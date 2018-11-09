@@ -1,0 +1,43 @@
+{
+  "name": "iobroker.vw-carnet",
+  "version": "0.0.1",
+  "description": "ioBroker VW-CarNet Adapter",
+  "author": {
+    "name": "Ralf Perkuhn",
+    "email": "ralf.perkuhn@online.de"
+  },
+  "contributors": [
+    {
+      "name": "RPerkuhn",
+      "email": "ralf.perkuhn@online.de"
+    }
+  ],
+  "homepage": "https://github.com/RPerkuhn/ioBroker.vw-carnet",
+  "license": "MIT",
+  "keywords": [
+    "ioBroker",
+    "car",
+    "smarthome",
+    "elektromobility"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RPerkuhn/ioBroker.vw-carnet"
+  },
+  "dependencies": {
+    "request": "^2.87.0"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "mocha": "^5.2.0",
+    "chai": "^4.1.2"
+  },
+  "main": "vw-carnet.js",
+  "scripts": {
+    "test": "node node_modules/mocha/bin/mocha --exit"
+  },
+  "bugs": {
+    "url": "https://github.com/RPerkuhn/ioBroker.vw-carnet/issues"
+  },
+  "readmeFilename": "README.md"
+}
