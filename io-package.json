@@ -1,4 +1,70 @@
 {
     "common": {
-    }
+        "name": "vw-carnet",
+        "version": "0.0.1",
+        "news": {
+	    "0.0.1": {
+                "en": "initial adapter",
+                "de": "Initiale Version"
+		}
+        },
+		"title": "Volkswagen Car-Net",
+        "titleLang": {
+            "en": "Threema gateway messenger",
+            "de": "Threema Gateway Messenger"
+        },
+        "desc": {
+            "en": "Adapter for connection to VW Car-Net for a specific car",
+            "de": "Adapter zur Verbindung mit VW Car-Net"
+        },
+        "authors": [
+            "RPerkuhn <ralf.perkuhn@online.de>"
+        ],
+        "docs": {
+            "en": "docs/en/admin.md",
+            "de": "docs/de/admin.md"
+        },
+        "platform": "Javascript/Node.js",
+        "mode": "daemon",
+        "icon": "vw-logo.png",
+        "materialize": true,
+        "enabled": false,
+        "extIcon": "https://raw.githubusercontent.com/RPerkuhn/ioBroker.vw-carnet/master/admin/vw-logo.png",
+        "keywords": ["notification", "threema", "message"],
+        "readme": "https://github.com/RPerkuhn/ioBroker.vw-carnet/blob/master/README.md",
+        "loglevel": "info",
+        "type": "messaging",
+	"blockly": false,
+        "license": "MIT",
+        "messagebox": false
+    },
+    "native": {
+        "apikey": "",
+        "sender": "",
+        "receipient": ""
+    },
+    "objects": [],
+    "instanceObjects": [
+    {
+            "_id": "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "If connected to VW car-net server",
+                "type": "boolean",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        }
+]
 }
