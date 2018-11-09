@@ -30,10 +30,10 @@
         "materialize": true,
         "enabled": false,
         "extIcon": "https://raw.githubusercontent.com/RPerkuhn/ioBroker.vw-carnet/master/admin/vw-logo.png",
-        "keywords": ["notification", "threema", "message"],
+        "keywords": ["Volkswagen Car-Net"],
         "readme": "https://github.com/RPerkuhn/ioBroker.vw-carnet/blob/master/README.md",
         "loglevel": "info",
-        "type": "messaging",
+        "type": "hardware",
 	"blockly": false,
         "license": "MIT",
         "messagebox": false
