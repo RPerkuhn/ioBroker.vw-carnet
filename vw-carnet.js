@@ -26,6 +26,40 @@ adapter.on('message', function (obj) {
     }
 });
 
+var request = require('request');
+
+var base      = "https://www.volkswagen-car-net.com";
+var authbase  = "https://security.volkswagen.com";
+var csrf      = "";
+var refUrl    = "";
+var viewState = "";
+var cookieJar = null;
+var urlHeader = null;
+var code      = "";
+var state     = "";
+var unterwegs = "unterwegs - zuletzt:";
+var email     = "#####"; // User Car-Net-Account
+var password  = "#####"; // Passwort Car-Net-Account
+var mapsApiKey= "";                       // API-Key für Google Maps Platform (noch optional)
+var errCount  = 0;  // Anzahl zulässige Fehler bis Mail verschickt wird
+var defaultHeader = {
+    'Accept': 'application/json, text/plain, */*',
+	'Content-Type': 'application/json;charset=UTF-8',
+	'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0.1; D5803 Build/23.5.A.1.291; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/63.0.3239.111 Mobile Safari/537.36'
+};
+var stateBatterieProz = "emanager.batteryPercentage";
+var stateLadevorgang  = "emanager.chargingState";
+var stateLadedauer    = "emanager.chargingRemaining";
+var stateReichweite   = "emanager.electricRange";
+var stateMinLadung    = "emanager.minChargeLimit";
+var stateletzteVerb   = "vehicle.lastConnectionTimeStamp";
+var stateGesamtKm     = "vehicle.distanceCovered";
+var stateReichweiteV  = "vehicle.range";
+var stateServiceTermin= "vehicle.serviceInspectionData";
+var statePosBreite    = "location.lat";
+var statePosLaenge    = "location.lng";
+var statePosAdresse   = "location.address";
+
 // start here!
 adapter.on('ready', function () {
     VWCarNetCheckConnect()
