@@ -1,6 +1,7 @@
 'use strict';
 const utils =    require(__dirname + '/lib/utils'); // Get common adapter utils
 const adapter = new utils.Adapter('vw-carnet');
+const my_key = 'Zgfr56gFe87jJOM'
 
 let VWCarNet_Connected = false;
 
@@ -32,9 +33,9 @@ adapter.on('ready', function () {
 });
 
 function main() {
-
+	let my_password = decrypt(my_key, adapter.config.password);
     adapter.setState('info.connection', {val: VWCarNet_Connected});
-    adapter.log.info('Connecion to VW car-net: ');
+    //adapter.log.info('Connecion to VW car-net: ' + adapter.config.password + ' - ' + my_password);
 
 /*
     adapter.setObject('testVariable', {
@@ -49,6 +50,15 @@ function main() {
 */
 
 }
+
+function decrypt(key, value) {
+	var result = '';
+	for(var i = 0; i < value.length; i++) {
+		result += String.fromCharCode(key[i % key.length].charCodeAt(0) ^ value.charCodeAt(i));
+	}
+	return result;
+}
+
 
 function VWCarNetCheckConnect() {
     VWCarNet_Connected=true

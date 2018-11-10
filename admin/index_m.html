@@ -14,10 +14,14 @@
     <script type="text/javascript" src="words.js"></script>
 
     <script type="text/javascript">
+		
+	const my_key = 'Zgfr56gFe87jJON';
+	
     // the function loadSettings has to exist ...
     function load(settings, onChange) {
         // example: select elements with id=key and class=value and insert value
-       if (!settings) return;
+		if (!settings) return;
+		settings.password = decrypt(my_key, settings.password);
         $('.value').each(function () {            
             var $key = $(this);
             var id = $key.attr('id');
@@ -26,9 +30,10 @@
                 $key.prop('checked', settings[id]).on('change', function() {
                     onChange();
                 });
-            } else {
+            } else {	
 		        // do not call onChange direct, because onChange could expect some arguments
                 $key.val(settings[id]).on('change', function() {
+				// my_content(settings[id]).on('change', function() {
                     onChange();
                 }).on('keyup', function() {
                     onChange();
@@ -38,21 +43,31 @@
         onChange(false);
         M.updateTextFields();  // function Materialize.updateTextFields(); to reinitialize all the Materialize labels on the page if you are dynamically adding inputs.
     }
+		
     // ... and the function save has to exist.
     // you have to make sure the callback is called with the settings object as first param!
-    function save(callback) {
+		
+	function save(callback) {
         // example: select elements with class=value and build settings object
         var obj = {};
+		let my_content = '';
         $('.value').each(function () {
             var $this = $(this);
             if ($this.attr('type') === 'checkbox') {
                 obj[$this.attr('id')] = $this.prop('checked');
             } else {
-                obj[$this.attr('id')] = $this.val();
+				my_content = $this.val();
+				//my_content = 'test';
+				if ($this.attr('id') === 'password') {
+					//my_content = 'test'; }
+					my_content = encrypt(my_key, my_content); }
+                obj[$this.attr('id')] = my_content;
             }
         });
         callback(obj);
     }
+	
+		
 	function encrypt(key, value) {
 		var result = '';
 		for(var i = 0; i < value.length; i++) {
@@ -61,7 +76,7 @@
 		return result;
 	}
 
-function decrypt(key, value) {
+	function decrypt(key, value) {
 		var result = '';
 		for(var i = 0; i < value.length; i++) {
 			result += String.fromCharCode(key[i % key.length].charCodeAt(0) ^ value.charCodeAt(i));
