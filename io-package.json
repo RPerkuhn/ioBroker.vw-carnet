@@ -10,8 +10,8 @@
         },
 		"title": "Volkswagen Car-Net",
         "titleLang": {
-            "en": "Threema gateway messenger",
-            "de": "Threema Gateway Messenger"
+            "en": "Volkswagen Car-Net",
+            "de": "Volkswagen Car-Net"
         },
         "desc": {
             "en": "Adapter for connection to VW Car-Net for a specific car",
@@ -36,12 +36,11 @@
         "type": "hardware",
 	"blockly": false,
         "license": "MIT",
-        "messagebox": false
+        "messagebox": true
     },
     "native": {
-        "apikey": "",
-        "sender": "",
-        "receipient": ""
+        "mail": "",
+        "password": ""
     },
     "objects": [],
     "instanceObjects": [
