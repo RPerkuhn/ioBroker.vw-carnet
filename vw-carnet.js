@@ -48,23 +48,36 @@ var defaultHeader = {
 	'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0.1; D5803 Build/23.5.A.1.291; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/63.0.3239.111 Mobile Safari/537.36'
 };
 
-// declaring names for states for currentVehicle data
-const state_v_channel = "Vehicle"
-const state_v_name = "Vehicle.name"
-const state_v_channelSelected = "Vehicle.currentVehicle"
-const state_v_lastConnectionTimeStamp   = "Vehicle.currentVehicle.lastConnectionTimeStamp";
-const state_v_distanceCovered     = "Vehicle.currentVehicle.distanceCovered";
-const state_v_range  = "Vehicle.currentVehicle.range";
-const state_v_serviceInspectionData= "Vehicle.currentVehicle.serviceInspectionData";
-const state_v_oilInspectionData= "Vehicle.currentVehicle.oilInspectionData";
+// declaring names for states for Vehicle data
+const channel_v = "Vehicle";
+const state_v_name = "Vehicle.name";
+const channel_vc = "Vehicle.currentVehicle";
+const state_vc_lastConnectionTimeStamp   = "Vehicle.currentVehicle.lastConnectionTimeStamp";
+const state_vc_distanceCovered     = "Vehicle.currentVehicle.distanceCovered";
+const state_vc_range  = "Vehicle.currentVehicle.range";
+const state_vc_serviceInspectionData= "Vehicle.currentVehicle.serviceInspectionData";
+const state_vc_oilInspectionData= "Vehicle.currentVehicle.oilInspectionData";
 
-// creating states for currentVehicle Data
-adapter.setObject(state_v_channel, {
+// declaring names for states for eManager data
+const channel_e = "eManager";
+const state_e_batteryPercentage = "eManager.batteryPercentage";
+const state_e_chargingState = "eManager.chargingState";
+const state_e_chargingRemaining = "eManager.chargingRemaining";
+const state_e_electricRange = "eManager.electricRange";
+const state_e_minChargeLimit = "eManager.minChargeLimit";
+
+// declaring names for states for location data
+const channel_l = "location";
+const state_l_lat = "location.lat";
+const state_l_lng = "location.lng";
+const state_l_address = "location.address";
+
+// creating channel/states for currentVehicle Data
+adapter.setObject(channel_v, {
     type: 'channel',
-    common: {},
+    common: {name: 'Fahrzeug'},
     native: {}
 });
-
 adapter.setObject(state_v_name, {
     type: 'state',
     common: {
@@ -76,12 +89,12 @@ adapter.setObject(state_v_name, {
     },
     native: {}
 });
-adapter.setObject(state_v_channelSelected, {
+adapter.setObject(channel_vc, {
     type: 'channel',
-    common: {},
+    common: {name: 'ausgewähltes Fahrzeug'},
     native: {}
 });
-adapter.setObject(state_v_lastConnectionTimeStamp, {
+adapter.setObject(state_vc_lastConnectionTimeStamp, {
     type: 'state',
     common: {
         name: 'Zeitpunkt der letzten Verbindung zum Fahrzeug',
@@ -92,10 +105,10 @@ adapter.setObject(state_v_lastConnectionTimeStamp, {
     },
     native: {}
 });
-adapter.setObject(state_v_distanceCovered, {
+adapter.setObject(state_vc_distanceCovered, {
     type: 'state',
     common: {
-        name: 'Kilomaterstand',
+        name: 'Kilometerstand',
         type: 'number',
         read: true,
         write: false,
@@ -104,7 +117,7 @@ adapter.setObject(state_v_distanceCovered, {
     },
     native: {}
 });
-adapter.setObject(state_v_range, {
+adapter.setObject(state_vc_range, {
     type: 'state',
     common: {
         name: 'Gesamtreichweite des Fahrzeugs',
@@ -116,7 +129,7 @@ adapter.setObject(state_v_range, {
     },
     native: {}
 });
-adapter.setObject(state_v_serviceInspectionData, {
+adapter.setObject(state_vc_serviceInspectionData, {
     type: 'state',
     common: {
         name: 'Nächste Inspektion',
@@ -127,7 +140,7 @@ adapter.setObject(state_v_serviceInspectionData, {
     },
     native: {}
 });
-adapter.setObject(state_v_oilInspectionData, {
+adapter.setObject(state_vc_oilInspectionData, {
     type: 'state',
     common: {
         name: 'Nächster Ölwechsel-Service',
@@ -139,16 +152,120 @@ adapter.setObject(state_v_oilInspectionData, {
     native: {}
 });
 
-// start here!
+// creating channel/states for eManager Data
+adapter.setObject(channel_e, {
+    type: 'channel',
+    common: {name: 'e-Manager'},
+    native: {}
+});
+adapter.setObject(state_e_batteryPercentage, {
+    type: 'state',
+    common: {
+        name: "Ladezustand der Hauptbatterie in 10%-Schritten",
+        type: "number",
+        unit: "%",
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_e_chargingState, {
+    type: 'state',
+    common: {
+        name: "Zustand des Ladevorgangs",
+        type: "string",
+        unit: "",
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_e_chargingRemaining, {
+    type: 'state',
+    common: {
+        name: "Verbleibende Ladedauer bis 100% SoC",
+        type: "string",
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_e_electricRange, {
+    type: 'state',
+    common: {
+        name: "Elektrische Reichweite mit aktuellem Batteriestand",
+        type: "number",
+        unit: "km",
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_e_minChargeLimit, {
+    type: 'state',
+    common: {
+        name: "Untere Batterie-Ladegrenze",
+        type: "number",
+        unit: "%",
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+
+// creating channel/states for location Data
+adapter.setObject(channel_l, {
+    type: 'channel',
+    common: {name: 'Parkposition'},
+    native: {}
+});
+adapter.setObject(state_l_lat, {
+    type: 'state',
+    common: {
+        name: "Breitengrad der Position des Fahrzeugs",
+        type: "number",
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_l_lng, {
+    type: 'state',
+    common: {
+        name: "Längengrad der Position des Fahrzeugs",
+        type: "number",
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_l_address, {
+    type: 'state',
+    common: {
+        name: "Anschrift der Position des Fahrzeugs",
+        type: "string",
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+
+// ##################################### start here! ##############################################
 adapter.on('ready', function () {
     VWCarNetCheckConnect()
-    main();
+    doRequest();
 });
 
 function main() {
-	let my_password = decrypt(my_key, adapter.config.password);
-
-
+	//let my_password = decrypt(my_key, adapter.config.password);
 
     //Set adapter connected status online when login credentials are correct
     adapter.setState('info.connection', {val: VWCarNet_Connected});
@@ -181,4 +298,433 @@ function decrypt(key, value) {
 
 function VWCarNetCheckConnect() {
     VWCarNet_Connected=true
+}
+
+function carNet_error(meldung, typ) {
+    if (typ === undefined)
+        typ = "";
+
+    var sendMail = true;
+    adapter.log.info('CarNet: ' + meldung, 'error');
+    if (typ == "main") {
+        errCount ++;
+        if (errCount < 3)
+            sendMail = false;
+    }
+    /*if (sendMail)
+        sendTo("email", {
+            subject: "FEHLER bei CarNet-Verarbeitung",
+            text:    meldung
+        });*/
+}
+
+function getPartOfSite(content, startTag, endTag, startOffset) {
+    if (startOffset === undefined)
+        startOffset = 0;
+    var pos = content.indexOf(startTag, startOffset);
+    if (pos >= 0) {
+        pos += startTag.length;
+        var pos2 = content.indexOf(endTag, pos +1);
+        if (pos2 >= 0) {
+            return {
+                found: true,
+                value: content.substring(pos, pos2).trim(),
+                start: pos,
+                end:   pos2,
+                cutter: pos2 + endTag.length
+            };
+        }
+    }
+    return null;
+}
+
+function get_csrf(body) {
+    var data = getPartOfSite(body, '<meta name="_csrf" content="', '"/>');
+    if (data === null) {
+        carNet_error('Kein Token für Login gefunden\n' + body);
+        return "";
+    }
+    return data.value;
+}
+
+function get_loginUrl(body) {
+    var data = getPartOfSite(body, '"path":"', '"');
+    if (data === null) {
+        carNet_error('Keine Login-URL gefunden\n' + body);
+        return "";
+    }
+    return data.value;
+}
+
+function get_viewState(body) {
+    var data = getPartOfSite(body, 'name="javax.faces.ViewState" id="j_id1:javax.faces.ViewState:0" value="', '"');
+    if (data === null) {
+        carNet_error('Keinen Viewstate für Login gefunden\n' + body);
+        return "";
+    }
+    return data.value.replace(/\\x3a/g, ":").replace(/\\x2f/g, "/").replace(/\\x2e/g, ".");
+}
+
+function get_redirectUrl(body) {
+    var data = getPartOfSite(body, '<redirect url="', '"></redirect>');
+    if (data === null) {
+        carNet_error('Keine Redirect-URL nach Login gefunden\n' + body);
+        return "";
+    }
+    return data.value.replace('&amp;', '&');
+}
+
+function get_code(body) {
+    var data = getPartOfSite(body, 'code=', '&');
+    if (data === null) {
+        carNet_error('Keinen Code nach Login gefunden\n' + body);
+        return "";
+    }
+    return data.value;
+}
+
+function get_state(body) {
+    // Hier indexOf anstelle getPartOfsite, weil es keinen EndeString gibt
+    var pos = body.indexOf('state=');
+    if (pos < 0) {
+        carNet_error('Keinen State nach Login gefunden\n' + body);
+        return "";
+    }
+    return body.substr(pos + 6);
+}
+
+function get_newUrl(url) {
+    var data = getPartOfSite(url, '/', '?', 10);
+    if (data === null) {
+        carNet_error('Konnte keinen Path aus URL ' + url + ' extrahieren');
+        return "";
+    }
+    return base + '/' + data.value + '?p_auth=' + state + '&p_p_id=33_WAR_cored5portlet&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_count=1&_33_WAR_cored5portlet_javax.portlet.action=getLoginStatus';
+}
+
+function get_request(url, mayRedirect, forms, doJSON) {
+    var options = {
+        url: url,
+        jar: cookieJar
+    };
+    if (urlHeader !== null)
+        options.headers = urlHeader;
+    if (mayRedirect === undefined || mayRedirect === null)
+        mayRedirect = true;
+    if (! mayRedirect)
+        options.followRedirect = function (resp) { return false; };
+    if (forms !== undefined)
+        options.form = forms;
+    if (doJSON === undefined || doJSON === null)
+        doJSON = false;
+    if (doJSON)
+        options.json = true;
+    return options;
+}
+
+function isAbrufOk(oper, err, stat, body) {
+    if (err)
+        carNet_error('Fehler "' + err + '" beim ' + oper);
+    else if(body) {
+        return true;
+    } else
+        carNet_error("Kein Inhalt bei " + oper + " (Status " + stat.statusCode + ")");
+    return false;
+}
+
+function isRedirectOk(oper, err, stat, body) {
+    if (err)
+        carNet_error('Fehler "' + err + '" beim ' + oper);
+    else if(stat.statusCode == 302) {
+        return true;
+    } else
+        carNet_error(oper + " ist keine Weiterleitung (Status " + stat.statusCode + "): " + body);
+    return false;
+}
+
+function carNet_login() {
+    csrf      = "";
+    refUrl    = "";
+    viewState = "";
+    cookieJar = request.jar();
+    urlHeader = null;
+    code      = "";
+    state     = "";
+    //request(base + '/portal/en_GB/web/guest/home', process_login1);
+    request(get_request(base + '/portal/en_GB/web/guest/home'), process_login1);
+}
+
+function process_login1(err, stat, body) {
+    if (isAbrufOk("Login-Seite", err, stat, body)) {
+        urlHeader = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0.1; D5803 Build/23.5.A.1.291; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/63.0.3239.111 Mobile Safari/537.36',
+            'Referer': base + '/portal'
+        };
+        var detailsUrl = stat.request.uri.href;
+        csrf = get_csrf(body);
+        if (csrf === "")
+            return;
+        //console.log("Session = " + csrf);
+        request(get_request(base + "/portal/web/guest/home/-/csrftokenhandling/get-login-url"), process_login2);
+    }
+}
+
+function process_login2(err, stat, body) {
+    if (isAbrufOk("Login-Seite 2", err, stat, body)) {
+        var loginUrl = get_loginUrl(body);
+        if (loginUrl === "")
+            return;
+        //console.log('Login-URL: ' + loginUrl);
+        request.get(get_request(loginUrl, false), process_login3);
+    }
+}
+
+function process_login3(err, stat, body) {
+    if (isRedirectOk("Login-Setie 3", err, stat, body)) {
+        refUrl = stat.headers.location;
+        if (refUrl === "") {
+            carNet_error("Keine Location für Redirect gefunden");
+            return;
+        }
+        //console.log('refURL: ' + refUrl);
+        request.get(get_request(refUrl), process_login4);
+    }
+}
+
+function process_login4(err, stat, body) {
+    if (isAbrufOk("Login-Setie 4", err, stat, body)) {
+        viewState = get_viewState(body);
+        if (viewState === "")
+            return;
+        //console.log('ViewState = ' + viewState);
+        var formData = {
+            'loginForm': 'loginForm',
+            'loginForm:email': adapter.config.email,
+            'loginForm:password': decrypt(my_key, adapter.config.password),
+            'loginForm:j_idt19': '',
+            'javax.faces.ViewState': viewState,
+            'javax.faces.source': 'loginForm:submit',
+            'javax.faces.partial.event': 'click',
+            'javax.faces.partial.execute': 'loginForm:submit loginForm',
+            'javax.faces.partial.render': 'loginForm',
+            'javax.faces.behavior.event': 'action',
+            'javax.faces.partial.ajax': 'true'
+        };
+        // AuthHeader aktualisieren
+        urlHeader['Faces-Request'] = 'partial/ajax';
+        urlHeader.Referer = refUrl;
+        urlHeader['X-CSRF-Token'] = '';
+        request.post(get_request(authbase + '/ap-login/jsf/login.jsf', null, formData), process_login5);
+    }
+}
+
+function process_login5(err, stat, body) {
+    if (isAbrufOk("Login-Seite 5", err, stat, body)) {
+        //console.log('Status = ' + stat.statusCode);
+        var redirectUrl = get_redirectUrl(body);
+        if (redirectUrl === "")
+            return;
+        request.get(get_request(redirectUrl, false), process_login6);
+    }
+}
+
+function process_login6(err, stat, body) {
+    if (isRedirectOk("Login-Seite 6", err, stat, body)) {
+        var redirectUrl2 = stat.headers.location;
+        if (redirectUrl2 === "") {
+            carNet_error("Keine Location für Redirect2 gefunden");
+            return;
+        }
+        code = get_code(redirectUrl2);
+        if (code === "")
+            return;
+        state = get_state(redirectUrl2);
+        if (state === "")
+            return;
+        //console.log('redirectUrl2: ' + redirectUrl2 + ', code = ' + code + ', state = ' + state);
+        request.get(get_request(redirectUrl2), process_login7);
+    }
+}
+
+function process_login7(err, stat, body) {
+    if (isAbrufOk("Login-Seite 7", err, stat,body)) {
+        //console.log('Status = ' + stat.statusCode);
+        urlHeader['Faces-Request'] = '';
+        urlHeader.Referer = stat.request.uri.href;
+        var post_data = {
+            '_33_WAR_cored5portlet_code': code,
+            '_33_WAR_cored5portlet_landingPageUrl': ''
+        }
+        var newUrl = get_newUrl(urlHeader.Referer);
+        if (newUrl === "")
+            return;
+        //console.log('newUrl = ' + newUrl);
+        request.post(get_request(newUrl , false, post_data), process_login8);
+    }
+}
+
+function process_login8(err, stat, body) {
+    if (isRedirectOk("Login-Seite 8", err, stat,body)) {
+        var redirectUrl3 = stat.headers.location;
+        if (redirectUrl3 === "") {
+            carNet_error("Keine Location für Redirect3 gefunden");
+            return;
+        }
+        request.get(get_request(redirectUrl3), process_login9);
+    }
+}
+
+function process_login9(err, stat, body) {
+    if (isAbrufOk("Login-Seite 9", err, stat, body)) {
+        //console.log('Status = ' + stat.statusCode);
+        csrf = get_csrf(body);
+        if (csrf === "")
+            return;
+        //console.log('neuer csrf = ' + csrf);
+        urlHeader = defaultHeader;
+        urlHeader.Referer = stat.request.uri.href;
+        urlHeader['X-CSRF-Token'] = csrf;
+        //request.post(get_request(stat.request.uri.href + '/-/msgc/get-new-messages', null, null, true), process_messages);
+        //request.post(get_request(stat.request.uri.href + '/-/vsr/request-vsr', null, null, true), process_vsr);
+        //request.post(get_request(stat.request.uri.href + '/-/vsr/get-vsr', null, null, true), process_vsr2);
+        request.post(get_request(stat.request.uri.href + '/-/cf/get-location', null, null, true), process_location);
+        request.post(get_request(stat.request.uri.href + '/-/vehicle-info/get-vehicle-details', null, null, true), process_vehicleDetails);
+        request.post(get_request(stat.request.uri.href + '/-/emanager/get-emanager', null, null, true), process_emanager);
+    }
+}
+
+function process_messages(err, stat, body) {
+    if (isAbrufOk("Messages", err, stat, body)) {
+        //console.log('Status = ' + stat.statusCode);
+        console.log('Messages = ' + JSON.stringify(body));
+    }
+}
+
+function process_vsr(err, stat, body) {
+    if (isAbrufOk("Get VSR", err, stat, body)) {
+        //console.log('Status = ' + stat.statusCode);
+        console.log('Get VSR = ' + JSON.stringify(body));
+    }
+}
+
+function process_vsr2(err, stat, body) {
+    if (isAbrufOk("Process VSR", err, stat, body)) {
+        //console.log('Status = ' + stat.statusCode);
+        console.log('Process VSR = ' + JSON.stringify(body));
+    }
+}
+
+function process_location(err, stat, body) {
+    if (isAbrufOk("Location", err, stat, body)) {
+        //console.log('Status = ' + stat.statusCode);
+        //console.log('Location = ' + JSON.stringify(body));
+        //var data = body; // JSON.parse(body);
+        if (body.errorCode != 0)
+            carNet_error('Fehler ' + body.errorCode + ' beim Abruf Positions-Daten: ' + JSON.stringify(body));
+        else {
+            var posStatus = body.position;
+            if (posStatus !== undefined && posStatus !== null) {
+                if ((posStatus.lat != 0) && (posStatus.lng != 0)) {
+                    adapter.setState(state_l_lat, posStatus.lat, true);
+                    adapter.setState(state_l_lng, posStatus.lng, true);
+                    // requestGeocoding(posStatus.lat, posStatus.lng);
+                }
+            } else
+            if (getState(state_l_address).val.substr(0, unterwegs.length) != unterwegs)
+                adapter.setState(state_l_address, unterwegs + ' ' + getState(state_l_address).val, true);
+        }
+    }
+}
+
+function process_vehicleDetails(err, stat, body) {
+    if (isAbrufOk("Vehicle Details", err, stat, body)) {
+        //console.log('Status = ' + stat.statusCode);
+        //console.log('Vehicle Details = ' + JSON.stringify(body));
+        if (body.errorCode != 0)
+            carNet_error('Fehler ' + body.errorCode + ' beim Abruf Fahrzeug-Daten: ' + JSON.stringify(body));
+        else {
+            var vehStatus = body.vehicleDetails;
+            if (vehStatus !== undefined && vehStatus !== null) {
+                if (vehStatus.lastConnectionTimeStamp.length > 0)  {
+                    var datum = vehStatus.lastConnectionTimeStamp[0];
+                    // tt.mm.jjjj zu jjjj-mm-tt drehen
+                    datum = datum.substr(6, 4) + '-' + datum.substr(3, 2) + '-' + datum.substr(0, 2);
+                    datum = datum + " " + vehStatus.lastConnectionTimeStamp[1]
+                    //setState(stateletzteVerb, datum, true);
+                    var x = new Date(datum);
+                    adapter.setState(state_vc_lastConnectionTimeStamp, x, true);
+                    //console.log("Timestamp: " + datum + '=>' + x);
+                }
+                if (vehStatus.distanceCovered > 0)
+                    adapter.setState(state_vc_distanceCovered, parseInt(vehStatus.distanceCovered.replace('.', "")), true);
+                if (vehStatus.range > 0)
+                    adapter.setState(state_vc_range, parseInt(vehStatus.range), true);
+                if (vehStatus.serviceInspectionData !== "")
+                    adapter.setState(state_vc_serviceInspectionData, vehStatus.serviceInspectionData, true);
+                if (vehStatus.oilInspectionData !== "")
+                    adapter.setState(state_vc_oilInspectionData, vehStatus.oilInspectionData, true);
+            }
+        }
+    }
+}
+
+function process_emanager(err, stat, body) {
+    if (isAbrufOk("eManager-Daten", err, stat, body)) {
+        //console.log('Status = ' + stat.statusCode);
+        //console.log('eManager = ' + JSON.stringify(body));
+        if (body.errorCode != 0)
+            carNet_error('Fehler ' + body.errorCode + ' beim Abruf eManager-Daten: ' + JSON.stringify(body));
+        else {
+            var ladeStatus = body.EManager.rbc.status;
+            if (ladeStatus !== undefined && ladeStatus !== null) {
+                adapter.setState(state_e_batteryPercentage, ladeStatus.batteryPercentage, true);
+                //console.log('Ladestand: ' + ladeStatus.batteryPercentage + "%");
+                adapter.setState(state_e_chargingState, ladeStatus.chargingState, true);
+                //console.log('Ladevorgang: ' + ladeStatus.chargingState);
+                if (ladeStatus.chargingRemaningHour > 0 || ladeStatus.chargingRemaningMinute > 0)
+                    adapter.setState(state_e_chargingRemaining, ladeStatus.chargingRemaningHour + ":" + ladeStatus.chargingRemaningMinute, true);
+                else
+                    adapter.setState(state_e_chargingRemaining, "", true);
+                //console.log('Verbl. Ladedauer: ' + ladeStatus.chargingRemaningHour + "h " + ladeStatus.chargingRemaningMinute + "min");
+                adapter.setState(state_e_electricRange, ladeStatus.electricRange, true);
+                //console.log('Reichweite: ' + ladeStatus.electricRange + "km");
+            }
+            adapter.setState(state_e_minChargeLimit, body.EManager.rdt.settings.minChargeLimit, true);
+            //console.log('Mindestladung: ' + body.EManager.rdt.settings.minChargeLimit + "%");
+        }
+    }
+}
+
+function process_geocoding(err, stat, body) {
+    if (isAbrufOk("Geocoding", err, stat, body)) {
+        //console.log('Status = ' + stat.statusCode);
+        //console.log('Location = ' + JSON.stringify(body));
+        //var data = body; // JSON.parse(body);
+        if (body.status != "OK")
+        //carNet_error('Fehler ' + body.status + '/' + body.error_message + ' beim Abruf Geocoding: ' + JSON.stringify(body));
+            log('Fehler ' + body.status + '/' + body.error_message + ' beim Abruf Geocoding: ' + JSON.stringify(body), 'error');
+        else {
+            var address = "<unbekannt>";
+            if ((body.results.length> 0) & body.results[0].formatted_address !== "")
+                address = body.results[0].formatted_address;
+            setState(statePosAdresse, address, true);
+        }
+    }
+}
+
+function requestGeocoding(lat, lng) {
+    var url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng='+lat+','+lng;
+    if (mapsApiKey !== "")
+        url = url + '&key=' + mapsApiKey;
+    //console.log("Geocoding-URL: " + url)
+    request({
+        url: url,
+        headers: defaultHeader,
+        json: true
+    }, process_geocoding);
+}
+
+function doRequest() {
+    carNet_login();
 }
