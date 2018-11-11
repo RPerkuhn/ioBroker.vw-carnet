@@ -47,18 +47,97 @@ var defaultHeader = {
 	'Content-Type': 'application/json;charset=UTF-8',
 	'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0.1; D5803 Build/23.5.A.1.291; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/63.0.3239.111 Mobile Safari/537.36'
 };
-var stateBatterieProz = "emanager.batteryPercentage";
-var stateLadevorgang  = "emanager.chargingState";
-var stateLadedauer    = "emanager.chargingRemaining";
-var stateReichweite   = "emanager.electricRange";
-var stateMinLadung    = "emanager.minChargeLimit";
-var stateletzteVerb   = "vehicle.lastConnectionTimeStamp";
-var stateGesamtKm     = "vehicle.distanceCovered";
-var stateReichweiteV  = "vehicle.range";
-var stateServiceTermin= "vehicle.serviceInspectionData";
-var statePosBreite    = "location.lat";
-var statePosLaenge    = "location.lng";
-var statePosAdresse   = "location.address";
+
+// declaring names for states for currentVehicle data
+const state_v_channel = "Vehicle"
+const state_v_name = "Vehicle.name"
+const state_v_channelSelected = "Vehicle.currentVehicle"
+const state_v_lastConnectionTimeStamp   = "Vehicle.currentVehicle.lastConnectionTimeStamp";
+const state_v_distanceCovered     = "Vehicle.currentVehicle.distanceCovered";
+const state_v_range  = "Vehicle.currentVehicle.range";
+const state_v_serviceInspectionData= "Vehicle.currentVehicle.serviceInspectionData";
+const state_v_oilInspectionData= "Vehicle.currentVehicle.oilInspectionData";
+
+// creating states for currentVehicle Data
+adapter.setObject(state_v_channel, {
+    type: 'channel',
+    common: {},
+    native: {}
+});
+
+adapter.setObject(state_v_name, {
+    type: 'state',
+    common: {
+        name: 'Name des Fahrzeugs in VW Car-Net',
+        type: 'string',
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_v_channelSelected, {
+    type: 'channel',
+    common: {},
+    native: {}
+});
+adapter.setObject(state_v_lastConnectionTimeStamp, {
+    type: 'state',
+    common: {
+        name: 'Zeitpunkt der letzten Verbindung zum Fahrzeug',
+        type: 'string',
+        read: true,
+        write: false,
+        role: "datetime"
+    },
+    native: {}
+});
+adapter.setObject(state_v_distanceCovered, {
+    type: 'state',
+    common: {
+        name: 'Kilomaterstand',
+        type: 'number',
+        read: true,
+        write: false,
+        unit: "km",
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_v_range, {
+    type: 'state',
+    common: {
+        name: 'Gesamtreichweite des Fahrzeugs',
+        type: 'number',
+        read: true,
+        write: false,
+        unit: "km",
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_v_serviceInspectionData, {
+    type: 'state',
+    common: {
+        name: 'Nächste Inspektion',
+        type: 'string',
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_v_oilInspectionData, {
+    type: 'state',
+    common: {
+        name: 'Nächster Ölwechsel-Service',
+        type: 'string',
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
 
 // start here!
 adapter.on('ready', function () {
@@ -68,7 +147,13 @@ adapter.on('ready', function () {
 
 function main() {
 	let my_password = decrypt(my_key, adapter.config.password);
+
+
+
+    //Set adapter connected status online when login credentials are correct
     adapter.setState('info.connection', {val: VWCarNet_Connected});
+
+
     //adapter.log.info('Connecion to VW car-net: ' + adapter.config.password + ' - ' + my_password);
 
 /*
