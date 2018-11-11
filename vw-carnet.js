@@ -327,12 +327,12 @@ adapter.setObject(state_l_address, {
 adapter.on('ready', function () {
     VWCarNetCheckConnect()
     doRequest();
-    adapter.setState('info.connection', {val: VWCarNet_Connected});
+    adapter.setState('info.connection', {val: VWCarNet_Connected, ack: true});
 });
 
 function main() {
 
-    adapter.setState('info.connection', {val: VWCarNet_Connected});
+    adapter.setState('info.connection', {val: VWCarNet_Connected, ack: true});
 
 }
 
@@ -674,7 +674,7 @@ function process_vehicleDetails(err, stat, body) {
                     datum = datum.substr(6, 4) + '-' + datum.substr(3, 2) + '-' + datum.substr(0, 2);
                     datum = datum + " " + vehStatus.lastConnectionTimeStamp[1]
                     var x = new Date(datum);
-                    adapter.setState(state_vc_lastConnectionTimeStamp, x, true);
+                    adapter.setState(state_vc_lastConnectionTimeStamp, {val: x, ack: true});
                     //adapter.log.info("Timestamp: " + datum + '=>' + x);
                 }
                 if (vehStatus.distanceCovered > 0)
@@ -766,7 +766,7 @@ function process_geocoding(err, stat, body) {
             var address = "<unbekannt>";
             if ((body.results.length> 0) & body.results[0].formatted_address !== "")
                 address = body.results[0].formatted_address;
-            setState(statePosAdresse, address, true);
+            adapter.setState(state_l_address, address, true);
         }
     }
 }
