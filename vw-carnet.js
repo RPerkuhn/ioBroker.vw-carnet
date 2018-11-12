@@ -9,7 +9,7 @@ let VWCarNet_Connected = false;
 adapter.on('unload', function (callback) {
     try {
         VWCarNet_Connected = false
-        adapter.setState('info.connection', {val: VWCarNet_Connected}); //connection to Threema gateway not established
+        adapter.setState('connection', {val: VWCarNet_Connected}); //connection to Threema gateway not established
         adapter.log.info('VW CarNet adater stopped - cleaned everything up...');
         callback();
     } catch (e) {
@@ -51,34 +51,39 @@ var defaultHeader = {
 // declaring names for states for Vehicle data
 const channel_v = "Vehicle";
 const state_v_name = "Vehicle.name";
-const channel_vc = "Vehicle.currentVehicle";
-const state_vc_lastConnectionTimeStamp   = "Vehicle.currentVehicle.lastConnectionTimeStamp";
-const state_vc_distanceCovered     = "Vehicle.currentVehicle.distanceCovered";
-const state_vc_range  = "Vehicle.currentVehicle.range";
-const state_vc_serviceInspectionData= "Vehicle.currentVehicle.serviceInspectionData";
-const state_vc_oilInspectionData= "Vehicle.currentVehicle.oilInspectionData";
+const channel_vc = "Vehicle.selectedVehicle";
+const state_vc_lastConnectionTimeStamp   = "Vehicle.selectedVehicle.lastConnectionTimeStamp";
+const state_vc_distanceCovered     = "Vehicle.selectedVehicle.distanceCovered";
+const state_vc_range  = "Vehicle.selectedVehicle.range";
+const state_vc_serviceInspectionData= "Vehicle.selectedVehicle.serviceInspectionData";
+const state_vc_oilInspectionData= "Vehicle.selectedVehicle.oilInspectionData";
 
 // declaring names for states for eManager data
-const channel_e = "eManager";
-const state_e_batteryPercentage = "eManager.batteryPercentage";
-const state_e_chargingState = "eManager.chargingState";
-const state_e_chargingRemaining = "eManager.chargingRemaining";
-const state_e_electricRange = "eManager.electricRange";
-const state_e_combustionRange = "eManager.combustionRange"
-const state_e_combinedRange = "eManager.combinedRange"
-const state_e_minChargeLimit = "eManager.minChargeLimit";
-const state_e_pluginState = "eManager.pluginState"
-const state_e_extPowerSupplyState = "eManager.extPowerSupplyState"
-
-const state_e_climatisationWithoutHVPower = "eManager.climatisationWithoutHVPower";
+const channel_e = "Vehicle.selectedVehicle.eManager";
+const state_e_batteryPercentage = "Vehicle.selectedVehicle.eManager.batteryPercentage";
+const state_e_chargingState = "Vehicle.selectedVehicle.eManager.chargingState";
+const state_e_chargingRemaining = "Vehicle.selectedVehicle.eManager.chargingRemaining";
+const state_e_electricRange = "Vehicle.selectedVehicle.eManager.electricRange";
+const state_e_combustionRange = "Vehicle.selectedVehicle.eManager.combustionRange"
+const state_e_combinedRange = "Vehicle.selectedVehicle.eManager.combinedRange"
+const state_e_minChargeLimit = "Vehicle.selectedVehicle.eManager.minChargeLimit";
+const state_e_pluginState = "Vehicle.selectedVehicle.eManager.pluginState"
+const state_e_extPowerSupplyState = "Vehicle.selectedVehicle.eManager.extPowerSupplyState"
+const state_e_climatisationWithoutHVPower = "Vehicle.selectedVehicle.eManager.climatisationWithoutHVPower";
 
 // declaring names for states for location data
-const channel_l = "location";
-const state_l_lat = "location.lat";
-const state_l_lng = "location.lng";
-const state_l_address = "location.address";
+const channel_l = "Vehicle.selectedVehicle.location";
+const state_l_lat = "Vehicle.selectedVehicle.location.lat";
+const state_l_lng = "Vehicle.selectedVehicle.location.lng";
+const state_l_address = "Vehicle.selectedVehicle.location.address";
 
-// creating channel/states for currentVehicle Data
+// declaring names for states for status data
+const channel_s = "Vehicle.selectedVehicle.status";
+const state_s_areDoorsAndWindowsClosed = "Vehicle.selectedVehicle.status.areDoorsAndWindowsClosed";
+const state_s_areLightsOff = "Vehicle.selectedVehicle.status.areLightsOff";
+const state_s_carCentralLock = "Vehicle.selectedVehicle.status.carCentralLock";
+
+// creating channel/states for selectedVehicle Data
 adapter.setObject(channel_v, {
     type: 'channel',
     common: {name: 'Fahrzeug'},
@@ -323,16 +328,56 @@ adapter.setObject(state_l_address, {
     native: {}
 });
 
+// creating channel/states for status Data
+adapter.setObject(channel_s, {
+    type: 'channel',
+    common: {name: 'status'},
+    native: {}
+});
+adapter.setObject(state_s_areDoorsAndWindowsClosed, {
+    type: 'state',
+    common: {
+        name: "Türen/Fenster",
+        type: "string",
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_s_areLightsOff, {
+    type: 'state',
+    common: {
+        name: "Lichter",
+        type: "string",
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_s_carCentralLock, {
+    type: 'state',
+    common: {
+        name: "Zentralverriegelung",
+        type: "string",
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+
 // ##################################### start here! ##############################################
 adapter.on('ready', function () {
     VWCarNetCheckConnect()
     doRequest();
-    adapter.setState('info.connection', {val: VWCarNet_Connected, ack: true});
+    adapter.setState('connection', {val: VWCarNet_Connected, ack: true});
 });
 
 function main() {
 
-    adapter.setState('info.connection', {val: VWCarNet_Connected, ack: true});
+    adapter.setState('connection', {val: VWCarNet_Connected, ack: true});
 
 }
 
@@ -493,7 +538,6 @@ function carNet_login() {
     urlHeader = null;
     code      = "";
     state     = "";
-    //request(base + '/portal/en_GB/web/guest/home', process_login1);
     request(get_request(base + '/portal/en_GB/web/guest/home'), process_login1);
 }
 
@@ -630,7 +674,7 @@ function process_login9(err, stat, body) {
         urlHeader['X-CSRF-Token'] = csrf;
         //request.post(get_request(stat.request.uri.href + '/-/msgc/get-new-messages', null, null, true), process_messages);
         //request.post(get_request(stat.request.uri.href + '/-/vsr/request-vsr', null, null, true), process_vsr);
-        //request.post(get_request(stat.request.uri.href + '/-/vsr/get-vsr', null, null, true), process_vsr2);
+        request.post(get_request(stat.request.uri.href + '/-/vsr/get-vsr', null, null, true), process_vsr2);
         request.post(get_request(stat.request.uri.href + '/-/cf/get-location', null, null, true), process_location);
         request.post(get_request(stat.request.uri.href + '/-/vehicle-info/get-vehicle-details', null, null, true), process_vehicleDetails);
         request.post(get_request(stat.request.uri.href + '/-/emanager/get-emanager', null, null, true), process_emanager);

@@ -1,17 +1,21 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.0.5",
+        "version": "0.0.6",
         "news": {
+		"0.0.x": {
+                "en": "developement versions",
+                "de": "Entwicklungsstand-Versionen"
+		},
 	    "0.0.1": {
                 "en": "initial adapter",
                 "de": "Initiale Version"
 		}
         },
-		"title": "Volkswagen Car-Net",
+		"title": "Volkswagen Car-Net data adapter",
         "titleLang": {
-            "en": "Threema gateway messenger",
-            "de": "Threema Gateway Messenger"
+            "en": "Volkswagen Car-Net data adapter",
+            "de": "Volkswagen Car-Net Data Adapter"
         },
         "desc": {
             "en": "Adapter for connection to VW Car-Net for a specific car",
@@ -45,26 +49,19 @@
     },
     "objects": [],
     "instanceObjects": [
-    {
-            "_id": "info",
-            "type": "channel",
-            "common": {
-                "name": "Information"
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.connection",
-            "type": "state",
-            "common": {
-                "role": "indicator.connected",
-                "name": "If connected to VW car-net server",
-                "type": "boolean",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        }
+
+	{
+		"_id": "connection",
+		"type": "state",
+		"common": {
+			"role": "indicator.connected",
+			"name": "If connected to VW car-net server",
+			"type": "boolean",
+			"read": true,
+			"write": false,
+			"def": false
+		},
+		"native": {}
+	}
 ]
 }
