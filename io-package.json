@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.0.6",
+        "version": "0.0.7",
         "news": {
 		"0.0.x": {
                 "en": "developement versions",
@@ -38,9 +38,9 @@
         "readme": "https://github.com/RPerkuhn/ioBroker.vw-carnet/blob/master/README.md",
         "loglevel": "info",
         "type": "hardware",
-	"blockly": false,
+		"blockly": false,
         "license": "MIT",
-        "messagebox": false
+        "messagebox": true
     },
     "native": {
         "apikey": "",

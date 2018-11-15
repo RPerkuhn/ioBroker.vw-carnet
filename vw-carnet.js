@@ -371,6 +371,7 @@ adapter.setObject(state_s_carCentralLock, {
 // ##################################### start here! ##############################################
 adapter.on('ready', function () {
     VWCarNetCheckConnect()
+    main()
     doRequest();
     adapter.setState('connection', {val: VWCarNet_Connected, ack: true});
 });
@@ -391,7 +392,7 @@ function decrypt(key, value) {
 
 
 function VWCarNetCheckConnect() {
-    VWCarNet_Connected=true
+    VWCarNet_Connected = true
 }
 
 function carNet_error(meldung, typ) {
