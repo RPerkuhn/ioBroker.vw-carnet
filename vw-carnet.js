@@ -51,6 +51,7 @@ var defaultHeader = {
 // declaring names for states for Vehicle data
 const channel_v = "Vehicle";
 const state_v_name = "Vehicle.name";
+const state_v_VIN = "Vehicle.VIN";
 const channel_vc = "Vehicle.selectedVehicle";
 const state_vc_lastConnectionTimeStamp   = "Vehicle.selectedVehicle.lastConnectionTimeStamp";
 const state_vc_distanceCovered     = "Vehicle.selectedVehicle.distanceCovered";
@@ -93,6 +94,17 @@ adapter.setObject(state_v_name, {
     type: 'state',
     common: {
         name: 'Name des Fahrzeugs in VW Car-Net',
+        type: 'string',
+        read: true,
+        write: false,
+        role: 'value'
+    },
+    native: {}
+});
+adapter.setObject(state_v_VIN, {
+    type: 'state',
+    common: {
+        name: 'Fahrgestellnummer des Fahrzeugs',
         type: 'string',
         read: true,
         write: false,
