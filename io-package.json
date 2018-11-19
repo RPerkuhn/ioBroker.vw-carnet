@@ -62,6 +62,19 @@
 			"def": false
 		},
 		"native": {}
+	},
+	{
+		"_id": "lastUpdate",
+		"type": "state",
+		"common": {
+			"role": "datetime",
+			"name": "last data-update from VW car-net",
+			"type": "string",
+			"read": true,
+			"write": false,
+			"def": false
+		},
+		"native": {}
 	}
 ]
 }

@@ -8,6 +8,9 @@ var VWCarNet_CredentialsAreValid = false;
 var VWCarNet_VINIsValid = false;
 var VWCarNet_Connected = false;
 var myLastCarNetAnswer = '';
+var VWCarNet_GetLocation = true;
+var VWCarNet_GetEManager = true;
+var VWCarNet_GetClimater = true;
 var myToken = '';
 var myVIN = '';
 var myTmp;
@@ -253,6 +256,7 @@ adapter.setObject(state_e_extPowerSupplyState, {
 const channel_l = "Vehicle.selectedVehicle.location";
 const state_l_lat = "Vehicle.selectedVehicle.location.lat";
 const state_l_lng = "Vehicle.selectedVehicle.location.lng";
+const state_l_parkingTime = "Vehicle.selectedVehicle.location.parkingTime";
 const state_l_address = "Vehicle.selectedVehicle.location.address";
 // creating channel/states for location Data
 adapter.setObject(channel_l, {
@@ -270,12 +274,16 @@ adapter.setObject(state_l_lng, {
     common: {name: "Längengrad der Position des Fahrzeugs", type: "number", read: true, write: false, role: 'value'},
     native: {}
 });
+adapter.setObject(state_l_parkingTime, {
+    type: 'state',
+    common: {name: "Zeitpunkt parken des Fahrzeugs", type: "string", read: true, write: false, role: 'datetime'},
+    native: {}
+});
 adapter.setObject(state_l_address, {
     type: 'state',
     common: {name: "Anschrift der Position des Fahrzeugs", type: "string", read: true, write: false, role: 'value'},
     native: {}
 });
-
 
 // ############################################# start here! ###################################################
 
@@ -293,6 +301,7 @@ function decrypt(key, value) {
 }
 
 function VWCarNetReadData(){
+    var mySuccefulUpdate = true
     CarNetLogon(function(myTmp){
         VWCarNet_CredentialsAreValid=myTmp;
         VWCarNet_Connected = VWCarNet_CredentialsAreValid && VWCarNet_VINIsValid;
@@ -300,19 +309,29 @@ function VWCarNetReadData(){
         if (VWCarNet_Connected){
             RetrieveVehicleData_Status(function(myTmp){
                 //adapter.log.info(myTmp);
+                mySuccefulUpdate = mySuccefulUpdate && myTmp
             });
-            /*
             RetrieveVehicleData_Location(function(myTmp){
                 //adapter.log.info(myTmp);
+                mySuccefulUpdate = mySuccefulUpdate && myTmp
             });
-            RetrieveVehicleData_eManager(function(myTmp){
-                //adapter.log.info(myTmp);
-            });
-            RetrieveVehicleData_Climater(function(myTmp){
-                /adapter.log.info(myTmp);
-            });
-            */
+
+           RetrieveVehicleData_eManager(function(myTmp) {
+               //adapter.log.info(myTmp);
+               mySuccefulUpdate = mySuccefulUpdate && myTmp
+           });
+
+            /*
+           RetrieveVehicleData_Climater(function(myTmp){
+               /adapter.log.info(myTmp);
+               mySuccefulUpdate = mySuccefulUpdate && myTmp
+           });
+           */
             //adapter.log.info(myLastCarNetAnswer);
+            if (mySuccefulUpdate){
+                var myDate = Date.now();
+                adapter.setState('lastUpdate', {val: myDate, ack: true});
+            };
         }
     });
 }
@@ -329,16 +348,22 @@ function VWCarNetCheckConnect() {
                     VWCarNet_Connected = VWCarNet_CredentialsAreValid && VWCarNet_VINIsValid;
                     adapter.setState('connection', {val: VWCarNet_Connected, ack: true});
                     if(VWCarNet_VINIsValid){
-                        adapter.setState('Vehicle.VIN', {val: myVIN, ack: true});
+                        var mySuccefulUpdate = true
+                        adapter.setState(state_v_VIN, {val: myVIN, ack: true});
                     } else {
-                        adapter.setState('Vehicle.VIN', {val: '', ack: true});
+                        adapter.setState(state_v_VIN, {val: '', ack: true});
                     }
                     if (VWCarNet_Connected){
                         RetrieveVehicleData_Status(function(myTmp){
                             //adapter.log.info(myTmp);
+                            mySuccefulUpdate = mySuccefulUpdate && myTmp
                         });
                     }
                     //adapter.log.info('VW Car-Net connected?: ' + VWCarNet_Connected);
+                    if (mySuccefulUpdate){
+                        var myDate = Date.now();
+                        adapter.setState('lastUpdate', {val: myDate, ack: true});
+                    };
                 });
             });
         }
@@ -430,6 +455,7 @@ function RetrieveVehicleData_Status(callback){
     var myServiceInspectionDays=0, myServiceInspectionKm=0;
 
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/VW/DE/vehicles/' + myVIN + '/status';
+    if (VWCarNet_Connected===false){return callback(false)};
     request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
         //adapter.log.info(result);
         responseData = JSON.parse(result);
@@ -492,16 +518,62 @@ function RetrieveVehicleData_Status(callback){
                         adapter.setState(state_vc_range, {val: myReceivedDataKey.value, ack: true});
                         //adapter.log.info('TotalRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                         break;
-                    case '':
+                    case '1':
 
                         break;
-                    case '':
+                    case '2':
 
                         break;
                     default: //thish should not be possible
                 }
             }
         }
+        return callback(true);
+    });
+}
+
+function RetrieveVehicleData_Location(callback){
+    var responseData;
+    var myCarNet_locationStatus;
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/cf/v1/VW/DE/vehicles/' + myVIN + '/position';
+    if (VWCarNet_Connected===false){return callback(false)};
+    if (VWCarNet_GetLocation===false){
+        adapter.setState(state_l_lat, {val: '', ack: true});
+        adapter.setState(state_l_lng, {val: '', ack: true});
+        adapter.setState(state_l_parkingTime, {val: '', ack: true});
+        adapter.setState(state_l_address, {val: '', ack: true});
+        return callback(true)
+    };
+    request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
+        //adapter.log.info(result);
+        responseData = JSON.parse(result);
+        myCarNet_locationStatus = responseData.findCarResponse;
+        adapter.setState(state_l_lat, {val: myCarNet_locationStatus.Position.carCoordinate.latitude, ack: true});
+        adapter.setState(state_l_lng, {val: myCarNet_locationStatus.Position.carCoordinate.longitude, ack: true});
+        adapter.setState(state_l_parkingTime, {val: myCarNet_locationStatus.parkingTimeUTC, ack: true});
+        adapter.setState(state_l_address, {val: '', ack: true});
+        return callback(true);
+    });
+}
+
+
+function RetrieveVehicleData_eManager(callback){
+    var responseData;
+    if (VWCarNet_Connected===false){return callback(false)};
+    if (VWCarNet_GetEManager===false){
+        /*
+        adapter.setState(state_l_lat, {val: '', ack: true});
+        adapter.setState(state_l_lng, {val: '', ack: true});
+        adapter.setState(state_l_parkingTime, {val: '', ack: true});
+        adapter.setState(state_l_address, {val: '', ack: true});
+        */
+        return callback(true)
+    };
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/VW/DE/vehicles/' + myVIN + '/charger';
+    request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
+        //adapter.log.info(result);
+        responseData = JSON.parse(result);
+
         return callback(true);
     });
 }
