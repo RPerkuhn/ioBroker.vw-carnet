@@ -187,13 +187,10 @@ const channel_e = "Vehicle.selectedVehicle.eManager";
 const state_e_batteryPercentage = "Vehicle.selectedVehicle.eManager.batteryPercentage";
 const state_e_chargingState = "Vehicle.selectedVehicle.eManager.chargingState";
 const state_e_chargingRemaining = "Vehicle.selectedVehicle.eManager.chargingRemaining";
-const state_e_electricRange = "Vehicle.selectedVehicle.eManager.electricRange";
-const state_e_combustionRange = "Vehicle.selectedVehicle.eManager.combustionRange"
-const state_e_combinedRange = "Vehicle.selectedVehicle.eManager.combinedRange"
-const state_e_minChargeLimit = "Vehicle.selectedVehicle.eManager.minChargeLimit";
+const state_e_maxChargeCurrent = "Vehicle.selectedVehicle.eManager.maxChargeCurrent";
 const state_e_pluginState = "Vehicle.selectedVehicle.eManager.pluginState"
 const state_e_extPowerSupplyState = "Vehicle.selectedVehicle.eManager.extPowerSupplyState"
-const state_e_climatisationWithoutHVPower = "Vehicle.selectedVehicle.eManager.climatisationWithoutHVPower";
+//const state_e_climatisationWithoutHVPower = "Vehicle.selectedVehicle.eManager.climatisationWithoutHVPower";
 // creating channel/states for eManager Data
 adapter.setObject(channel_e, {
     type: 'channel',
@@ -215,31 +212,18 @@ adapter.setObject(state_e_chargingRemaining, {
     common: {name: "Verbleibende Ladedauer bis 100% SoC", type: "string", read: true, write: false, role: 'value'},
     native: {}
 });
-adapter.setObject(state_e_electricRange, {
+adapter.setObject(state_e_maxChargeCurrent, {
     type: 'state',
-    common: {name: "Elektrische Reichweite mit aktuellem Batteriestand", type: "number", unit: "km", read: true, write: false, role: 'value'},
+    common: {name: "maximaler Ladestrom", type: "number", unit: "A", read: true, write: false, role: 'value'},
     native: {}
 });
-adapter.setObject(state_e_combustionRange, {
-    type: 'state',
-    common: {name: "Reichweite Benzinmotor mit aktuellem Tankinhalt", type: "number", unit: "km", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_e_combinedRange, {
-    type: 'state',
-    common: {name: "Reichweite kombiniert", type: "number", unit: "km", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_e_minChargeLimit, {
-    type: 'state',
-    common: {name: "Untere Batterie-Ladegrenze", type: "number", unit: "%", read: true, write: false, role: 'value'},
-    native: {}
-});
+/*
 adapter.setObject(state_e_climatisationWithoutHVPower, {
     type: 'state',
     common: {name: "Klimatisierung/Scheibenheizung über Batterie zulassen", type: "boolean", read: true, write: false, role: 'value'},
     native: {}
 });
+*/
 adapter.setObject(state_e_pluginState, {
     type: 'state',
     common: {name: "Ladestecker eingesteckt", type: "string", read: true, write: false, role: 'value'},
@@ -456,124 +440,180 @@ function RetrieveVehicleData_Status(callback){
 
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/VW/DE/vehicles/' + myVIN + '/status';
     if (VWCarNet_Connected===false){return callback(false)};
-    request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
-        //adapter.log.info(result);
-        responseData = JSON.parse(result);
-        myCarNet_vehicleStatus = responseData.StoredVehicleDataResponse.vehicleData;
-        //adapter.log.info(myCarNet_vehicleStatus.data[myData].field[myField].tsCarSentUtc);
-        adapter.setState(state_vc_lastConnectionTimeStamp, {val: myCarNet_vehicleStatus.data[myData].field[myField].tsCarSentUtc, ack: true});
+    try{
+        request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
+            //adapter.log.info(result);
+            try {
+                responseData = JSON.parse(result);
+            } catch (err) {
+                adapter.log.error(responseData.error.errorCode + ': ' + responseData.error.description);
+                return callback(false);
+            }
+            myCarNet_vehicleStatus = responseData.StoredVehicleDataResponse.vehicleData;
+            //adapter.log.info(myCarNet_vehicleStatus.data[myData].field[myField].tsCarSentUtc);
+            adapter.setState(state_vc_lastConnectionTimeStamp, {val: myCarNet_vehicleStatus.data[myData].field[myField].tsCarSentUtc, ack: true});
 
-        for (myData in myCarNet_vehicleStatus.data) {
-            for (myField in myCarNet_vehicleStatus.data[myData].field) {
-                myReceivedDataKey = myCarNet_vehicleStatus.data[myData].field[myField];
-                //adapter.log.info(myCarNet_vehicleStatus.data[myData].id + "." + myCarNet_vehicleStatus.data[myData].field[myField].id)
-                switch(myCarNet_vehicleStatus.data[myData].id + "." + myCarNet_vehicleStatus.data[myData].field[myField].id){
-                    case '0x0101010002.0x0101010002': //distanceCovered
-                        adapter.setState(state_vc_distanceCovered, {val: myReceivedDataKey.value, ack: true});
-                        //adapter.log.info(myReceivedDataKey.value);
-                        break;
-                    case '0x0203FFFFFF.0x0203010001': //oilInspectionData_km
-                        myOilInspectionKm = myReceivedDataKey.value *-1;
-                        adapter.setState(state_vc_oilInspectionDistance, {val: myOilInspectionKm, ack: true});
-                        //adapter.log.info(myOilInspectionKm + myReceivedDataKey.unit);
-                        break;
-                    case '0x0203FFFFFF.0x0203010002': //oilInspectionData_days
-                        myOilInspectionDays = myReceivedDataKey.value *-1;
-                        adapter.setState(state_vc_oilInspectionTime, {val: myOilInspectionDays, ack: true});
-                        //adapter.log.info(myOilInspectionDays);
-                        break;
-                    case '0x0203FFFFFF.0x0203010003': //serciceInspectionData_km
-                        myServiceInspectionKm = myReceivedDataKey.value * -1;
-                        adapter.setState(state_vc_serviceInspectionDistance, {val: myServiceInspectionKm, ack: true});
-                        //adapter.log.info(myServiceInspectionKm + myReceivedDataKey.unit);
-                        break;
-                    case '0x0203FFFFFF.0x0203010004': //serviceInspectionData_days
-                        myServiceInspectionDays = myReceivedDataKey.value *-1;
-                        adapter.setState(state_vc_serviceInspectionTime, {val: myServiceInspectionDays, ack: true});
-                        //adapter.log.info(myServiceInspectionDays);
-                        break;
-                    case '0x030101FFFF.0x0301010001':  //status_parking_light_off
-                        adapter.log.info('ParkingLight: ' + myReceivedDataKey.value);
-                        break;
-                    case '0x030103FFFF.0x0301030001': //parking_brake_active
-                        adapter.log.info('ParkingBrake: ' + myReceivedDataKey.value);
-                        break;
-                    case '0x030103FFFF.0x030103000A': //fuel_level_ok
-                        adapter.setState(state_s_fuelLevel, {val: myReceivedDataKey.value, ack: true});
-                        //adapter.log.info('FuelLevel: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
-                        break;
-                    case '0x030103FFFF.0x0301030002': //soc_ok
-                        adapter.setState(state_s_batteryLevel, {val: myReceivedDataKey.value, ack: true});
-                        //adapter.log.info('BatteryLevel: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
-                        break;
-                    case '0x030103FFFF.0x0301030006': //fuel_range
-                        adapter.setState(state_s_fuelRange, {val: myReceivedDataKey.value, ack: true});
-                        //adapter.log.info('FuelRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
-                        break;
-                    case '0x030103FFFF.0x0301030008': //electric_range
-                        adapter.setState(state_s_batteryRange, {val: myReceivedDataKey.value, ack: true});
-                        //adapter.log.info('BatteryRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
-                        break;
-                    case '0x030103FFFF.0x0301030005': //total_range
-                        adapter.setState(state_vc_range, {val: myReceivedDataKey.value, ack: true});
-                        //adapter.log.info('TotalRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
-                        break;
-                    case '1':
+            for (myData in myCarNet_vehicleStatus.data) {
+                for (myField in myCarNet_vehicleStatus.data[myData].field) {
+                    myReceivedDataKey = myCarNet_vehicleStatus.data[myData].field[myField];
+                    //adapter.log.info(myCarNet_vehicleStatus.data[myData].id + "." + myCarNet_vehicleStatus.data[myData].field[myField].id)
+                    switch(myCarNet_vehicleStatus.data[myData].id + "." + myCarNet_vehicleStatus.data[myData].field[myField].id){
+                        case '0x0101010002.0x0101010002': //distanceCovered
+                            adapter.setState(state_vc_distanceCovered, {val: myReceivedDataKey.value, ack: true});
+                            //adapter.log.info(myReceivedDataKey.value);
+                            break;
+                        case '0x0203FFFFFF.0x0203010001': //oilInspectionData_km
+                            myOilInspectionKm = myReceivedDataKey.value *-1;
+                            adapter.setState(state_vc_oilInspectionDistance, {val: myOilInspectionKm, ack: true});
+                            //adapter.log.info(myOilInspectionKm + myReceivedDataKey.unit);
+                            break;
+                        case '0x0203FFFFFF.0x0203010002': //oilInspectionData_days
+                            myOilInspectionDays = myReceivedDataKey.value *-1;
+                            adapter.setState(state_vc_oilInspectionTime, {val: myOilInspectionDays, ack: true});
+                            //adapter.log.info(myOilInspectionDays);
+                            break;
+                        case '0x0203FFFFFF.0x0203010003': //serciceInspectionData_km
+                            myServiceInspectionKm = myReceivedDataKey.value * -1;
+                            adapter.setState(state_vc_serviceInspectionDistance, {val: myServiceInspectionKm, ack: true});
+                            //adapter.log.info(myServiceInspectionKm + myReceivedDataKey.unit);
+                            break;
+                        case '0x0203FFFFFF.0x0203010004': //serviceInspectionData_days
+                            myServiceInspectionDays = myReceivedDataKey.value *-1;
+                            adapter.setState(state_vc_serviceInspectionTime, {val: myServiceInspectionDays, ack: true});
+                            //adapter.log.info(myServiceInspectionDays);
+                            break;
+                        case '0x030101FFFF.0x0301010001':  //status_parking_light_off
+                            //adapter.log.info('ParkingLight: ' + myReceivedDataKey.value);
+                            break;
+                        case '0x030103FFFF.0x0301030001': //parking_brake_active
+                            //adapter.log.info('ParkingBrake: ' + myReceivedDataKey.value);
+                            break;
+                        case '0x030103FFFF.0x030103000A': //fuel_level_ok
+                            adapter.setState(state_s_fuelLevel, {val: myReceivedDataKey.value, ack: true});
+                            //adapter.log.info('FuelLevel: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
+                            break;
+                        case '0x030103FFFF.0x0301030002': //soc_ok
+                            adapter.setState(state_s_batteryLevel, {val: myReceivedDataKey.value, ack: true});
+                            //adapter.log.info('BatteryLevel: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
+                            break;
+                        case '0x030103FFFF.0x0301030006': //fuel_range
+                            adapter.setState(state_s_fuelRange, {val: myReceivedDataKey.value, ack: true});
+                            //adapter.log.info('FuelRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
+                            break;
+                        case '0x030103FFFF.0x0301030008': //electric_range
+                            adapter.setState(state_s_batteryRange, {val: myReceivedDataKey.value, ack: true});
+                            //adapter.log.info('BatteryRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
+                            break;
+                        case '0x030103FFFF.0x0301030005': //total_range
+                            adapter.setState(state_vc_range, {val: myReceivedDataKey.value, ack: true});
+                            //adapter.log.info('TotalRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
+                            break;
+                        case '1':
 
-                        break;
-                    case '2':
+                            break;
+                        case '2':
 
-                        break;
-                    default: //thish should not be possible
+                            break;
+                        default: //thish should not be possible
+                    }
                 }
             }
-        }
-        return callback(true);
-    });
+            return callback(true);
+        });
+    } catch (err) {
+        adapter.log.error('Fehler bei der Auswertung im status Modul');
+        return callback(false);
+    }
 }
 
-function RetrieveVehicleData_Location(callback){
+function RetrieveVehicleData_Location(callback) {
     var responseData;
     var myCarNet_locationStatus;
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/cf/v1/VW/DE/vehicles/' + myVIN + '/position';
-    if (VWCarNet_Connected===false){return callback(false)};
-    if (VWCarNet_GetLocation===false){
+    if (VWCarNet_Connected === false) {
+        return callback(false)
+    };
+    if (VWCarNet_GetLocation === false) {
         adapter.setState(state_l_lat, {val: '', ack: true});
         adapter.setState(state_l_lng, {val: '', ack: true});
         adapter.setState(state_l_parkingTime, {val: '', ack: true});
         adapter.setState(state_l_address, {val: '', ack: true});
-        return callback(true)
     };
-    request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
-        //adapter.log.info(result);
-        responseData = JSON.parse(result);
-        myCarNet_locationStatus = responseData.findCarResponse;
-        adapter.setState(state_l_lat, {val: myCarNet_locationStatus.Position.carCoordinate.latitude, ack: true});
-        adapter.setState(state_l_lng, {val: myCarNet_locationStatus.Position.carCoordinate.longitude, ack: true});
-        adapter.setState(state_l_parkingTime, {val: myCarNet_locationStatus.parkingTimeUTC, ack: true});
-        adapter.setState(state_l_address, {val: '', ack: true});
-        return callback(true);
-    });
+    try {
+        request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result) {
+            //adapter.log.info(result);
+            responseData = JSON.parse(result);
+            myCarNet_locationStatus = responseData.findCarResponse;
+            adapter.setState(state_l_lat, {val: myCarNet_locationStatus.Position.carCoordinate.latitude, ack: true});
+            adapter.setState(state_l_lng, {val: myCarNet_locationStatus.Position.carCoordinate.longitude, ack: true});
+            adapter.setState(state_l_parkingTime, {val: myCarNet_locationStatus.parkingTimeUTC, ack: true});
+            adapter.setState(state_l_address, {val: '', ack: true});
+            return callback(true);
+        });
+    } catch (err){
+        adapter.log.error('Fehler bei der Auswertung im location Modul');
+        return callback(false);
+    }
 }
-
 
 function RetrieveVehicleData_eManager(callback){
     var responseData;
+    var myCarNet_eManager;
     if (VWCarNet_Connected===false){return callback(false)};
     if (VWCarNet_GetEManager===false){
-        /*
-        adapter.setState(state_l_lat, {val: '', ack: true});
-        adapter.setState(state_l_lng, {val: '', ack: true});
-        adapter.setState(state_l_parkingTime, {val: '', ack: true});
-        adapter.setState(state_l_address, {val: '', ack: true});
-        */
+        adapter.setState(state_e_batteryPercentage, {val: '', ack: true});
+        adapter.setState(state_e_chargingState, {val: '', ack: true});
+        adapter.setState(state_e_chargingRemaining, {val: '', ack: true});
+        adapter.setState(state_e_pluginState, {val: '', ack: true});
+        adapter.setState(state_e_extPowerSupplyState, {val: '', ack: true});
         return callback(true)
     };
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/VW/DE/vehicles/' + myVIN + '/charger';
-    request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
+    try {
+        request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
         //adapter.log.info(result);
-        responseData = JSON.parse(result);
+
+            responseData = JSON.parse(result);
+
+            myCarNet_eManager = responseData.charger.settings;
+            adapter.setState(state_e_maxChargeCurrent, {val: myCarNet_eManager.maxChargeCurrent.content, ack: true});
+            //adapter.log.info(myCarNet_eManager.maxChargeCurrent.content);
+
+            myCarNet_eManager = responseData.charger.status.chargingStatusData;
+            // adapter.log.info(myCarNet_eManager.chargingMode.content);
+            // adapter.log.info(myCarNet_eManager.chargingStateErrorCode.content);
+            // adapter.log.info(myCarNet_eManager.chargingReason.content);
+            adapter.setState(state_e_extPowerSupplyState, {val: myCarNet_eManager.externalPowerSupplyState.content.toUpperCase(), ack: true});
+            // adapter.log.info(myCarNet_eManager.energyFlow.content);
+            adapter.setState(state_e_chargingState, {val: myCarNet_eManager.chargingState.content.toUpperCase(), ack: true});
+
+            myCarNet_eManager = responseData.charger.status.cruisingRangeStatusData;
+            // adapter.log.info(myCarNet_eManager.engineTypeFirstEngine.content);
+            // adapter.log.info(myCarNet_eManager.primaryEngineRange.content);
+            // adapter.log.info(myCarNet_eManager.hybridRange.content);
+            // adapter.log.info(myCarNet_eManager.engineTypeSecondEngine.content);
+            // adapter.log.info(myCarNet_eManager.secondaryEngineRange.content);
+
+            myCarNet_eManager = responseData.charger.status.ledStatusData;
+            //adapter.log.info(myCarNet_eManager.ledColor.content);
+            //adapter.log.info(myCarNet_eManager.ledState.content);
+
+            myCarNet_eManager = responseData.charger.status.batteryStatusData;
+
+            adapter.setState(state_e_batteryPercentage, {val: myCarNet_eManager.stateOfCharge.content, ack: true});
+            var myRemainingTime = myCarNet_eManager.remainingChargingTime.content;
+            var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
+            adapter.setState(state_e_chargingRemaining, {val: myRemainingTimeStr, ack: true});
+            //adapter.log.info(myCarNet_eManager.remainingChargingTimeTargetSOC.content);
+
+            myCarNet_eManager = responseData.charger.status.plugStatusData;
+            adapter.setState(state_e_pluginState, {val: myCarNet_eManager.plugState.content.toUpperCase(), ack: true});
+            //adapter.log.info(myCarNet_eManager.lockState.content);
 
         return callback(true);
     });
+    } catch (err) {
+        adapter.log.error('Fehler bei der Auswertung im eManager Modul');
+        return callback(false);
+    }
 }
