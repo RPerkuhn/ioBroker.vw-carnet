@@ -534,20 +534,27 @@ function RetrieveVehicleData_Location(callback) {
         return callback(false)
     };
     if (VWCarNet_GetLocation === false) {
-        adapter.setState(state_l_lat, {val: '', ack: true});
-        adapter.setState(state_l_lng, {val: '', ack: true});
-        adapter.setState(state_l_parkingTime, {val: '', ack: true});
-        adapter.setState(state_l_address, {val: '', ack: true});
+        adapter.setState(state_l_lat, {val: null, ack: true});
+        adapter.setState(state_l_lng, {val: null, ack: true});
+        adapter.setState(state_l_parkingTime, {val: null, ack: true});
+        adapter.setState(state_l_address, {val: null, ack: true});
     };
     try {
         request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result) {
             //adapter.log.info(result);
-            responseData = JSON.parse(result);
-            myCarNet_locationStatus = responseData.findCarResponse;
-            adapter.setState(state_l_lat, {val: myCarNet_locationStatus.Position.carCoordinate.latitude, ack: true});
-            adapter.setState(state_l_lng, {val: myCarNet_locationStatus.Position.carCoordinate.longitude, ack: true});
-            adapter.setState(state_l_parkingTime, {val: myCarNet_locationStatus.parkingTimeUTC, ack: true});
-            adapter.setState(state_l_address, {val: '', ack: true});
+            if (response.statusCode=200){
+                responseData = JSON.parse(result);
+                myCarNet_locationStatus = responseData.findCarResponse;
+                adapter.setState(state_l_lat, {val: myCarNet_locationStatus.Position.carCoordinate.latitude, ack: true});
+                adapter.setState(state_l_lng, {val: myCarNet_locationStatus.Position.carCoordinate.longitude, ack: true});
+                adapter.setState(state_l_parkingTime, {val: myCarNet_locationStatus.parkingTimeUTC, ack: true});
+                adapter.setState(state_l_address, {val: null, ack: true});
+            } else {
+                adapter.setState(state_l_lat, {val: null, ack: true});
+                adapter.setState(state_l_lng, {val: null, ack: true});
+                adapter.setState(state_l_parkingTime, {val: null, ack: true});
+                adapter.setState(state_l_address, {val: 'MOVING', ack: true});
+            };
             return callback(true);
         });
     } catch (err){
@@ -561,11 +568,11 @@ function RetrieveVehicleData_eManager(callback){
     var myCarNet_eManager;
     if (VWCarNet_Connected===false){return callback(false)};
     if (VWCarNet_GetEManager===false){
-        adapter.setState(state_e_batteryPercentage, {val: '', ack: true});
-        adapter.setState(state_e_chargingState, {val: '', ack: true});
-        adapter.setState(state_e_chargingRemaining, {val: '', ack: true});
-        adapter.setState(state_e_pluginState, {val: '', ack: true});
-        adapter.setState(state_e_extPowerSupplyState, {val: '', ack: true});
+        adapter.setState(state_e_batteryPercentage, {val: null, ack: true});
+        adapter.setState(state_e_chargingState, {val: null, ack: true});
+        adapter.setState(state_e_chargingRemaining, {val: null, ack: true});
+        adapter.setState(state_e_pluginState, {val: null, ack: true});
+        adapter.setState(state_e_extPowerSupplyState, {val: null, ack: true});
         return callback(true)
     };
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/VW/DE/vehicles/' + myVIN + '/charger';
@@ -603,6 +610,7 @@ function RetrieveVehicleData_eManager(callback){
             adapter.setState(state_e_batteryPercentage, {val: myCarNet_eManager.stateOfCharge.content, ack: true});
             var myRemainingTime = myCarNet_eManager.remainingChargingTime.content;
             var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
+            if (myRemainingTime <0 ){myRemainingTimeStr = null}
             adapter.setState(state_e_chargingRemaining, {val: myRemainingTimeStr, ack: true});
             //adapter.log.info(myCarNet_eManager.remainingChargingTimeTargetSOC.content);
 
