@@ -24,6 +24,11 @@ var myHeaders = { 'Accept': 'application/json',
     'User-Agent': 'okhttp/2.3.0' };
 var myAuthHeaders = myHeaders;
 
+var myGoogleMapsAPIKey = '';
+var myGoogleDefaulHeader = {
+    'Accept': 'application/json, ' + 'text/plain, */*',
+    'Content-Type': 'application/json;charset=UTF-8',
+    'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0.1; D5803 Build/23.5.A.1.291; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/63.0.3239.111 Mobile Safari/537.36'};
 
 // is called when adapter shuts down - callback has to be called under any circumstances!
 adapter.on('unload', function (callback) {
@@ -40,7 +45,7 @@ adapter.on('unload', function (callback) {
 // Some message was sent to adapter instance over message box.
 adapter.on('message', function (obj) {
     if (typeof obj === 'object' && obj.message) {
-        adapter.log.info(obj.command)
+        adapter.log.info('Received message in VW CarNet adapter :' + obj.command)
         if (obj.command === 'update') {
             VWCarNetReadData() // sendto command 'update' received
         }
@@ -49,6 +54,7 @@ adapter.on('message', function (obj) {
 
 adapter.on('ready', function () {
     //adapter.setState('connection', {val: false, ack: true});
+    myGoogleMapsAPIKey = adapter.config.GoogleAPIKey;
     VWCarNetCheckConnect()
     //main()
 });
@@ -541,14 +547,15 @@ function RetrieveVehicleData_Location(callback) {
     };
     try {
         request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result) {
-            //adapter.log.info(result);
+            adapter.log.info('Location Result: ' + result);
+            adapter.log.info('Location StatusCode: ' + response.statusCode);
             if (response.statusCode=200){
                 responseData = JSON.parse(result);
                 myCarNet_locationStatus = responseData.findCarResponse;
                 adapter.setState(state_l_lat, {val: myCarNet_locationStatus.Position.carCoordinate.latitude, ack: true});
                 adapter.setState(state_l_lng, {val: myCarNet_locationStatus.Position.carCoordinate.longitude, ack: true});
                 adapter.setState(state_l_parkingTime, {val: myCarNet_locationStatus.parkingTimeUTC, ack: true});
-                adapter.setState(state_l_address, {val: null, ack: true});
+                requestGeocoding(myCarNet_locationStatus.Position.carCoordinate.latitude, myCarNet_locationStatus.Position.carCoordinate.longitude);
             } else {
                 adapter.setState(state_l_lat, {val: null, ack: true});
                 adapter.setState(state_l_lng, {val: null, ack: true});
@@ -624,4 +631,33 @@ function RetrieveVehicleData_eManager(callback){
         adapter.log.error('Fehler bei der Auswertung im eManager Modul');
         return callback(false);
     }
+}
+
+function requestGeocoding(lat, lng) {
+    var myUrl = 'https://maps.googleapis.com/maps/api/geocode/json?latlng='+lat/1000000+','+lng/1000000;
+    var myAddress = '<UNKNOWN>';
+
+    if (myGoogleMapsAPIKey !== ""){
+        myUrl = myUrl + '&key=' + myGoogleMapsAPIKey;
+        //adapter.log.info(myUrl);
+        try{
+            request.get({url:myUrl, headers: myGoogleDefaulHeader,json: true}, function (error, response, result) {
+                //adapter.log.info(response.statusCode);
+                //adapter.log.info(JSON.stringify(result));
+
+                if ((result.results.length > 0) & result.results[0].formatted_address !== ""){
+                    myAddress = result.results[0].formatted_address;
+                }
+                adapter.setState(state_l_address, {val: myAddress, ack: true});
+                //adapter.log.info(myAddress);
+            });
+
+        } catch (err){
+            adapter.setState(state_l_address, {val: null, ack: true});
+            adapter.log.error(response.statusCode);
+        }
+    } else {
+        adapter.setState(state_l_address, {val: null, ack: true});
+    }
+
 }
