@@ -66,7 +66,7 @@ const state_v_name = "Vehicle.name";
 const state_v_VIN = "Vehicle.VIN";
 // creating channel/states for Vehicle Data
 adapter.setObject(channel_v, {
-    type: 'channel',
+    type: 'object',
     common: {name: 'Fahrzeug'},
     native: {}
 });
@@ -223,13 +223,6 @@ adapter.setObject(state_e_maxChargeCurrent, {
     common: {name: "maximaler Ladestrom", type: "number", unit: "A", read: true, write: false, role: 'value'},
     native: {}
 });
-/*
-adapter.setObject(state_e_climatisationWithoutHVPower, {
-    type: 'state',
-    common: {name: "Klimatisierung/Scheibenheizung über Batterie zulassen", type: "boolean", read: true, write: false, role: 'value'},
-    native: {}
-});
-*/
 adapter.setObject(state_e_pluginState, {
     type: 'state',
     common: {name: "Ladestecker eingesteckt", type: "string", read: true, write: false, role: 'value'},
@@ -275,6 +268,36 @@ adapter.setObject(state_l_address, {
     native: {}
 });
 
+
+//##############################################################################################################
+// declaring names for states for climater data
+const channel_c = "Vehicle.selectedVehicle.climater";
+const state_c_climatisationWithoutHVPower = "Vehicle.selectedVehicle.climater.climatisationWithoutHVPower";
+const state_c_targetTemperature = "Vehicle.selectedVehicle.climater.targetTemperature";
+const state_c_outdoorTemperature = "Vehicle.selectedVehicle.climater.outdoorTemperature";
+const state_c_address = "Vehicle.selectedVehicle.climater.address";
+// creating channel/states for climater Data
+adapter.setObject(channel_c, {
+    type: 'channel',
+    common: {name: 'Parkposition'},
+    native: {}
+});
+adapter.setObject(state_c_climatisationWithoutHVPower, {
+    type: 'state',
+    common: {name: "Klimatisierung/Scheibenheizung über Batterie zulassen", type: "boolean", read: true, write: false, role: 'value'},
+    native: {}
+});
+adapter.setObject(state_c_targetTemperature, {
+    type: 'state',
+    common: {name: "Zieltemperatur", type: "number", unit: "°C", read: true, write: false, role: 'value'},
+    native: {}
+});
+adapter.setObject(state_c_outdoorTemperature, {
+    type: 'state',
+    common: {name: "Außentemperatur", type: "number", unit: "°C", read: true, write: false, role: 'value'},
+    native: {}
+});
+
 // ############################################# start here! ###################################################
 
 
@@ -310,13 +333,11 @@ function VWCarNetReadData(){
                //adapter.log.info(myTmp);
                mySuccefulUpdate = mySuccefulUpdate && myTmp
            });
-
-            /*
            RetrieveVehicleData_Climater(function(myTmp){
-               /adapter.log.info(myTmp);
+               //adapter.log.info(myTmp);
                mySuccefulUpdate = mySuccefulUpdate && myTmp
            });
-           */
+
             //adapter.log.info(myLastCarNetAnswer);
             if (mySuccefulUpdate){
                 var myDate = Date.now();
@@ -534,6 +555,7 @@ function RetrieveVehicleData_Status(callback){
 
 function RetrieveVehicleData_Location(callback) {
     var responseData;
+    var locationData;
     var myCarNet_locationStatus;
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/cf/v1/VW/DE/vehicles/' + myVIN + '/position';
     if (VWCarNet_Connected === false) {
@@ -546,27 +568,69 @@ function RetrieveVehicleData_Location(callback) {
         adapter.setState(state_l_address, {val: null, ack: true});
     };
     try {
-        request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result) {
-            adapter.log.info('Location Result: ' + result);
-            adapter.log.info('Location StatusCode: ' + response.statusCode);
-            if (response.statusCode=200){
-                responseData = JSON.parse(result);
+        request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData){
+            if (error !== null) {
+                return callback(false)
+            }
+            if (responseData === undefined) {
+                return callback(false)
+            }
+            if ('findCarResponse' in responseData){
                 myCarNet_locationStatus = responseData.findCarResponse;
-                adapter.setState(state_l_lat, {val: myCarNet_locationStatus.Position.carCoordinate.latitude, ack: true});
-                adapter.setState(state_l_lng, {val: myCarNet_locationStatus.Position.carCoordinate.longitude, ack: true});
-                adapter.setState(state_l_parkingTime, {val: myCarNet_locationStatus.parkingTimeUTC, ack: true});
-                requestGeocoding(myCarNet_locationStatus.Position.carCoordinate.latitude, myCarNet_locationStatus.Position.carCoordinate.longitude);
+                if (myCarNet_locationStatus !== undefined && myCarNet_locationStatus !== null) {
+                    adapter.setState(state_l_lat, {
+                        val: myCarNet_locationStatus.Position.carCoordinate.latitude,
+                        ack: true
+                    });
+                    adapter.setState(state_l_lng, {
+                        val: myCarNet_locationStatus.Position.carCoordinate.longitude,
+                        ack: true
+                    });
+                    adapter.setState(state_l_parkingTime, {val: myCarNet_locationStatus.parkingTimeUTC, ack: true});
+                    requestGeocoding(myCarNet_locationStatus.Position.carCoordinate.latitude, myCarNet_locationStatus.Position.carCoordinate.longitude);
+                } else {
+                    adapter.setState(state_l_lat, {val: null, ack: true});
+                    adapter.setState(state_l_lng, {val: null, ack: true});
+                    adapter.setState(state_l_parkingTime, {val: null, ack: true});
+                    adapter.setState(state_l_address, {val: 'MOVING', ack: true});
+                }
             } else {
-                adapter.setState(state_l_lat, {val: null, ack: true});
-                adapter.setState(state_l_lng, {val: null, ack: true});
-                adapter.setState(state_l_parkingTime, {val: null, ack: true});
-                adapter.setState(state_l_address, {val: 'MOVING', ack: true});
-            };
+            adapter.setState(state_l_lat, {val: null, ack: true});
+            adapter.setState(state_l_lng, {val: null, ack: true});
+            adapter.setState(state_l_parkingTime, {val: null, ack: true});
+            adapter.setState(state_l_address, {val: 'MOVING', ack: true});
+            }
             return callback(true);
-        });
-    } catch (err){
-        adapter.log.error('Fehler bei der Auswertung im location Modul');
-        return callback(false);
+            });
+    } catch (err) {
+    adapter.log.error('Fehler bei der Auswertung im location Modul');
+    return callback(false);
+    }
+}
+
+function requestGeocoding(lat, lng) {
+    var myUrl = 'https://maps.googleapis.com/maps/api/geocode/json?latlng='+lat/1000000+','+lng/1000000;
+    var myAddress = '<UNKNOWN>';
+    if (myGoogleMapsAPIKey !== ""){
+        myUrl = myUrl + '&key=' + myGoogleMapsAPIKey;
+        //adapter.log.info(myUrl);
+        try{
+            request.get({url:myUrl, headers: myGoogleDefaulHeader,json: true}, function (error, response, result) {
+                //adapter.log.info(response.statusCode);
+                //adapter.log.info(JSON.stringify(result));
+
+                if ((result.results.length > 0) & result.results[0].formatted_address !== ""){
+                    myAddress = result.results[0].formatted_address;
+                }
+                adapter.setState(state_l_address, {val: myAddress, ack: true});
+                //adapter.log.info(myAddress);
+            });
+        } catch (err){
+            adapter.setState(state_l_address, {val: null, ack: true});
+            adapter.log.error(response.statusCode);
+        }
+    } else {
+        adapter.setState(state_l_address, {val: null, ack: true});
     }
 }
 
@@ -633,31 +697,42 @@ function RetrieveVehicleData_eManager(callback){
     }
 }
 
-function requestGeocoding(lat, lng) {
-    var myUrl = 'https://maps.googleapis.com/maps/api/geocode/json?latlng='+lat/1000000+','+lng/1000000;
-    var myAddress = '<UNKNOWN>';
+function RetrieveVehicleData_Climater(callback){
+    var responseData;
+    var myCarNet_Climater;
+    if (VWCarNet_Connected===false){return callback(false)};
+    if (VWCarNet_GetClimater===false){
+        adapter.setState(state_c_climatisationWithoutHVPower, {val: null, ack: true});
+        adapter.setState(state_c_targetTemperature, {val: null, ack: true});
 
-    if (myGoogleMapsAPIKey !== ""){
-        myUrl = myUrl + '&key=' + myGoogleMapsAPIKey;
-        //adapter.log.info(myUrl);
-        try{
-            request.get({url:myUrl, headers: myGoogleDefaulHeader,json: true}, function (error, response, result) {
-                //adapter.log.info(response.statusCode);
-                //adapter.log.info(JSON.stringify(result));
+        return callback(true)
+    };
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/VW/DE/vehicles/' + myVIN + '/climater';
+    request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData){
+        //adapter.log.info(JSON.stringify(responseData));
 
-                if ((result.results.length > 0) & result.results[0].formatted_address !== ""){
-                    myAddress = result.results[0].formatted_address;
-                }
-                adapter.setState(state_l_address, {val: myAddress, ack: true});
-                //adapter.log.info(myAddress);
-            });
+        myCarNet_Climater = responseData.climater.settings;
+        //adapter.log.info(myCarNet_Climater.targetTemperature.content);
+        adapter.setState(state_c_targetTemperature, {val: myCarNet_Climater.targetTemperature.content, ack: true});
+        adapter.setState(state_c_climatisationWithoutHVPower, {val: myCarNet_Climater.climatisationWithoutHVpower.content, ack: true});
+        //adapter.log.info(myCarNet_Climater.heaterSource.content);
 
-        } catch (err){
-            adapter.setState(state_l_address, {val: null, ack: true});
-            adapter.log.error(response.statusCode);
-        }
-    } else {
-        adapter.setState(state_l_address, {val: null, ack: true});
-    }
+        var myCarNet_Climater = responseData.climater.status.climatisationStatusData;
+        //adapter.log.info(myCarNet_Climater.climatisationState.content);
+        //adapter.log.info(myCarNet_Climater.climatisationStateErrorCode.content);
+        //adapter.log.info(myCarNet_Climater.remainingClimatisationTime.content);
+        //adapter.log.info(myCarNet_Climater.climatisationReason.content);
 
+        var myCarNet_Climater = responseData.climater.status.windowHeatingStatusData;
+        //adapter.log.info(myCarNet_Climater.windowHeatingStateFront.content);
+        //adapter.log.info(myCarNet_Climater.windowHeatingStateRear.content);
+        //adapter.log.info(myCarNet_Climater.windowHeatingErrorCode.content);
+
+        var myCarNet_Climater = responseData.climater.status;
+        //state_c_outdoorTemperature
+        adapter.setState(state_c_outdoorTemperature, {val: myCarNet_Climater.temperatureStatusData.outdoorTemperature.content, ack: true});
+        //adapter.log.info(myCarNet_Climater.vehicleParkingClockStatusData.vehicleParkingClock.content);
+
+        return callback(true);
+    });
 }
