@@ -55,8 +55,8 @@ adapter.on('message', function (obj) {
 adapter.on('ready', function () {
     //adapter.setState('connection', {val: false, ack: true});
     myGoogleMapsAPIKey = adapter.config.GoogleAPIKey;
-    VWCarNetCheckConnect()
-    //main()
+    //VWCarNetCheckConnect()
+    main()
 });
 
 //##############################################################################################################
@@ -138,7 +138,8 @@ adapter.setObject(state_vc_oilInspectionTime, {
 // declaring names for states for status data
 const channel_s = "Vehicle.selectedVehicle.status";
 const state_s_areDoorsAndWindowsClosed = "Vehicle.selectedVehicle.status.areDoorsAndWindowsClosed";
-const state_s_areLightsOff = "Vehicle.selectedVehicle.status.areLightsOff";
+const state_s_areLightsOff = "Vehicle.selectedVehicle.status.areParkingLightsOff";
+const state_s_parkingBrake = "Vehicle.selectedVehicle.status.parkingBrake";
 const state_s_carCentralLock = "Vehicle.selectedVehicle.status.carCentralLock";
 const state_s_fuelLevel = "Vehicle.selectedVehicle.status.fuelLevel";
 const state_s_fuelRange = "Vehicle.selectedVehicle.status.fuelRange";
@@ -157,7 +158,12 @@ adapter.setObject(state_s_areDoorsAndWindowsClosed, {
 });
 adapter.setObject(state_s_areLightsOff, {
     type: 'state',
-    common: {name: "Lichter", type: "string", read: true, write: false, role: 'value'},
+    common: {name: "Parklichlichter", type: "string", read: true, write: false, role: 'value'},
+    native: {}
+});
+adapter.setObject(state_s_parkingBrake, {
+    type: 'state',
+    common: {name: "Park-/Handbremse", type: "string", read: true, write: false, role: 'value'},
     native: {}
 });
 adapter.setObject(state_s_carCentralLock, {
@@ -191,12 +197,13 @@ adapter.setObject(state_s_batteryRange, {
 // declaring names for states for eManager data
 const channel_e = "Vehicle.selectedVehicle.eManager";
 const state_e_batteryPercentage = "Vehicle.selectedVehicle.eManager.batteryPercentage";
+const state_e_minBatteryChargingLimit = "Vehicle.selectedVehicle.eManager.minBatteryChargingLimit";
 const state_e_chargingState = "Vehicle.selectedVehicle.eManager.chargingState";
 const state_e_chargingRemaining = "Vehicle.selectedVehicle.eManager.chargingRemaining";
 const state_e_maxChargeCurrent = "Vehicle.selectedVehicle.eManager.maxChargeCurrent";
 const state_e_pluginState = "Vehicle.selectedVehicle.eManager.pluginState"
 const state_e_extPowerSupplyState = "Vehicle.selectedVehicle.eManager.extPowerSupplyState"
-//const state_e_climatisationWithoutHVPower = "Vehicle.selectedVehicle.eManager.climatisationWithoutHVPower";
+
 // creating channel/states for eManager Data
 adapter.setObject(channel_e, {
     type: 'channel',
@@ -205,7 +212,12 @@ adapter.setObject(channel_e, {
 });
 adapter.setObject(state_e_batteryPercentage, {
     type: 'state',
-    common: {name: "Ladezustand der Hauptbatterie in 10%-Schritten", type: "number", unit: "%", read: true, write: false, role: 'value'},
+    common: {name: "Ladezustand der Hauptbatterie", type: "number", unit: "%", read: true, write: false, role: 'value'},
+    native: {}
+});
+adapter.setObject(state_e_minBatteryChargingLimit, {
+    type: 'state',
+    common: {name: "Untere Batterie-Ladegrenze", type: "number", unit: "%", read: true, write: false, role: 'value'},
     native: {}
 });
 adapter.setObject(state_e_chargingState, {
@@ -276,6 +288,8 @@ const state_c_climatisationWithoutHVPower = "Vehicle.selectedVehicle.climater.cl
 const state_c_targetTemperature = "Vehicle.selectedVehicle.climater.targetTemperature";
 const state_c_outdoorTemperature = "Vehicle.selectedVehicle.climater.outdoorTemperature";
 const state_c_address = "Vehicle.selectedVehicle.climater.address";
+const state_c_climatisationState = "Vehicle.selectedVehicle.climater.climatisationState";
+const state_c_remainingClimatisationTime = "Vehicle.selectedVehicle.climater.remainingClimatisationTime";
 // creating channel/states for climater Data
 adapter.setObject(channel_c, {
     type: 'channel',
@@ -297,12 +311,68 @@ adapter.setObject(state_c_outdoorTemperature, {
     common: {name: "Außentemperatur", type: "number", unit: "°C", read: true, write: false, role: 'value'},
     native: {}
 });
+adapter.setObject(state_c_climatisationState, {
+    type: 'state',
+    common: {name: "Zustand der Standheizung", type: "string", read: true, write: false, role: 'value'},
+    native: {}
+});
+adapter.setObject(state_c_remainingClimatisationTime, {
+    type: 'state',
+    common: {name: "Verbleibende Dauer bis Zieltemeratur", type: "string", read: true, write: false, role: 'value'},
+    native: {}
+});
 
 // ############################################# start here! ###################################################
 
 
 function main() {
-    //standard Function
+    CarNetLogon(function(myTmp){
+        VWCarNet_CredentialsAreValid=myTmp;
+        //adapter.log.info('Credentials valid?: ' +  VWCarNet_CredentialsAreValid);
+        if (VWCarNet_CredentialsAreValid){
+            RetrieveVehicles(function(myTmp){
+                RetrieveVehicleData_VINValid(function(myTmp){
+                    VWCarNet_VINIsValid=myTmp;
+                    //adapter.log.info('VIN valid?: ' + VWCarNet_VINIsValid)
+                    VWCarNet_Connected = VWCarNet_CredentialsAreValid && VWCarNet_VINIsValid;
+                    adapter.setState('connection', {val: VWCarNet_Connected, ack: true});
+                    if(VWCarNet_VINIsValid){
+                        var mySuccefulUpdate = true
+                        adapter.setState(state_v_VIN, {val: myVIN, ack: true});
+                    } else {
+                        adapter.setState(state_v_VIN, {val: '', ack: true});
+                    }
+                    if (VWCarNet_Connected){
+                        RetrieveVehicleData_Status(function(myTmp){
+                            //adapter.log.info(myTmp);
+                            mySuccefulUpdate = mySuccefulUpdate && myTmp
+                        });
+
+                        RetrieveVehicleData_Location(function(myTmp){
+                            //adapter.log.info(myTmp);
+                            mySuccefulUpdate = mySuccefulUpdate && myTmp
+                        });
+
+                        RetrieveVehicleData_eManager(function(myTmp) {
+                            //adapter.log.info(myTmp);
+                            mySuccefulUpdate = mySuccefulUpdate && myTmp
+                        });
+
+                        RetrieveVehicleData_Climater(function(myTmp){
+                            //adapter.log.info(myTmp);
+                            mySuccefulUpdate = mySuccefulUpdate && myTmp
+                        });
+
+                    }
+                    //adapter.log.info('VW Car-Net connected?: ' + VWCarNet_Connected);
+                    if (mySuccefulUpdate){
+                        var myDate = Date.now();
+                        adapter.setState('lastUpdate', {val: myDate, ack: true});
+                    };
+                });
+            });
+        }
+    });
 }
 
 function decrypt(key, value) {
@@ -324,6 +394,7 @@ function VWCarNetReadData(){
                 //adapter.log.info(myTmp);
                 mySuccefulUpdate = mySuccefulUpdate && myTmp
             });
+
             RetrieveVehicleData_Location(function(myTmp){
                 //adapter.log.info(myTmp);
                 mySuccefulUpdate = mySuccefulUpdate && myTmp
@@ -333,6 +404,7 @@ function VWCarNetReadData(){
                //adapter.log.info(myTmp);
                mySuccefulUpdate = mySuccefulUpdate && myTmp
            });
+
            RetrieveVehicleData_Climater(function(myTmp){
                //adapter.log.info(myTmp);
                mySuccefulUpdate = mySuccefulUpdate && myTmp
@@ -346,7 +418,7 @@ function VWCarNetReadData(){
         }
     });
 }
-
+/*
 function VWCarNetCheckConnect() {
     CarNetLogon(function(myTmp){
         VWCarNet_CredentialsAreValid=myTmp;
@@ -369,6 +441,22 @@ function VWCarNetCheckConnect() {
                             //adapter.log.info(myTmp);
                             mySuccefulUpdate = mySuccefulUpdate && myTmp
                         });
+
+                        RetrieveVehicleData_Location(function(myTmp){
+                            //adapter.log.info(myTmp);
+                            mySuccefulUpdate = mySuccefulUpdate && myTmp
+                        });
+
+                        RetrieveVehicleData_eManager(function(myTmp) {
+                            //adapter.log.info(myTmp);
+                            mySuccefulUpdate = mySuccefulUpdate && myTmp
+                        });
+
+                        RetrieveVehicleData_Climater(function(myTmp){
+                            //adapter.log.info(myTmp);
+                            mySuccefulUpdate = mySuccefulUpdate && myTmp
+                        });
+
                     }
                     //adapter.log.info('VW Car-Net connected?: ' + VWCarNet_Connected);
                     if (mySuccefulUpdate){
@@ -380,7 +468,7 @@ function VWCarNetCheckConnect() {
         }
     });
 }
-
+*/
 function CarNetLogon(callback) { //retrieve Token for the respective user
     var responseData;
     var myConnected=false;
@@ -388,7 +476,7 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
     var myFormdata = {'grant_type': 'password',
         'username': adapter.config.email,
         'password': decrypt(my_key, adapter.config.password)};
-    request.post({url: myUrl, form: myFormdata, headers: myHeaders}, function(error, response, result){
+    request.post({url: myUrl, form: myFormdata, headers: myHeaders, json: true}, function(error, response, responseData){
         //adapter.log.info(response.statusCode);
         switch(response.statusCode){
             case 200:
@@ -406,7 +494,7 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
                 myConnected=false;  //connection to VW Car-Net not established
                 myLastCarNetAnswer='Answer fom Car-Net: ' + response.statusCode + ' undefined';
         }
-        responseData = JSON.parse(result);
+        //responseData = JSON.parse(result);
         myAuthHeaders.Authorization = 'AudiAuth 1 ' + responseData.access_token;
         myToken = responseData.access_token;
         return callback(myConnected);
@@ -421,9 +509,8 @@ function RetrieveVehicles(callback){ //retrieve VIN of the first vehicle (Fahrge
         return callback('not autenticated');
     }
     if (adapter.config.VIN === ''){
-        request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
-            //adapter.log.debug(result);
-            responseData = JSON.parse(result);
+        request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData){
+            //adapter.log.debug(JSON.stringify(responseData));
             myVIN = responseData.userVehicles.vehicle[myVehicleID];
             //adapter.log.info(responseData.userVehicles.vehicle.length);
             return callback('Count: ' + responseData.userVehicles.vehicle.length);
@@ -438,10 +525,9 @@ function RetrieveVehicleData_VINValid(callback){
     var responseData;
     var myVINIsValid=false;
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/VW/DE/vehicles/' + myVIN + '/status';
-    request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
-        //adapter.log.info(result);
+    request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData){
+        //adapter.log.info(JSON.stringify(responseData));
         //adapter.log.info(response.statusCode);
-        responseData = JSON.parse(result);
         try {
             //adapter.log.info(responseData.StoredVehicleDataResponse.vin);
             if(responseData.StoredVehicleDataResponse.vin===myVIN){
@@ -464,7 +550,7 @@ function RetrieveVehicleData_Status(callback){
     var myReceivedDataKey;
     var myOilInspectionDays=0, myOilInspectionKm=0;
     var myServiceInspectionDays=0, myServiceInspectionKm=0;
-
+    var myParkingLight;
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/VW/DE/vehicles/' + myVIN + '/status';
     if (VWCarNet_Connected===false){return callback(false)};
     try{
@@ -511,9 +597,12 @@ function RetrieveVehicleData_Status(callback){
                             break;
                         case '0x030101FFFF.0x0301010001':  //status_parking_light_off
                             //adapter.log.info('ParkingLight: ' + myReceivedDataKey.value);
+                            myParkingLight = myReceivedDataKey.value
+
                             break;
                         case '0x030103FFFF.0x0301030001': //parking_brake_active
                             //adapter.log.info('ParkingBrake: ' + myReceivedDataKey.value);
+                            adapter.setState(state_s_parkingBrake, {val: myReceivedDataKey.value != 0, ack: true});
                             break;
                         case '0x030103FFFF.0x030103000A': //fuel_level_ok
                             adapter.setState(state_s_fuelLevel, {val: myReceivedDataKey.value, ack: true});
@@ -537,6 +626,7 @@ function RetrieveVehicleData_Status(callback){
                             break;
                         case '1':
 
+
                             break;
                         case '2':
 
@@ -544,6 +634,19 @@ function RetrieveVehicleData_Status(callback){
                         default: //thish should not be possible
                     }
                 }
+            }
+            switch (myParkingLight) {
+                case '3':
+                    adapter.setState(state_s_areLightsOff, {val: 'left=on, right=off', ack: true});
+                    break;
+                case '4':
+                    adapter.setState(state_s_areLightsOff, {val: 'left=off, right=on', ack: true});
+                    break;
+                case '5':
+                    adapter.setState(state_s_areLightsOff, {val: 'left=on, right=on', ack: true});
+                    break;
+                default:
+                    adapter.setState(state_s_areLightsOff, {val: 'off', ack: true});
             }
             return callback(true);
         });
@@ -579,11 +682,11 @@ function RetrieveVehicleData_Location(callback) {
                 myCarNet_locationStatus = responseData.findCarResponse;
                 if (myCarNet_locationStatus !== undefined && myCarNet_locationStatus !== null) {
                     adapter.setState(state_l_lat, {
-                        val: myCarNet_locationStatus.Position.carCoordinate.latitude,
+                        val: myCarNet_locationStatus.Position.carCoordinate.latitude/1000000,
                         ack: true
                     });
                     adapter.setState(state_l_lng, {
-                        val: myCarNet_locationStatus.Position.carCoordinate.longitude,
+                        val: myCarNet_locationStatus.Position.carCoordinate.longitude/1000000,
                         ack: true
                     });
                     adapter.setState(state_l_parkingTime, {val: myCarNet_locationStatus.parkingTimeUTC, ack: true});
@@ -644,6 +747,7 @@ function RetrieveVehicleData_eManager(callback){
         adapter.setState(state_e_chargingRemaining, {val: null, ack: true});
         adapter.setState(state_e_pluginState, {val: null, ack: true});
         adapter.setState(state_e_extPowerSupplyState, {val: null, ack: true});
+        adapter.setState(state_e_minBatteryChargingLimit, {val: null, ack: true});
         return callback(true)
     };
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/VW/DE/vehicles/' + myVIN + '/charger';
@@ -655,14 +759,14 @@ function RetrieveVehicleData_eManager(callback){
 
             myCarNet_eManager = responseData.charger.settings;
             adapter.setState(state_e_maxChargeCurrent, {val: myCarNet_eManager.maxChargeCurrent.content, ack: true});
-            //adapter.log.info(myCarNet_eManager.maxChargeCurrent.content);
+            //adapter.log.info('eManager/maxChargeCurrent: ' + myCarNet_eManager.maxChargeCurrent.content);
 
             myCarNet_eManager = responseData.charger.status.chargingStatusData;
-            // adapter.log.info(myCarNet_eManager.chargingMode.content);
-            // adapter.log.info(myCarNet_eManager.chargingStateErrorCode.content);
-            // adapter.log.info(myCarNet_eManager.chargingReason.content);
+            //adapter.log.info('eManager/chargingMode: ' + myCarNet_eManager.chargingMode.content);
+            //adapter.log.info('eManager/chargingStateErrorCode: ' + myCarNet_eManager.chargingStateErrorCode.content);
+            //adapter.log.info('eManager/chargingReason: ' + myCarNet_eManager.chargingReason.content);
             adapter.setState(state_e_extPowerSupplyState, {val: myCarNet_eManager.externalPowerSupplyState.content.toUpperCase(), ack: true});
-            // adapter.log.info(myCarNet_eManager.energyFlow.content);
+            //adapter.log.info('eManager/energyFlow: ' + myCarNet_eManager.energyFlow.content);
             adapter.setState(state_e_chargingState, {val: myCarNet_eManager.chargingState.content.toUpperCase(), ack: true});
 
             myCarNet_eManager = responseData.charger.status.cruisingRangeStatusData;
@@ -673,8 +777,8 @@ function RetrieveVehicleData_eManager(callback){
             // adapter.log.info(myCarNet_eManager.secondaryEngineRange.content);
 
             myCarNet_eManager = responseData.charger.status.ledStatusData;
-            //adapter.log.info(myCarNet_eManager.ledColor.content);
-            //adapter.log.info(myCarNet_eManager.ledState.content);
+            //adapter.log.info('eManager/ledColor: ' + myCarNet_eManager.ledColor.content);
+            //adapter.log.info('eManager/ledState: ' + myCarNet_eManager.ledState.content);
 
             myCarNet_eManager = responseData.charger.status.batteryStatusData;
 
@@ -683,11 +787,11 @@ function RetrieveVehicleData_eManager(callback){
             var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
             if (myRemainingTime <0 ){myRemainingTimeStr = null}
             adapter.setState(state_e_chargingRemaining, {val: myRemainingTimeStr, ack: true});
-            //adapter.log.info(myCarNet_eManager.remainingChargingTimeTargetSOC.content);
+            adapter.setState(state_e_minBatteryChargingLimit, {val: myCarNet_eManager.remainingChargingTimeTargetSOC.content, ack: true});
 
             myCarNet_eManager = responseData.charger.status.plugStatusData;
             adapter.setState(state_e_pluginState, {val: myCarNet_eManager.plugState.content.toUpperCase(), ack: true});
-            //adapter.log.info(myCarNet_eManager.lockState.content);
+            //adapter.log.info('eManager/lockState: ' + myCarNet_eManager.lockState.content);
 
         return callback(true);
     });
@@ -700,6 +804,7 @@ function RetrieveVehicleData_eManager(callback){
 function RetrieveVehicleData_Climater(callback){
     var responseData;
     var myCarNet_Climater;
+    var myTemperatureCelsius = 0;
     if (VWCarNet_Connected===false){return callback(false)};
     if (VWCarNet_GetClimater===false){
         adapter.setState(state_c_climatisationWithoutHVPower, {val: null, ack: true});
@@ -712,15 +817,24 @@ function RetrieveVehicleData_Climater(callback){
         //adapter.log.info(JSON.stringify(responseData));
 
         myCarNet_Climater = responseData.climater.settings;
-        //adapter.log.info(myCarNet_Climater.targetTemperature.content);
-        adapter.setState(state_c_targetTemperature, {val: myCarNet_Climater.targetTemperature.content, ack: true});
+
+        if (isNaN(myCarNet_Climater.targetTemperature.content)){
+            myTemperatureCelsius = 999
+        } else {
+            myTemperatureCelsius = parseFloat((myCarNet_Climater.targetTemperature.content)/10) - 273
+        }
+        adapter.setState(state_c_targetTemperature, {val: myTemperatureCelsius.toFixed(1), ack: true});
+        myTemperatureCelsius = null
         adapter.setState(state_c_climatisationWithoutHVPower, {val: myCarNet_Climater.climatisationWithoutHVpower.content, ack: true});
         //adapter.log.info(myCarNet_Climater.heaterSource.content);
 
         var myCarNet_Climater = responseData.climater.status.climatisationStatusData;
-        //adapter.log.info(myCarNet_Climater.climatisationState.content);
+        adapter.setState(state_c_climatisationState, {val: myCarNet_Climater.climatisationState.content.toUpperCase(), ack: true});
         //adapter.log.info(myCarNet_Climater.climatisationStateErrorCode.content);
-        //adapter.log.info(myCarNet_Climater.remainingClimatisationTime.content);
+        var myRemainingTime = myCarNet_Climater.remainingClimatisationTime.content
+        var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
+        if (myRemainingTime <0 ){myRemainingTimeStr = null}
+        adapter.setState(state_c_remainingClimatisationTime, {val: myRemainingTimeStr, ack: true});
         //adapter.log.info(myCarNet_Climater.climatisationReason.content);
 
         var myCarNet_Climater = responseData.climater.status.windowHeatingStatusData;
@@ -728,10 +842,18 @@ function RetrieveVehicleData_Climater(callback){
         //adapter.log.info(myCarNet_Climater.windowHeatingStateRear.content);
         //adapter.log.info(myCarNet_Climater.windowHeatingErrorCode.content);
 
-        var myCarNet_Climater = responseData.climater.status;
-        //state_c_outdoorTemperature
-        adapter.setState(state_c_outdoorTemperature, {val: myCarNet_Climater.temperatureStatusData.outdoorTemperature.content, ack: true});
-        //adapter.log.info(myCarNet_Climater.vehicleParkingClockStatusData.vehicleParkingClock.content);
+        var myCarNet_Climater = responseData.climater.status.temperatureStatusData;
+
+        if (isNaN(myCarNet_Climater.outdoorTemperature.content)){
+            myTemperatureCelsius = 999
+        } else {
+            myTemperatureCelsius = parseFloat((myCarNet_Climater.outdoorTemperature.content)/10) - 273
+        }
+        adapter.setState(state_c_outdoorTemperature, {val: myTemperatureCelsius.toFixed(1), ack: true});
+        myTemperatureCelsius = null
+
+        var myCarNet_Climater = responseData.climater.status.vehicleParkingClockStatusData;
+        //adapter.log.info(myCarNet_Climater.vehicleParkingClock.content);
 
         return callback(true);
     });
