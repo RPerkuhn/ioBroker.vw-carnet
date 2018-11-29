@@ -8,9 +8,10 @@ var VWCarNet_CredentialsAreValid = false;
 var VWCarNet_VINIsValid = false;
 var VWCarNet_Connected = false;
 var myLastCarNetAnswer = '';
-var VWCarNet_GetLocation = true;
-var VWCarNet_GetEManager = true;
 var VWCarNet_GetClimater = true;
+var VWCarNet_GetEManager = true;
+var VWCarNet_GetLocation = true;
+
 var myToken = '';
 var myVIN = '';
 var myTmp;
@@ -53,10 +54,13 @@ adapter.on('message', function (obj) {
 });
 
 adapter.on('ready', function () {
-    //adapter.setState('connection', {val: false, ack: true});
+    var myTmp;
     myGoogleMapsAPIKey = adapter.config.GoogleAPIKey;
-    //VWCarNetCheckConnect()
-    main()
+    CreateStates_Status(function(myTmp){});
+    CreateStates_climater(function(myTmp){});
+    CreateStates_eManager(function(myTmp){});
+    CreateStates_location(function(myTmp){});
+    main();
 });
 
 //##############################################################################################################
@@ -81,249 +85,309 @@ adapter.setObject(state_v_VIN, {
     native: {}
 });
 
-//##############################################################################################################
-// declaring names for states for selectedVehicle data
-const channel_vc = "Vehicle.selectedVehicle";
-const state_vc_lastConnectionTimeStamp   = "Vehicle.selectedVehicle.lastConnectionTimeStamp";
-const state_vc_distanceCovered     = "Vehicle.selectedVehicle.distanceCovered";
-const state_vc_range  = "Vehicle.selectedVehicle.range";
-const state_vc_serviceInspectionDistance= "Vehicle.selectedVehicle.serviceInspectionDistance";
-const state_vc_serviceInspectionTime= "Vehicle.selectedVehicle.serviceInspectionTime";
-const state_vc_oilInspectionDistance= "Vehicle.selectedVehicle.oilInspectionDistance";
-const state_vc_oilInspectionTime= "Vehicle.selectedVehicle.oilInspectionTime";
-// creating channel/states for selectedVehicle Data
-adapter.setObject(channel_vc, {
-    type: 'channel',
-    common: {name: 'ausgewähltes Fahrzeug'},
-    native: {}
-});
-adapter.setObject(state_vc_lastConnectionTimeStamp, {
-    type: 'state',
-    common: {name: 'Zeitpunkt der letzten Verbindung zum Fahrzeug', type: 'string', read: true, write: false, role: 'datetime'},
-    native: {}
-});
-adapter.setObject(state_vc_distanceCovered, {
-    type: 'state',
-    common: {name: 'Kilometerstand', type: 'number', unit: 'km', read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_vc_range, {
-    type: 'state',
-    common: {name: 'Gesamtreichweite des Fahrzeugs', type: 'number', unit: 'km', read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_vc_serviceInspectionDistance, {
-    type: 'state',
-    common: {name: 'Km bis zur nächsten Inspektion', type: 'string', unit: 'km', read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_vc_serviceInspectionTime, {
-    type: 'state',
-    common: {name: 'Zeit bis zur nächsten Inspektion', type: 'string', unit: 'Tag(e)', read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_vc_oilInspectionDistance, {
-    type: 'state',
-    common: {name: 'Km bis zum nächsten Ölwechsel-Service', type: 'string', unit: 'km', read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_vc_oilInspectionTime, {
-    type: 'state',
-    common: {name: 'Km bis zum nächsten Ölwechsel-Service', type: 'string', unit: 'Tag(e)', read: true, write: false, role: 'value'},
-    native: {}
-});
-
 
 //##############################################################################################################
 // declaring names for states for status data
-const channel_s = "Vehicle.selectedVehicle.status";
-const state_s_areDoorsAndWindowsClosed = "Vehicle.selectedVehicle.status.areDoorsAndWindowsClosed";
-const state_s_areLightsOff = "Vehicle.selectedVehicle.status.areParkingLightsOff";
-const state_s_parkingBrake = "Vehicle.selectedVehicle.status.parkingBrake";
-const state_s_carCentralLock = "Vehicle.selectedVehicle.status.carCentralLock";
-const state_s_fuelLevel = "Vehicle.selectedVehicle.status.fuelLevel";
-const state_s_fuelRange = "Vehicle.selectedVehicle.status.fuelRange";
-const state_s_batteryLevel = "Vehicle.selectedVehicle.status.batteryLevel";
-const state_s_batteryRange = "Vehicle.selectedVehicle.status.batteryRange";
-// creating channel/states for status Data
-adapter.setObject(channel_s, {
-    type: 'channel',
-    common: {name: 'status'},
-    native: {}
-});
-adapter.setObject(state_s_areDoorsAndWindowsClosed, {
-    type: 'state',
-    common: {name: "Türen/Fenster", type: "string", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_s_areLightsOff, {
-    type: 'state',
-    common: {name: "Parklichlichter", type: "string", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_s_parkingBrake, {
-    type: 'state',
-    common: {name: "Park-/Handbremse", type: "string", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_s_carCentralLock, {
-    type: 'state',
-    common: {name: "Zentralverriegelung", type: "string", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_s_fuelLevel, {
-    type: 'state',
-    common: {name: "Füllstand Kraftstoff", type: "string", unit: "%", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_s_fuelRange , {
-    type: 'state',
-    common: {name: "Reichweite Kraftstoff", type: "string", unit: "km", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_s_batteryLevel, {
-    type: 'state',
-    common: {name: "Füllstand Batterie", type: "string", unit: "%", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_s_batteryRange, {
-    type: 'state',
-    common: {name: "Reichweite Batterie", type: "string", unit: "km", read: true, write: false, role: 'value'},
-    native: {}
-});
-
-
-//##############################################################################################################
-// declaring names for states for eManager data
-const channel_e = "Vehicle.selectedVehicle.eManager";
-const state_e_batteryPercentage = "Vehicle.selectedVehicle.eManager.batteryPercentage";
-const state_e_minBatteryChargingLimit = "Vehicle.selectedVehicle.eManager.minBatteryChargingLimit";
-const state_e_chargingState = "Vehicle.selectedVehicle.eManager.chargingState";
-const state_e_chargingRemaining = "Vehicle.selectedVehicle.eManager.chargingRemaining";
-const state_e_maxChargeCurrent = "Vehicle.selectedVehicle.eManager.maxChargeCurrent";
-const state_e_pluginState = "Vehicle.selectedVehicle.eManager.pluginState"
-const state_e_extPowerSupplyState = "Vehicle.selectedVehicle.eManager.extPowerSupplyState"
-
-// creating channel/states for eManager Data
-adapter.setObject(channel_e, {
-    type: 'channel',
-    common: {name: 'e-Manager'},
-    native: {}
-});
-adapter.setObject(state_e_batteryPercentage, {
-    type: 'state',
-    common: {name: "Ladezustand der Hauptbatterie", type: "number", unit: "%", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_e_minBatteryChargingLimit, {
-    type: 'state',
-    common: {name: "Untere Batterie-Ladegrenze", type: "number", unit: "%", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_e_chargingState, {
-    type: 'state',
-    common: {name: "Zustand des Ladevorgangs", type: "string", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_e_chargingRemaining, {
-    type: 'state',
-    common: {name: "Verbleibende Ladedauer bis 100% SoC", type: "string", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_e_maxChargeCurrent, {
-    type: 'state',
-    common: {name: "maximaler Ladestrom", type: "number", unit: "A", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_e_pluginState, {
-    type: 'state',
-    common: {name: "Ladestecker eingesteckt", type: "string", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_e_extPowerSupplyState, {
-    type: 'state',
-    common: {name: "Ext. Stromversorgung", type: "string", read: true, write: false, role: 'value'},
-    native: {}
-});
-
-//##############################################################################################################
-// declaring names for states for location data
-const channel_l = "Vehicle.selectedVehicle.location";
-const state_l_lat = "Vehicle.selectedVehicle.location.lat";
-const state_l_lng = "Vehicle.selectedVehicle.location.lng";
-const state_l_parkingTime = "Vehicle.selectedVehicle.location.parkingTime";
-const state_l_address = "Vehicle.selectedVehicle.location.address";
-// creating channel/states for location Data
-adapter.setObject(channel_l, {
-    type: 'channel',
-    common: {name: 'Parkposition'},
-    native: {}
-});
-adapter.setObject(state_l_lat, {
-    type: 'state',
-    common: {name: "Breitengrad der Position des Fahrzeugs", type: "number", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_l_lng, {
-    type: 'state',
-    common: {name: "Längengrad der Position des Fahrzeugs", type: "number", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_l_parkingTime, {
-    type: 'state',
-    common: {name: "Zeitpunkt parken des Fahrzeugs", type: "string", read: true, write: false, role: 'datetime'},
-    native: {}
-});
-adapter.setObject(state_l_address, {
-    type: 'state',
-    common: {name: "Anschrift der Position des Fahrzeugs", type: "string", read: true, write: false, role: 'value'},
-    native: {}
-});
-
+const channel_s = "Vehicle.status";
+const state_s_lastConnectionTimeStamp   = "Vehicle.status.lastConnectionTimeStamp";
+const state_s_distanceCovered     = "Vehicle.status.distanceCovered";
+const state_s_hybridRange  = "Vehicle.status.hybridRange";
+const state_s_serviceInspectionDistance= "Vehicle.status.serviceInspectionDistance";
+const state_s_serviceInspectionTime= "Vehicle.status.serviceInspectionTime";
+const state_s_oilInspectionDistance= "Vehicle.status.oilInspectionDistance";
+const state_s_oilInspectionTime= "Vehicle.status.oilInspectionTime";
+const state_s_parkingLights = "Vehicle.status.ParkingLights";
+const state_s_parkingBrake = "Vehicle.status.parkingBrake";
+const state_s_carCentralLock = "Vehicle.status.carCentralLock";
+const state_s_fuelLevel = "Vehicle.status.fuelLevel";
+const state_s_fuelRange = "Vehicle.status.fuelRange";
+const state_s_batteryLevel = "Vehicle.status.batteryLevel";
+const state_s_batteryRange = "Vehicle.status.batteryRange";
+const channel_dw_DoorsAndWindows = "Vehicle.status.DoorsAndWindows";
 
 //##############################################################################################################
 // declaring names for states for climater data
-const channel_c = "Vehicle.selectedVehicle.climater";
-const state_c_climatisationWithoutHVPower = "Vehicle.selectedVehicle.climater.climatisationWithoutHVPower";
-const state_c_targetTemperature = "Vehicle.selectedVehicle.climater.targetTemperature";
-const state_c_outdoorTemperature = "Vehicle.selectedVehicle.climater.outdoorTemperature";
-const state_c_address = "Vehicle.selectedVehicle.climater.address";
-const state_c_climatisationState = "Vehicle.selectedVehicle.climater.climatisationState";
-const state_c_remainingClimatisationTime = "Vehicle.selectedVehicle.climater.remainingClimatisationTime";
-// creating channel/states for climater Data
-adapter.setObject(channel_c, {
-    type: 'channel',
-    common: {name: 'Parkposition'},
-    native: {}
-});
-adapter.setObject(state_c_climatisationWithoutHVPower, {
-    type: 'state',
-    common: {name: "Klimatisierung/Scheibenheizung über Batterie zulassen", type: "boolean", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_c_targetTemperature, {
-    type: 'state',
-    common: {name: "Zieltemperatur", type: "number", unit: "°C", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_c_outdoorTemperature, {
-    type: 'state',
-    common: {name: "Außentemperatur", type: "number", unit: "°C", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_c_climatisationState, {
-    type: 'state',
-    common: {name: "Zustand der Standheizung", type: "string", read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_c_remainingClimatisationTime, {
-    type: 'state',
-    common: {name: "Verbleibende Dauer bis Zieltemeratur", type: "string", read: true, write: false, role: 'value'},
-    native: {}
-});
+const channel_c = "Vehicle.climater";
+const state_c_climatisationWithoutHVPower = "Vehicle.climater.climatisationWithoutHVPower";
+const state_c_targetTemperature = "Vehicle.climater.targetTemperature";
+const state_c_heaterSource = "Vehicle.climater.heaterSource";
+const state_c_climatisationReason = "Vehicle.climater.climatisationReason";
+const state_c_windowHeatingStateFront = "Vehicle.climater.windowHeatingStateFront";
+const state_c_windowHeatingStateRear = "Vehicle.climater.windowHeatingStateRear";
+const state_c_outdoorTemperature = "Vehicle.climater.outdoorTemperature";
+const state_c_vehicleParkingClock = "Vehicle.climater.vehicleParkingClock";
+const state_c_climatisationState = "Vehicle.climater.climatisationState";
+const state_c_remainingClimatisationTime = "Vehicle.climater.remainingClimatisationTime";
+
+//##############################################################################################################
+// declaring names for states for eManager data
+const channel_e = "Vehicle.eManager";
+const state_e_stateOfCharge = "Vehicle.eManager.stateOfCharge";
+const state_e_remainingChargingTimeTargetSOC = "Vehicle.eManager.remainingChargingTimeTargetSOC";
+const state_e_chargingMode = "Vehicle.eManager.chargingMode";
+const state_e_chargingState = "Vehicle.eManager.chargingState";
+const state_e_chargingReason = "Vehicle.eManager.chargingReason";
+const state_e_remainingChargingTime = "Vehicle.eManager.remainingChargingTime";
+const state_e_maxChargeCurrent = "Vehicle.eManager.maxChargeCurrent";
+const state_e_plugState = "Vehicle.eManager.plugState";
+const state_e_lockState = "Vehicle.eManager.lockState";
+const state_e_extPowerSupplyState = "Vehicle.eManager.externalPowerSupplyState";
+
+//##############################################################################################################
+// declaring names for states for location data
+const channel_l = "Vehicle.location";
+const state_l_lat = "Vehicle.location.latitude";
+const state_l_lng = "Vehicle.location.longitude";
+const state_l_parkingTime = "Vehicle.location.parkingTimeUTC";
+const state_l_address = "Vehicle.location.parkingAddress";
+
+function CreateStates_Status(callback){
+    // creating channel/states for selectedVehicle Data
+    adapter.setObject(channel_s, {
+        type: 'channel',
+        common: {name: 'Fahrzeugstatus'},
+        native: {}
+    });
+    adapter.setObject(state_s_lastConnectionTimeStamp, {
+        type: 'state',
+        common: {name: 'Zeitpunkt der letzten Verbindung zum Fahrzeug', type: 'string', read: true, write: false, role: 'datetime'},
+        native: {}
+    });
+    adapter.setObject(state_s_distanceCovered, {
+        type: 'state',
+        common: {name: 'Kilometerstand', type: 'number', unit: 'km', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_s_hybridRange, {
+        type: 'state',
+        common: {name: 'Gesamtreichweite des Fahrzeugs', type: 'number', unit: 'km', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_s_serviceInspectionDistance, {
+        type: 'state',
+        common: {name: 'Km bis zur nächsten Inspektion', type: 'string', unit: 'km', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_s_serviceInspectionTime, {
+        type: 'state',
+        common: {name: 'Zeit bis zur nächsten Inspektion', type: 'string', unit: 'Tag(e)', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_s_oilInspectionDistance, {
+        type: 'state',
+        common: {name: 'Km bis zum nächsten Ölwechsel-Service', type: 'string', unit: 'km', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_s_oilInspectionTime, {
+        type: 'state',
+        common: {name: 'Km bis zum nächsten Ölwechsel-Service', type: 'string', unit: 'Tag(e)', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(channel_dw_DoorsAndWindows, {
+        type: 'channel',
+        common: {name: "Türen/Fenster"},
+        native: {}
+    });
+    adapter.setObject(state_s_parkingLights, {
+        type: 'state',
+        common: {name: "Parklichlichter", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_s_parkingBrake, {
+        type: 'state',
+        common: {name: "Park-/Handbremse", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_s_carCentralLock, {
+        type: 'state',
+        common: {name: "Zentralverriegelung", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_s_fuelLevel, {
+        type: 'state',
+        common: {name: "Füllstand Kraftstoff", type: "string", unit: "%", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_s_fuelRange , {
+        type: 'state',
+        common: {name: "Reichweite Kraftstoff", type: "string", unit: "km", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_s_batteryLevel, {
+        type: 'state',
+        common: {name: "Füllstand Batterie", type: "string", unit: "%", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_s_batteryRange, {
+        type: 'state',
+        common: {name: "Reichweite Batterie", type: "string", unit: "km", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    return callback(true);
+}
+
+function CreateStates_climater(callback){
+    if (VWCarNet_GetClimater === false){
+        return callback(true);
+    }
+    // creating channel/states for climater Data
+    adapter.setObject(channel_c, {
+        type: 'channel',
+        common: {name: 'Heizung / Klimaanlage / Lüftung'},
+        native: {}
+    });
+    adapter.setObject(state_c_climatisationWithoutHVPower, {
+        type: 'state',
+        common: {name: "Klimatisierung/Scheibenheizung über Batterie zulassen", type: "boolean", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_c_targetTemperature, {
+        type: 'state',
+        common: {name: "Zieltemperatur", type: "number", unit: "°C", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_c_heaterSource, {
+        type: 'state',
+        common: {name: "Heizungs-Quelle", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_c_climatisationReason, {
+        type: 'state',
+        common: {name: "Heizungsbetrieb", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_c_windowHeatingStateFront, {
+        type: 'state',
+        common: {name: "Heizung Windschutzscheibe", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_c_windowHeatingStateRear, {
+        type: 'state',
+        common: {name: "Heizung Heckscheibe", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_c_outdoorTemperature, {
+        type: 'state',
+        common: {name: "Außentemperatur", type: "number", unit: "°C", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_c_vehicleParkingClock, {
+        type: 'state',
+        common: {name: 'Zeitpunkt parken des Fahrzeugs', type: 'string', read: true, write: false, role: 'datetime'},
+        native: {}
+    });
+    adapter.setObject(state_c_climatisationState, {
+        type: 'state',
+        common: {name: "Zustand der Standheizung", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_c_remainingClimatisationTime, {
+        type: 'state',
+        common: {name: "Verbleibende Dauer bis Zieltemeratur", type: "number", unit: "Min", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    return callback(true);
+}
+
+function CreateStates_eManager(callback){
+    if (VWCarNet_GetEManager === false){
+        return callback(true);
+    }
+    // creating channel/states for eManager Data
+    adapter.setObject(channel_e, {
+        type: 'channel',
+        common: {name: 'e-Manager'},
+        native: {}
+    });
+    adapter.setObject(state_e_stateOfCharge, {
+        type: 'state',
+        common: {name: "Ladezustand der Hauptbatterie", type: "number", unit: "%", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_e_remainingChargingTimeTargetSOC, {
+        type: 'state',
+        common: {name: "Verbleibende Ladedauer untere Batterie-Ladegrenze", type: "number", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_e_chargingMode, {
+        type: 'state',
+        common: {name: "Lademodus", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_e_chargingState, {
+        type: 'state',
+        common: {name: "Zustand des Ladevorgangs", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_e_chargingReason, {
+        type: 'state',
+        common: {name: "Ladebetrieb", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_e_remainingChargingTime, {
+        type: 'state',
+        common: {name: "Verbleibende Ladedauer bis 100%", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_e_maxChargeCurrent, {
+        type: 'state',
+        common: {name: "maximaler Ladestrom", type: "number", unit: "A", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_e_plugState, {
+        type: 'state',
+        common: {name: "Status Ladestecker", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_e_lockState, {
+        type: 'state',
+        common: {name: "Verriegelung Ladestecker", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_e_extPowerSupplyState, {
+        type: 'state',
+        common: {name: "Status externe Stromversorgung", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    return callback(true);
+}
+
+function CreateStates_location(callback){
+    if (VWCarNet_GetLocation === false){
+        return callback(true);
+    }
+    // creating channel/states for location Data
+    adapter.setObject(channel_l, {
+        type: 'channel',
+        common: {name: 'Parkposition'},
+        native: {}
+    });
+    adapter.setObject(state_l_lat, {
+        type: 'state',
+        common: {name: "Breitengrad der Position des Fahrzeugs", type: "number", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_l_lng, {
+        type: 'state',
+        common: {name: "Längengrad der Position des Fahrzeugs", type: "number", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_l_parkingTime, {
+        type: 'state',
+        common: {name: "Zeitpunkt parken des Fahrzeugs", type: "string", read: true, write: false, role: 'datetime'},
+        native: {}
+    });
+    if (myGoogleMapsAPIKey !== ''){
+        adapter.setObject(state_l_address, {
+            type: 'state',
+            common: {name: "Anschrift der Position des Fahrzeugs", type: "string", read: true, write: false, role: 'value'},
+            native: {}
+        });
+    }
+    return callback(true);
+}
 
 // ############################################# start here! ###################################################
-
 
 function main() {
     CarNetLogon(function(myTmp){
@@ -400,15 +464,15 @@ function VWCarNetReadData(){
                 mySuccefulUpdate = mySuccefulUpdate && myTmp
             });
 
-           RetrieveVehicleData_eManager(function(myTmp) {
-               //adapter.log.info(myTmp);
-               mySuccefulUpdate = mySuccefulUpdate && myTmp
-           });
+            RetrieveVehicleData_eManager(function(myTmp) {
+                //adapter.log.info(myTmp);
+                mySuccefulUpdate = mySuccefulUpdate && myTmp
+            });
 
-           RetrieveVehicleData_Climater(function(myTmp){
-               //adapter.log.info(myTmp);
-               mySuccefulUpdate = mySuccefulUpdate && myTmp
-           });
+            RetrieveVehicleData_Climater(function(myTmp){
+                //adapter.log.info(myTmp);
+                mySuccefulUpdate = mySuccefulUpdate && myTmp
+            });
 
             //adapter.log.info(myLastCarNetAnswer);
             if (mySuccefulUpdate){
@@ -418,57 +482,7 @@ function VWCarNetReadData(){
         }
     });
 }
-/*
-function VWCarNetCheckConnect() {
-    CarNetLogon(function(myTmp){
-        VWCarNet_CredentialsAreValid=myTmp;
-        //adapter.log.info('Credentials valid?: ' +  VWCarNet_CredentialsAreValid);
-        if (VWCarNet_CredentialsAreValid){
-            RetrieveVehicles(function(myTmp){
-                RetrieveVehicleData_VINValid(function(myTmp){
-                    VWCarNet_VINIsValid=myTmp;
-                    //adapter.log.info('VIN valid?: ' + VWCarNet_VINIsValid)
-                    VWCarNet_Connected = VWCarNet_CredentialsAreValid && VWCarNet_VINIsValid;
-                    adapter.setState('connection', {val: VWCarNet_Connected, ack: true});
-                    if(VWCarNet_VINIsValid){
-                        var mySuccefulUpdate = true
-                        adapter.setState(state_v_VIN, {val: myVIN, ack: true});
-                    } else {
-                        adapter.setState(state_v_VIN, {val: '', ack: true});
-                    }
-                    if (VWCarNet_Connected){
-                        RetrieveVehicleData_Status(function(myTmp){
-                            //adapter.log.info(myTmp);
-                            mySuccefulUpdate = mySuccefulUpdate && myTmp
-                        });
 
-                        RetrieveVehicleData_Location(function(myTmp){
-                            //adapter.log.info(myTmp);
-                            mySuccefulUpdate = mySuccefulUpdate && myTmp
-                        });
-
-                        RetrieveVehicleData_eManager(function(myTmp) {
-                            //adapter.log.info(myTmp);
-                            mySuccefulUpdate = mySuccefulUpdate && myTmp
-                        });
-
-                        RetrieveVehicleData_Climater(function(myTmp){
-                            //adapter.log.info(myTmp);
-                            mySuccefulUpdate = mySuccefulUpdate && myTmp
-                        });
-
-                    }
-                    //adapter.log.info('VW Car-Net connected?: ' + VWCarNet_Connected);
-                    if (mySuccefulUpdate){
-                        var myDate = Date.now();
-                        adapter.setState('lastUpdate', {val: myDate, ack: true});
-                    };
-                });
-            });
-        }
-    });
-}
-*/
 function CarNetLogon(callback) { //retrieve Token for the respective user
     var responseData;
     var myConnected=false;
@@ -500,6 +514,7 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
         return callback(myConnected);
     });
 }
+
 function RetrieveVehicles(callback){ //retrieve VIN of the first vehicle (Fahrgestellnummer)
     var responseData;
     var myVehicleID = 0;
@@ -538,7 +553,6 @@ function RetrieveVehicleData_VINValid(callback){
             adapter.log.error(responseData.error.errorCode + ': ' + responseData.error.description);
             return callback(false);
         }
-
     });
 }
 
@@ -564,7 +578,7 @@ function RetrieveVehicleData_Status(callback){
             }
             myCarNet_vehicleStatus = responseData.StoredVehicleDataResponse.vehicleData;
             //adapter.log.info(myCarNet_vehicleStatus.data[myData].field[myField].tsCarSentUtc);
-            adapter.setState(state_vc_lastConnectionTimeStamp, {val: myCarNet_vehicleStatus.data[myData].field[myField].tsCarSentUtc, ack: true});
+            adapter.setState(state_s_lastConnectionTimeStamp, {val: myCarNet_vehicleStatus.data[myData].field[myField].tsCarSentUtc, ack: true});
 
             for (myData in myCarNet_vehicleStatus.data) {
                 for (myField in myCarNet_vehicleStatus.data[myData].field) {
@@ -572,27 +586,27 @@ function RetrieveVehicleData_Status(callback){
                     //adapter.log.info(myCarNet_vehicleStatus.data[myData].id + "." + myCarNet_vehicleStatus.data[myData].field[myField].id)
                     switch(myCarNet_vehicleStatus.data[myData].id + "." + myCarNet_vehicleStatus.data[myData].field[myField].id){
                         case '0x0101010002.0x0101010002': //distanceCovered
-                            adapter.setState(state_vc_distanceCovered, {val: myReceivedDataKey.value, ack: true});
+                            adapter.setState(state_s_distanceCovered, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info(myReceivedDataKey.value);
                             break;
                         case '0x0203FFFFFF.0x0203010001': //oilInspectionData_km
                             myOilInspectionKm = myReceivedDataKey.value *-1;
-                            adapter.setState(state_vc_oilInspectionDistance, {val: myOilInspectionKm, ack: true});
+                            adapter.setState(state_s_oilInspectionDistance, {val: myOilInspectionKm, ack: true});
                             //adapter.log.info(myOilInspectionKm + myReceivedDataKey.unit);
                             break;
                         case '0x0203FFFFFF.0x0203010002': //oilInspectionData_days
                             myOilInspectionDays = myReceivedDataKey.value *-1;
-                            adapter.setState(state_vc_oilInspectionTime, {val: myOilInspectionDays, ack: true});
+                            adapter.setState(state_s_oilInspectionTime, {val: myOilInspectionDays, ack: true});
                             //adapter.log.info(myOilInspectionDays);
                             break;
                         case '0x0203FFFFFF.0x0203010003': //serciceInspectionData_km
                             myServiceInspectionKm = myReceivedDataKey.value * -1;
-                            adapter.setState(state_vc_serviceInspectionDistance, {val: myServiceInspectionKm, ack: true});
+                            adapter.setState(state_s_serviceInspectionDistance, {val: myServiceInspectionKm, ack: true});
                             //adapter.log.info(myServiceInspectionKm + myReceivedDataKey.unit);
                             break;
                         case '0x0203FFFFFF.0x0203010004': //serviceInspectionData_days
                             myServiceInspectionDays = myReceivedDataKey.value *-1;
-                            adapter.setState(state_vc_serviceInspectionTime, {val: myServiceInspectionDays, ack: true});
+                            adapter.setState(state_s_serviceInspectionTime, {val: myServiceInspectionDays, ack: true});
                             //adapter.log.info(myServiceInspectionDays);
                             break;
                         case '0x030101FFFF.0x0301010001':  //status_parking_light_off
@@ -620,9 +634,9 @@ function RetrieveVehicleData_Status(callback){
                             adapter.setState(state_s_batteryRange, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('BatteryRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
-                        case '0x030103FFFF.0x0301030005': //total_range
-                            adapter.setState(state_vc_range, {val: myReceivedDataKey.value, ack: true});
-                            //adapter.log.info('TotalRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
+                        case '0x030103FFFF.0x0301030005': //hybrid_range
+                            adapter.setState(state_s_hybridRange, {val: myReceivedDataKey.value, ack: true});
+                            //adapter.log.info('HybridRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
                         case '1':
 
@@ -637,16 +651,16 @@ function RetrieveVehicleData_Status(callback){
             }
             switch (myParkingLight) {
                 case '3':
-                    adapter.setState(state_s_areLightsOff, {val: 'left=on, right=off', ack: true});
+                    adapter.setState(state_s_parkingLights, {val: 'left=on, right=off', ack: true});
                     break;
                 case '4':
-                    adapter.setState(state_s_areLightsOff, {val: 'left=off, right=on', ack: true});
+                    adapter.setState(state_s_parkingLights, {val: 'left=off, right=on', ack: true});
                     break;
                 case '5':
-                    adapter.setState(state_s_areLightsOff, {val: 'left=on, right=on', ack: true});
+                    adapter.setState(state_s_parkingLights, {val: 'left=on, right=on', ack: true});
                     break;
                 default:
-                    adapter.setState(state_s_areLightsOff, {val: 'off', ack: true});
+                    adapter.setState(state_s_parkingLights, {val: 'off', ack: true});
             }
             return callback(true);
         });
@@ -656,7 +670,123 @@ function RetrieveVehicleData_Status(callback){
     }
 }
 
+function RetrieveVehicleData_Climater(callback){
+    if (VWCarNet_GetClimater === false){
+        return callback(true);
+    }
+    var responseData;
+    var myCarNet_Climater;
+    var myTemperatureCelsius = 0;
+    if (VWCarNet_Connected===false){return callback(false)};
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/VW/DE/vehicles/' + myVIN + '/climater';
+    request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData){
+        //adapter.log.info(JSON.stringify(responseData));
+
+        myCarNet_Climater = responseData.climater.settings;
+
+        if (isNaN(myCarNet_Climater.targetTemperature.content)){
+            myTemperatureCelsius = 999
+        } else {
+            myTemperatureCelsius = parseFloat((myCarNet_Climater.targetTemperature.content)/10) - 273
+        }
+        adapter.setState(state_c_targetTemperature, {val: myTemperatureCelsius.toFixed(1), ack: true});
+        myTemperatureCelsius = null
+        adapter.setState(state_c_climatisationWithoutHVPower, {val: myCarNet_Climater.climatisationWithoutHVpower.content, ack: true});
+        adapter.setState(state_c_heaterSource, {val: myCarNet_Climater.heaterSource.content.toUpperCase(), ack: true});
+
+        var myCarNet_Climater = responseData.climater.status.climatisationStatusData;
+        adapter.setState(state_c_climatisationState, {val: myCarNet_Climater.climatisationState.content.toUpperCase(), ack: true});
+        //adapter.log.info(myCarNet_Climater.climatisationStateErrorCode.content);
+        var myRemainingTime = myCarNet_Climater.remainingClimatisationTime.content
+        //var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
+        var myRemainingTimeStr = myRemainingTime
+        if (myRemainingTime <0 ){myRemainingTimeStr = null}
+        adapter.setState(state_c_remainingClimatisationTime, {val: myRemainingTimeStr, ack: true});
+        adapter.setState(state_c_climatisationReason, {val: myCarNet_Climater.climatisationReason.content.toUpperCase(), ack: true});
+
+        var myCarNet_Climater = responseData.climater.status.windowHeatingStatusData;
+        adapter.setState(state_c_windowHeatingStateFront, {val: myCarNet_Climater.windowHeatingStateFront.content.toUpperCase(), ack: true});
+        adapter.setState(state_c_windowHeatingStateRear, {val: myCarNet_Climater.windowHeatingStateRear.content.toUpperCase(), ack: true});
+        //adapter.log.info(myCarNet_Climater.windowHeatingErrorCode.content);
+
+        var myCarNet_Climater = responseData.climater.status.temperatureStatusData;
+
+        if (isNaN(myCarNet_Climater.outdoorTemperature.content)){
+            myTemperatureCelsius = 999
+        } else {
+            myTemperatureCelsius = parseFloat((myCarNet_Climater.outdoorTemperature.content)/10) - 273
+        }
+        adapter.setState(state_c_outdoorTemperature, {val: myTemperatureCelsius.toFixed(1), ack: true});
+        myTemperatureCelsius = null
+
+        var myCarNet_Climater = responseData.climater.status.vehicleParkingClockStatusData;
+        adapter.setState(state_c_vehicleParkingClock, {val: myCarNet_Climater.vehicleParkingClock.content, ack: true});
+
+        return callback(true);
+    });
+}
+
+function RetrieveVehicleData_eManager(callback){
+    if (VWCarNet_GetEManager === false){
+        return callback(true);
+    }
+    var responseData;
+    var myCarNet_eManager;
+    if (VWCarNet_Connected===false){return callback(false)};
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/VW/DE/vehicles/' + myVIN + '/charger';
+    try {
+        request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
+            //adapter.log.info(result);
+
+            responseData = JSON.parse(result);
+
+            myCarNet_eManager = responseData.charger.settings;
+            adapter.setState(state_e_maxChargeCurrent, {val: myCarNet_eManager.maxChargeCurrent.content, ack: true});
+
+            myCarNet_eManager = responseData.charger.status.chargingStatusData;
+            adapter.setState(state_e_chargingMode, {val: myCarNet_eManager.chargingMode.content.toUpperCase(), ack: true});
+            //adapter.log.info('eManager/chargingStateErrorCode: ' + myCarNet_eManager.chargingStateErrorCode.content);
+            adapter.setState(state_e_chargingReason, {val: myCarNet_eManager.chargingReason.content.toUpperCase(), ack: true});
+            adapter.setState(state_e_extPowerSupplyState, {val: myCarNet_eManager.externalPowerSupplyState.content.toUpperCase(), ack: true});
+            //adapter.log.info('eManager/energyFlow: ' + myCarNet_eManager.energyFlow.content);
+            adapter.setState(state_e_chargingState, {val: myCarNet_eManager.chargingState.content.toUpperCase(), ack: true});
+
+            myCarNet_eManager = responseData.charger.status.cruisingRangeStatusData;
+            // adapter.log.info(myCarNet_eManager.engineTypeFirstEngine.content);
+            // adapter.log.info(myCarNet_eManager.primaryEngineRange.content);
+            // adapter.log.info(myCarNet_eManager.hybridRange.content);
+            // adapter.log.info(myCarNet_eManager.engineTypeSecondEngine.content);
+            // adapter.log.info(myCarNet_eManager.secondaryEngineRange.content);
+
+            myCarNet_eManager = responseData.charger.status.ledStatusData;
+            //adapter.log.info('eManager/ledColor: ' + myCarNet_eManager.ledColor.content);
+            //adapter.log.info('eManager/ledState: ' + myCarNet_eManager.ledState.content);
+
+            myCarNet_eManager = responseData.charger.status.batteryStatusData;
+
+            adapter.setState(state_e_stateOfCharge, {val: myCarNet_eManager.stateOfCharge.content, ack: true});
+            var myRemainingTime = myCarNet_eManager.remainingChargingTime.content;
+            var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
+            if (myRemainingTime <0 ){myRemainingTimeStr = null}
+            adapter.setState(state_e_remainingChargingTime, {val: myRemainingTimeStr, ack: true});
+            adapter.setState(state_e_remainingChargingTimeTargetSOC, {val: myCarNet_eManager.remainingChargingTimeTargetSOC.content, ack: true});
+
+            myCarNet_eManager = responseData.charger.status.plugStatusData;
+            adapter.setState(state_e_plugState, {val: myCarNet_eManager.plugState.content.toUpperCase(), ack: true});
+            adapter.setState(state_e_lockState, {val: myCarNet_eManager.lockState.content.toUpperCase(), ack: true});
+
+            return callback(true);
+        });
+    } catch (err) {
+        adapter.log.error('Fehler bei der Auswertung im eManager Modul');
+        return callback(false);
+    }
+}
+
 function RetrieveVehicleData_Location(callback) {
+    if (VWCarNet_GetLocation === false){
+        return callback(true);
+    }
     var responseData;
     var locationData;
     var myCarNet_locationStatus;
@@ -698,16 +828,16 @@ function RetrieveVehicleData_Location(callback) {
                     adapter.setState(state_l_address, {val: 'MOVING', ack: true});
                 }
             } else {
-            adapter.setState(state_l_lat, {val: null, ack: true});
-            adapter.setState(state_l_lng, {val: null, ack: true});
-            adapter.setState(state_l_parkingTime, {val: null, ack: true});
-            adapter.setState(state_l_address, {val: 'MOVING', ack: true});
+                adapter.setState(state_l_lat, {val: null, ack: true});
+                adapter.setState(state_l_lng, {val: null, ack: true});
+                adapter.setState(state_l_parkingTime, {val: null, ack: true});
+                adapter.setState(state_l_address, {val: 'MOVING', ack: true});
             }
             return callback(true);
-            });
+        });
     } catch (err) {
-    adapter.log.error('Fehler bei der Auswertung im location Modul');
-    return callback(false);
+        adapter.log.error('Fehler bei der Auswertung im location Modul');
+        return callback(false);
     }
 }
 
@@ -737,124 +867,3 @@ function requestGeocoding(lat, lng) {
     }
 }
 
-function RetrieveVehicleData_eManager(callback){
-    var responseData;
-    var myCarNet_eManager;
-    if (VWCarNet_Connected===false){return callback(false)};
-    if (VWCarNet_GetEManager===false){
-        adapter.setState(state_e_batteryPercentage, {val: null, ack: true});
-        adapter.setState(state_e_chargingState, {val: null, ack: true});
-        adapter.setState(state_e_chargingRemaining, {val: null, ack: true});
-        adapter.setState(state_e_pluginState, {val: null, ack: true});
-        adapter.setState(state_e_extPowerSupplyState, {val: null, ack: true});
-        adapter.setState(state_e_minBatteryChargingLimit, {val: null, ack: true});
-        return callback(true)
-    };
-    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/VW/DE/vehicles/' + myVIN + '/charger';
-    try {
-        request.get({url: myUrl, headers: myAuthHeaders}, function (error, response, result){
-        //adapter.log.info(result);
-
-            responseData = JSON.parse(result);
-
-            myCarNet_eManager = responseData.charger.settings;
-            adapter.setState(state_e_maxChargeCurrent, {val: myCarNet_eManager.maxChargeCurrent.content, ack: true});
-            //adapter.log.info('eManager/maxChargeCurrent: ' + myCarNet_eManager.maxChargeCurrent.content);
-
-            myCarNet_eManager = responseData.charger.status.chargingStatusData;
-            //adapter.log.info('eManager/chargingMode: ' + myCarNet_eManager.chargingMode.content);
-            //adapter.log.info('eManager/chargingStateErrorCode: ' + myCarNet_eManager.chargingStateErrorCode.content);
-            //adapter.log.info('eManager/chargingReason: ' + myCarNet_eManager.chargingReason.content);
-            adapter.setState(state_e_extPowerSupplyState, {val: myCarNet_eManager.externalPowerSupplyState.content.toUpperCase(), ack: true});
-            //adapter.log.info('eManager/energyFlow: ' + myCarNet_eManager.energyFlow.content);
-            adapter.setState(state_e_chargingState, {val: myCarNet_eManager.chargingState.content.toUpperCase(), ack: true});
-
-            myCarNet_eManager = responseData.charger.status.cruisingRangeStatusData;
-            // adapter.log.info(myCarNet_eManager.engineTypeFirstEngine.content);
-            // adapter.log.info(myCarNet_eManager.primaryEngineRange.content);
-            // adapter.log.info(myCarNet_eManager.hybridRange.content);
-            // adapter.log.info(myCarNet_eManager.engineTypeSecondEngine.content);
-            // adapter.log.info(myCarNet_eManager.secondaryEngineRange.content);
-
-            myCarNet_eManager = responseData.charger.status.ledStatusData;
-            //adapter.log.info('eManager/ledColor: ' + myCarNet_eManager.ledColor.content);
-            //adapter.log.info('eManager/ledState: ' + myCarNet_eManager.ledState.content);
-
-            myCarNet_eManager = responseData.charger.status.batteryStatusData;
-
-            adapter.setState(state_e_batteryPercentage, {val: myCarNet_eManager.stateOfCharge.content, ack: true});
-            var myRemainingTime = myCarNet_eManager.remainingChargingTime.content;
-            var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
-            if (myRemainingTime <0 ){myRemainingTimeStr = null}
-            adapter.setState(state_e_chargingRemaining, {val: myRemainingTimeStr, ack: true});
-            adapter.setState(state_e_minBatteryChargingLimit, {val: myCarNet_eManager.remainingChargingTimeTargetSOC.content, ack: true});
-
-            myCarNet_eManager = responseData.charger.status.plugStatusData;
-            adapter.setState(state_e_pluginState, {val: myCarNet_eManager.plugState.content.toUpperCase(), ack: true});
-            //adapter.log.info('eManager/lockState: ' + myCarNet_eManager.lockState.content);
-
-        return callback(true);
-    });
-    } catch (err) {
-        adapter.log.error('Fehler bei der Auswertung im eManager Modul');
-        return callback(false);
-    }
-}
-
-function RetrieveVehicleData_Climater(callback){
-    var responseData;
-    var myCarNet_Climater;
-    var myTemperatureCelsius = 0;
-    if (VWCarNet_Connected===false){return callback(false)};
-    if (VWCarNet_GetClimater===false){
-        adapter.setState(state_c_climatisationWithoutHVPower, {val: null, ack: true});
-        adapter.setState(state_c_targetTemperature, {val: null, ack: true});
-
-        return callback(true)
-    };
-    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/VW/DE/vehicles/' + myVIN + '/climater';
-    request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData){
-        //adapter.log.info(JSON.stringify(responseData));
-
-        myCarNet_Climater = responseData.climater.settings;
-
-        if (isNaN(myCarNet_Climater.targetTemperature.content)){
-            myTemperatureCelsius = 999
-        } else {
-            myTemperatureCelsius = parseFloat((myCarNet_Climater.targetTemperature.content)/10) - 273
-        }
-        adapter.setState(state_c_targetTemperature, {val: myTemperatureCelsius.toFixed(1), ack: true});
-        myTemperatureCelsius = null
-        adapter.setState(state_c_climatisationWithoutHVPower, {val: myCarNet_Climater.climatisationWithoutHVpower.content, ack: true});
-        //adapter.log.info(myCarNet_Climater.heaterSource.content);
-
-        var myCarNet_Climater = responseData.climater.status.climatisationStatusData;
-        adapter.setState(state_c_climatisationState, {val: myCarNet_Climater.climatisationState.content.toUpperCase(), ack: true});
-        //adapter.log.info(myCarNet_Climater.climatisationStateErrorCode.content);
-        var myRemainingTime = myCarNet_Climater.remainingClimatisationTime.content
-        var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
-        if (myRemainingTime <0 ){myRemainingTimeStr = null}
-        adapter.setState(state_c_remainingClimatisationTime, {val: myRemainingTimeStr, ack: true});
-        //adapter.log.info(myCarNet_Climater.climatisationReason.content);
-
-        var myCarNet_Climater = responseData.climater.status.windowHeatingStatusData;
-        //adapter.log.info(myCarNet_Climater.windowHeatingStateFront.content);
-        //adapter.log.info(myCarNet_Climater.windowHeatingStateRear.content);
-        //adapter.log.info(myCarNet_Climater.windowHeatingErrorCode.content);
-
-        var myCarNet_Climater = responseData.climater.status.temperatureStatusData;
-
-        if (isNaN(myCarNet_Climater.outdoorTemperature.content)){
-            myTemperatureCelsius = 999
-        } else {
-            myTemperatureCelsius = parseFloat((myCarNet_Climater.outdoorTemperature.content)/10) - 273
-        }
-        adapter.setState(state_c_outdoorTemperature, {val: myTemperatureCelsius.toFixed(1), ack: true});
-        myTemperatureCelsius = null
-
-        var myCarNet_Climater = responseData.climater.status.vehicleParkingClockStatusData;
-        //adapter.log.info(myCarNet_Climater.vehicleParkingClock.content);
-
-        return callback(true);
-    });
-}
