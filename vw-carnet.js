@@ -720,7 +720,12 @@ function RetrieveVehicleData_Climater(callback){
         myTemperatureCelsius = null
 
         var myCarNet_Climater = responseData.climater.status.vehicleParkingClockStatusData;
-        adapter.setState(state_c_vehicleParkingClock, {val: myCarNet_Climater.vehicleParkingClock.content, ack: true});
+        if (myCarNet_Climater !== undefined){
+            adapter.setState(state_c_vehicleParkingClock, {val: myCarNet_Climater.vehicleParkingClock.content, ack: true});
+        } else {
+            adapter.setState(state_c_vehicleParkingClock, {val: 'MOVING', ack: true});
+        }
+        //adapter.setState(state_c_vehicleParkingClock, {val: myCarNet_Climater.vehicleParkingClock.content, ack: true});
 
         return callback(true);
     });
