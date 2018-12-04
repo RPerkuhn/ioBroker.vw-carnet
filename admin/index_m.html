@@ -1,27 +1,31 @@
 <html>
 <head>
-    <meta charset="UTF-8">
-    <!-- Materialze style -->
-    <link rel="stylesheet" type="text/css" href="../../css/adapter.css"/>
-    <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
+<!-- these 4 files always have to be included -->
+<link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
+<link rel="stylesheet" type="text/css" href="../../css/adapter.css"/>
 
-    <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
-    <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+<script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="../../socket.io/socket.io.js"></script>
 
-    <script type="text/javascript" src="../../js/translate.js"></script>
-    <script type="text/javascript" src="../../lib/js/materialize.js"></script>
-    <script type="text/javascript" src="../../js/adapter-settings.js"></script>
-    <script type="text/javascript" src="words.js"></script>
-
-    <script type="text/javascript">
-		
-	const my_key = 'Zgfr56gFe87jJON';
-	
+<!-- these files always have to be included -->
+<script type="text/javascript" src="../../js/translate.js"></script>
+<script type="text/javascript" src="../../lib/js/materialize.js"></script>
+<script type="text/javascript" src="../../js/adapter-settings.js"></script>
+<script type="text/javascript" src="words.js"></script>
+ <style>
+  .m .col .select-wrapper+label {
+   top: -26px;  
+  }
+     .m span{
+         font-size: 0.9em;
+     }
+ </style>
+<!-- you have to define 2 functions in the global scope: -->
+<script type="text/javascript">
     // the function loadSettings has to exist ...
     function load(settings, onChange) {
         // example: select elements with id=key and class=value and insert value
-		if (!settings) return;
-		settings.password = decrypt(my_key, settings.password);
+       if (!settings) return;
         $('.value').each(function () {            
             var $key = $(this);
             var id = $key.attr('id');
@@ -30,10 +34,9 @@
                 $key.prop('checked', settings[id]).on('change', function() {
                     onChange();
                 });
-            } else {	
+            } else {
 		        // do not call onChange direct, because onChange could expect some arguments
                 $key.val(settings[id]).on('change', function() {
-				// my_content(settings[id]).on('change', function() {
                     onChange();
                 }).on('keyup', function() {
                     onChange();
@@ -46,43 +49,20 @@
 		
     // ... and the function save has to exist.
     // you have to make sure the callback is called with the settings object as first param!
-		
-	function save(callback) {
+    function save(callback) {
         // example: select elements with class=value and build settings object
         var obj = {};
-		let my_content = '';
         $('.value').each(function () {
             var $this = $(this);
             if ($this.attr('type') === 'checkbox') {
                 obj[$this.attr('id')] = $this.prop('checked');
             } else {
-				my_content = $this.val();
-				//my_content = 'test';
-				if ($this.attr('id') === 'password') {
-					//my_content = 'test'; }
-					my_content = encrypt(my_key, my_content); }
-                obj[$this.attr('id')] = my_content;
+                obj[$this.attr('id')] = $this.val();
             }
         });
         callback(obj);
     }
-	
-		
-	function encrypt(key, value) {
-		var result = '';
-		for(var i = 0; i < value.length; i++) {
-			result += String.fromCharCode(key[i % key.length].charCodeAt(0) ^ value.charCodeAt(i));
-		}
-		return result;
-	}
 
-	function decrypt(key, value) {
-		var result = '';
-		for(var i = 0; i < value.length; i++) {
-			result += String.fromCharCode(key[i % key.length].charCodeAt(0) ^ value.charCodeAt(i));
-		}
-		return result;
-	}
 		
 	</script>
 </head>
@@ -103,7 +83,7 @@
         </div>
 		<div class="row">
             <div class="input-field col s12 m6">
-                <input class="value" id="password" type="password"/>
+                <input class="value" id="password" type="text"/>
                 <label for="password" class="translate">Password</label>
                 <span class="translate">enter your VW Car-Net password here</span>
             </div>

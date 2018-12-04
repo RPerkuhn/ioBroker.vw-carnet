@@ -1,3 +1,4 @@
+//version 0.1.0
 'use strict';
 const utils =    require(__dirname + '/lib/utils'); // Get common adapter utils
 const adapter = new utils.Adapter('vw-carnet');
@@ -489,7 +490,8 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
     var myUrl = 'https://msg.volkswagen.de/fs-car/core/auth/v1/VW/DE/token';
     var myFormdata = {'grant_type': 'password',
         'username': adapter.config.email,
-        'password': decrypt(my_key, adapter.config.password)};
+        'password': adapter.config.password};
+        //'password': decrypt(my_key, adapter.config.password)};
     request.post({url: myUrl, form: myFormdata, headers: myHeaders, json: true}, function(error, response, responseData){
         //adapter.log.info(response.statusCode);
         switch(response.statusCode){

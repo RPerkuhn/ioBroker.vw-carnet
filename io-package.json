@@ -1,8 +1,12 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.0.8",
+        "version": "0.1.0",
         "news": {
+		"0.1.0": {
+                "en": "first alpha release",
+                "de": "Erste testbare Alpha-Version"
+		},
 		"0.0.x": {
                 "en": "developement versions",
                 "de": "Entwicklungsstand-Versionen"
