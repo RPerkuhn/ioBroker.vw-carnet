@@ -618,7 +618,9 @@ function RetrieveVehicleData_Status(callback){
                             break;
                         case '0x030103FFFF.0x0301030001': //parking_brake_active
                             //adapter.log.info('ParkingBrake: ' + myReceivedDataKey.value);
-                            adapter.setState(state_s_parkingBrake, {val: myReceivedDataKey.value != 0, ack: true});
+                            var myParkingBrake = false;
+                            if (myReceivedDataKey.value = '0'){myParkingBrake = true};
+                            adapter.setState(state_s_parkingBrake, {val: myParkingBrake, ack: true});
                             break;
                         case '0x030103FFFF.0x030103000A': //fuel_level_ok
                             adapter.setState(state_s_fuelLevel, {val: myReceivedDataKey.value, ack: true});
