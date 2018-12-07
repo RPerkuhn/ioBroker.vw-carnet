@@ -51,12 +51,18 @@ adapter.on('message', function (obj) {
         if (obj.command === 'update') {
             VWCarNetReadData() // sendto command 'update' received
         }
+        if (obj.command === 'CarSendData') {
+            VWCarNetForceCarToSendData() // sendto command 'update' received
+        }
     }
 });
 
 adapter.on('ready', function () {
     var myTmp;
     myGoogleMapsAPIKey = adapter.config.GoogleAPIKey;
+    //VWCarNet_GetClimater = adapter.config.adapterGetClimater;
+    //VWCarNet_GetEManager = adapter.config.adapterGetEManager;
+    //VWCarNet_GetLocation = adapter.config.adapterGetLocation;
     CreateStates_Status(function(myTmp){});
     CreateStates_climater(function(myTmp){});
     CreateStates_eManager(function(myTmp){});
@@ -484,6 +490,21 @@ function VWCarNetReadData(){
     });
 }
 
+function VWCarNetForceCarToSendData(){
+    var mySuccefulUpdate = true
+    CarNetLogon(function(myTmp){
+        VWCarNet_CredentialsAreValid=myTmp;
+        VWCarNet_Connected = VWCarNet_CredentialsAreValid && VWCarNet_VINIsValid;
+        //adapter.log.info(VWCarNet_CredentialsAreValid);
+        if (VWCarNet_Connected){
+            requestCarSendData2CarNet(function(myTmp){
+                //adapter.log.info(myTmp);
+                // mySuccefulUpdate = mySuccefulUpdate && myTmp
+             });
+        }
+    });
+}
+
 function CarNetLogon(callback) { //retrieve Token for the respective user
     var responseData;
     var myConnected=false;
@@ -875,4 +896,23 @@ function requestGeocoding(lat, lng) {
         adapter.setState(state_l_address, {val: null, ack: true});
     }
 }
-
+function requestCarSendData2CarNet(callback){
+    //Requesting car to send it's data to the server
+    var responseData;
+    var myCarNet_requestID
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/VW/DE/vehicles/' + myVIN + '/requests';
+    try {
+        request.post({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result) {
+            //adapter.log.info(response.statusCode);
+            if (response.statusCode===202){
+                adapter.log.info('RequestID: ' + result.CurrentVehicleDataResponse.requestId);
+                return callback(true);
+            } else {
+                return callback(false);
+            }
+        });
+    } catch (err){
+        //adapter.log.error('Fehler bei Post-Befehl')
+        return callback(false);
+    }
+}
