@@ -1,8 +1,12 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "news": {
+		"0.1.1": {
+                "en": "checkboxes to enable/disable retrieve of climater-, eManager- and locationdata",
+                "de": "Checkboxen zum ein-/ausschalten von Klimaanlagen-, eManager- und Ortungsdaten"
+		},
 		"0.1.0": {
                 "en": "first alpha release",
                 "de": "Erste testbare Alpha-Version"
