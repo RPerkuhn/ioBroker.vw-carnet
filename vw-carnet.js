@@ -1,4 +1,4 @@
-//version 0.1.1
+//version 0.1.2
 'use strict';
 const utils =    require(__dirname + '/lib/utils'); // Get common adapter utils
 const adapter = new utils.Adapter('vw-carnet');
@@ -12,6 +12,8 @@ var myLastCarNetAnswer = '';
 var VWCarNet_GetClimater = true;
 var VWCarNet_GetEManager = true;
 var VWCarNet_GetLocation = true;
+var myCarNetDoors={'doors':'dummy'};
+var myCarNetWindows={'windows':'dummy'};
 
 var myToken = '';
 var myVIN = '';
@@ -111,6 +113,8 @@ const state_s_fuelRange = "Vehicle.status.fuelRange";
 const state_s_batteryLevel = "Vehicle.status.batteryLevel";
 const state_s_batteryRange = "Vehicle.status.batteryRange";
 const channel_dw_DoorsAndWindows = "Vehicle.status.DoorsAndWindows";
+const state_dw_Doors = "Vehicle.status.DoorsAndWindows.doorsJSON";
+const state_dw_Windows = "Vehicle.status.DoorsAndWindows.windowsJSON";
 
 //##############################################################################################################
 // declaring names for states for climater data
@@ -172,27 +176,22 @@ function CreateStates_Status(callback){
     });
     adapter.setObject(state_s_serviceInspectionDistance, {
         type: 'state',
-        common: {name: 'Km bis zur nächsten Inspektion', type: 'string', unit: 'km', read: true, write: false, role: 'value'},
+        common: {name: 'Km bis zur nächsten Inspektion', type: 'number', unit: 'km', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_serviceInspectionTime, {
         type: 'state',
-        common: {name: 'Zeit bis zur nächsten Inspektion', type: 'string', unit: 'Tag(e)', read: true, write: false, role: 'value'},
+        common: {name: 'Zeit bis zur nächsten Inspektion', type: 'number', unit: 'Tag(e)', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_oilInspectionDistance, {
         type: 'state',
-        common: {name: 'Km bis zum nächsten Ölwechsel-Service', type: 'string', unit: 'km', read: true, write: false, role: 'value'},
+        common: {name: 'Km bis zum nächsten Ölwechsel-Service', type: 'number', unit: 'km', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_oilInspectionTime, {
         type: 'state',
-        common: {name: 'Km bis zum nächsten Ölwechsel-Service', type: 'string', unit: 'Tag(e)', read: true, write: false, role: 'value'},
-        native: {}
-    });
-    adapter.setObject(channel_dw_DoorsAndWindows, {
-        type: 'channel',
-        common: {name: "Türen/Fenster"},
+        common: {name: 'Km bis zum nächsten Ölwechsel-Service', type: 'number', unit: 'Tag(e)', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_parkingLights, {
@@ -200,11 +199,11 @@ function CreateStates_Status(callback){
         common: {name: "Parklichlichter", type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_s_parkingBrake, {
-        type: 'state',
-        common: {name: "Park-/Handbremse", type: "string", read: true, write: false, role: 'value'},
-        native: {}
-    });
+    // adapter.setObject(state_s_parkingBrake, {
+    //     type: 'state',
+    //     common: {name: "Park-/Handbremse", type: "string", read: true, write: false, role: 'value'},
+    //     native: {}
+    // });
     adapter.setObject(state_s_carCentralLock, {
         type: 'state',
         common: {name: "Zentralverriegelung", type: "string", read: true, write: false, role: 'value'},
@@ -212,22 +211,37 @@ function CreateStates_Status(callback){
     });
     adapter.setObject(state_s_fuelLevel, {
         type: 'state',
-        common: {name: "Füllstand Kraftstoff", type: "string", unit: "%", read: true, write: false, role: 'value'},
+        common: {name: "Füllstand Kraftstoff", type: "number", unit: "%", read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_fuelRange , {
         type: 'state',
-        common: {name: "Reichweite Kraftstoff", type: "string", unit: "km", read: true, write: false, role: 'value'},
+        common: {name: "Reichweite Kraftstoff", type: "number", unit: "km", read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_batteryLevel, {
         type: 'state',
-        common: {name: "Füllstand Batterie", type: "string", unit: "%", read: true, write: false, role: 'value'},
+        common: {name: "Füllstand Batterie", type: "number", unit: "%", read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_batteryRange, {
         type: 'state',
-        common: {name: "Reichweite Batterie", type: "string", unit: "km", read: true, write: false, role: 'value'},
+        common: {name: "Reichweite Batterie", type: "number", unit: "km", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(channel_dw_DoorsAndWindows, {
+        type: 'channel',
+        common: {name: "Türen/Fenster"},
+        native: {}
+    });
+    adapter.setObject(state_dw_Doors, {
+        type: 'state',
+        common: {name: "JSON Objekt Status Türen", type: "string", read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_dw_Windows, {
+        type: 'state',
+        common: {name: "JSON Objekt Status Fenster", type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
     return callback(true);
@@ -399,6 +413,19 @@ function CreateStates_location(callback){
 function main() {
     CarNetLogon(function(myTmp){
         VWCarNet_CredentialsAreValid=myTmp;
+        myCarNetDoors['FL']={'closed':false,'locked':true,'safe':false};
+        myCarNetDoors['RL']={'closed':false,'locked':true,'safe':false};
+        myCarNetDoors['FR']={'closed':false,'locked':true,'safe':false};
+        myCarNetDoors['RR']={'closed':false,'locked':true,'safe':false};
+        myCarNetDoors['hood']={'closed':false};
+        myCarNetDoors['rear']={'closed':false,'locked':false,};
+        delete myCarNetDoors['doors'];
+        myCarNetWindows['FL']={'closed':false, 'level':0};
+        myCarNetWindows['RL']={'closed':false, 'level':0};
+        myCarNetWindows['FR']={'closed':false, 'level':0};
+        myCarNetWindows['RR']={'closed':false, 'level':0};
+        myCarNetWindows['roof']={'closed':false, 'level':0};
+        delete myCarNetWindows['windows'];
         //adapter.log.info('Credentials valid?: ' +  VWCarNet_CredentialsAreValid);
         if (VWCarNet_CredentialsAreValid){
             RetrieveVehicles(function(myTmp){
@@ -637,12 +664,12 @@ function RetrieveVehicleData_Status(callback){
                             myParkingLight = myReceivedDataKey.value
 
                             break;
-                        case '0x030103FFFF.0x0301030001': //parking_brake_active
-                            //adapter.log.info('ParkingBrake: ' + myReceivedDataKey.value);
-                            var myParkingBrake = false;
-                            if (myReceivedDataKey.value = '0'){myParkingBrake = true};
-                            adapter.setState(state_s_parkingBrake, {val: myParkingBrake, ack: true});
-                            break;
+                        // case '0x030103FFFF.0x0301030001': //parking_brake_inactive
+                        //     //adapter.log.info('ParkingBrake: ' + myReceivedDataKey.value);
+                        //     var myParkingBrake = false;
+                        //     if (myReceivedDataKey.value = '0'){myParkingBrake = true};
+                        //     adapter.setState(state_s_parkingBrake, {val: myParkingBrake, ack: true});
+                        //     break;
                         case '0x030103FFFF.0x030103000A': //fuel_level_ok
                             adapter.setState(state_s_fuelLevel, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('FuelLevel: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
@@ -663,17 +690,114 @@ function RetrieveVehicleData_Status(callback){
                             adapter.setState(state_s_hybridRange, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('HybridRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
-                        case '1':
-
-
+                        //door1 - front/left
+                        case '0x030104FFFF.0x0301040001':
+                            myCarNetDoors.FL.locked = myReceivedDataKey.value === '2'
+                            break;
+                        case '0x030104FFFF.0x0301040002':
+                            myCarNetDoors.FL.closed = myReceivedDataKey.value === '3'
+                            break;
+                        case '0x030104FFFF.0x0301040003':
+                            myCarNetDoors.FL.safe = myReceivedDataKey.value === '2'
+                            break;
+                        //door2
+                        case '0x030104FFFF.0x0301040004':
+                            myCarNetDoors.RL.locked = myReceivedDataKey.value === '2'
+                            break;
+                        case '0x030104FFFF.0x0301040005':
+                            myCarNetDoors.RL.closed = myReceivedDataKey.value === '3'
+                            break;
+                        case '0x030104FFFF.0x0301040006':
+                            myCarNetDoors.RL.safe = myReceivedDataKey.value === '2'
+                            break;
+                        //door3 - front/right
+                        case '0x030104FFFF.0x0301040007':
+                            myCarNetDoors.FR.locked = myReceivedDataKey.value === '2'
+                            break;
+                        case '0x030104FFFF.0x0301040008':
+                            myCarNetDoors.FR.closed = myReceivedDataKey.value === '3'
+                            break;
+                        case '0x030104FFFF.0x0301040009':
+                            myCarNetDoors.FR.safe = myReceivedDataKey.value === '2'
+                            break;
+                        //door4
+                        case '0x030104FFFF.0x030104000A':
+                            myCarNetDoors.RR.locked = myReceivedDataKey.value === '2'
+                            break;
+                        case '0x030104FFFF.0x030104000B':
+                            myCarNetDoors.RR.closed = myReceivedDataKey.value === '3'
+                            break;
+                        case '0x030104FFFF.0x030104000C':
+                            myCarNetDoors.RR.safe = myReceivedDataKey.value === '2'
+                            break;
+                        //door5 rear
+                        case '0x030104FFFF.0x030104000D':
+                            myCarNetDoors.rear.locked = myReceivedDataKey.value === '2'
+                            break;
+                        case '0x030104FFFF.0x030104000E':
+                            myCarNetDoors.rear.closed = myReceivedDataKey.value === '3'
+                            break;
+                        case '0x030104FFFF.0x030104000F':
+                            //myCarNetDoors.RR.safe = myReceivedDataKey.value === '2'
+                            break;
+                        //door6 hood
+                        case '0x030104FFFF.0x0301040010':
+                            //myCarNetDoors.RR.locked = myReceivedDataKey.value === '2'
+                            break;
+                        case '0x030104FFFF.0x0301040011':
+                            myCarNetDoors.hood.closed = myReceivedDataKey.value === '3'
+                            break;
+                        case '0x030104FFFF.0x0301040012':
+                            //myCarNetDoors.RR.safe = myReceivedDataKey.value === '2'
+                            break;
+                        //window1 - front/left
+                        case '0x030105FFFF.0x0301050001':
+                            myCarNetWindows.FL.closed = myReceivedDataKey.value === '3'
+                            break;
+                        case '0x030105FFFF.0x0301050002':
+                            myCarNetWindows.FL.level = myReceivedDataKey.value
+                            break;
+                        //window2 - rear/left
+                        case '0x030105FFFF.0x0301050003':
+                            myCarNetWindows.RL.closed = myReceivedDataKey.value === '3'
+                            break;
+                        case '0x030105FFFF.0x0301050004':
+                            myCarNetWindows.RL.level = myReceivedDataKey.value
+                            break;
+                        //window3 - front/right
+                        case '0x030105FFFF.0x0301050005':
+                            myCarNetWindows.FR.closed = myReceivedDataKey.value === '3'
+                            break;
+                        case '0x030105FFFF.0x0301050006':
+                            myCarNetWindows.FR.level = myReceivedDataKey.value
+                            break;
+                        //window4 - rear/right
+                        case '0x030105FFFF.0x0301050007':
+                            myCarNetWindows.RR.closed = myReceivedDataKey.value === '3'
+                            break;
+                        case '0x030105FFFF.0x0301050008':
+                            myCarNetWindows.RR.level = myReceivedDataKey.value
+                            break;
+                        case '0x030105FFFF.0x030105000B':
+                            myCarNetWindows.roof.closed = myReceivedDataKey.value === '3'
+                            break;
+                        case '0x030105FFFF.0x030105000C':
+                            myCarNetWindows.roof.level = myReceivedDataKey.value
                             break;
                         case '2':
+
 
                             break;
                         default: //thish should not be possible
                     }
                 }
             }
+            adapter.setState(state_dw_Doors, {val: JSON.stringify(myCarNetDoors), ack: true});
+            //adapter.log.info(JSON.stringify(myCarNetDoors));
+            adapter.setState(state_dw_Windows, {val: JSON.stringify(myCarNetWindows), ack: true});
+            //adapter.log.info(JSON.stringify(myCarNetWindows));
+            adapter.setState(state_s_carCentralLock, {val: myCarNetDoors.FL.safe && myCarNetDoors.FR.safe, ack: true});
+
             switch (myParkingLight) {
                 case '3':
                     adapter.setState(state_s_parkingLights, {val: 'left=on, right=off', ack: true});

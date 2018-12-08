@@ -5,7 +5,12 @@ Adapter for connecting to Volkswagen Car-Net
 
 
 ## Changelog
-
+### 0.1.2 (2018-12-08)
+* (RPerkuhn) integration of door and window states
+### 0.1.1 (2018-12-07)
+* (RPerkuhn) checkboxes to enable/disable retrieve of climater-, eManager- and locationdata
+### 0.1.0 (2018-12-03)
+* (RPerkuhn) first alpha release
 ### 0.0.x (2018-11-09)
 * (RPerkuhn) initial setup of adapter and lab-versions until 0.1.x
 

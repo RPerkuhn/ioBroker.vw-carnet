@@ -1,8 +1,12 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.1.1",
+        "version": "0.1.2",
         "news": {
+		"0.1.2": {
+                "en": "integration of door and window states",
+                "de": "Integration der Tür- und Fensterstati"
+		},
 		"0.1.1": {
                 "en": "checkboxes to enable/disable retrieve of climater-, eManager- and locationdata",
                 "de": "Checkboxen zum ein-/ausschalten von Klimaanlagen-, eManager- und Ortungsdaten"
