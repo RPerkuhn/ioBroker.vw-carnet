@@ -1,0 +1,9 @@
+{
+  "enter your VW Car-Net username here": "enter your VW Car-Net username here",
+  "enter your VW Car-Net password here": "enter your VW Car-Net password here",
+  "enter your VIN here (optional)": "enter your VIN here (optional)",
+  "Retrieve eManager information:": "Retrieve eManager information:",
+  "Retrieve climater information:": "Retrieve climater information:",
+  "Retrieve location information:": "Retrieve location information:",
+  "enter your Google API Key here (optional for getting more location addressinfo)": "enter your Google API Key here (optional for getting more location addressinfo)"
+}

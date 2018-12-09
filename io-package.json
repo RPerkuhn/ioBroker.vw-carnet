@@ -55,9 +55,9 @@
         "messagebox": true
     },
     "native": {
-        "apikey": "",
-        "sender": "",
-        "receipient": ""
+        "email": "",
+        "password": "",
+        "GoogleAPIKey": ""
     },
     "objects": [],
     "instanceObjects": [

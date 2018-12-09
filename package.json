@@ -1,15 +1,15 @@
 {
   "name": "iobroker.vw-carnet",
   "version": "0.1.2",
-  "description": "ioBroker VW-CarNet Adapter",
+  "description": "ioBroker Volkswagen Car-Net adapter",
   "author": {
     "name": "Ralf Perkuhn",
-    "email": "ralf.perkuhn@online.de"
+    "email": "rperkuhn@online.de"
   },
   "contributors": [
     {
       "name": "RPerkuhn",
-      "email": "ralf.perkuhn@online.de"
+      "email": "rperkuhn@online.de"
     }
   ],
   "homepage": "https://github.com/RPerkuhn/ioBroker.vw-carnet",

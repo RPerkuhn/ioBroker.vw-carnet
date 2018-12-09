@@ -1,0 +1,9 @@
+{
+  "enter your VW Car-Net username here": "VW Car-Net Benutzername (eMail)",
+  "enter your VW Car-Net password here": "VW Car-Net Kennwort",
+  "enter your VIN here (optional)": "Ggf. Fahrgestellnummer (VIO) (optional)",
+  "Retrieve eManager information:": "Abfragen von eManager Informationen:",
+  "Retrieve climater information:": "Abfragen von Lüftung/Klimaanlage Informationen:",
+  "Retrieve location information:": "Abfragen von Standort Informationen:",
+  "enter your Google API Key here (optional for getting more location addressinfo)": "Google API Key (optional zum Ermittlen der Adresse aus den Geodaten)"
+}
