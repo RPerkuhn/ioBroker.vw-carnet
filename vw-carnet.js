@@ -1,4 +1,4 @@
-//version 0.1.3
+//version 0.1.2
 'use strict';
 const utils =    require(__dirname + '/lib/utils'); // Get common adapter utils
 const adapter = new utils.Adapter('vw-carnet');
@@ -72,7 +72,7 @@ adapter.on('message', function (obj) {
 
 adapter.on('ready', function () {
     var myTmp;
-    adapter.log.info(ioBroker_Language)
+    //adapter.log.info(ioBroker_Language)
     CreateStates_common(function(myTmp){});
     myGoogleMapsAPIKey = adapter.config.GoogleAPIKey;
     VWCarNet_GetClimater = adapter.config.adapterGetClimater;
