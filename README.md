@@ -5,6 +5,8 @@ Adapter for connecting to Volkswagen Car-Net
 
 
 ## Changelog
+### 0.1.3 (2018-12-10)
+* (RPerkuhn) implementation of dynamic display of state names in English or German depending on ioBroker systemlanguage
 ### 0.1.2 (2018-12-08)
 * (RPerkuhn) integration of door and window states
 ### 0.1.1 (2018-12-07)
