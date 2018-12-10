@@ -1,9 +1,20 @@
-//version 0.1.2
+//version 0.1.3
 'use strict';
 const utils =    require(__dirname + '/lib/utils'); // Get common adapter utils
 const adapter = new utils.Adapter('vw-carnet');
 
 const my_key = 'Zgfr56gFe87jJOM'
+
+//var ioBroker_Settings
+var ioBroker_Language = 'en'
+
+adapter.getForeignObject('system.config', function(err, ioBroker_Settings) {
+    if (err) {
+
+    } else {
+        ioBroker_Language = ioBroker_Settings.common.language;
+    }
+});
 
 var VWCarNet_CredentialsAreValid = false;
 var VWCarNet_VINIsValid = false;
@@ -61,6 +72,8 @@ adapter.on('message', function (obj) {
 
 adapter.on('ready', function () {
     var myTmp;
+    adapter.log.info(ioBroker_Language)
+    CreateStates_common(function(myTmp){});
     myGoogleMapsAPIKey = adapter.config.GoogleAPIKey;
     VWCarNet_GetClimater = adapter.config.adapterGetClimater;
     VWCarNet_GetEManager = adapter.config.adapterGetEManager;
@@ -74,174 +87,173 @@ adapter.on('ready', function () {
 
 //##############################################################################################################
 // declaring names for states for Vehicle data
-const channel_v = "Vehicle";
-const state_v_name = "Vehicle.name";
-const state_v_VIN = "Vehicle.VIN";
-// creating channel/states for Vehicle Data
-adapter.setObject(channel_v, {
-    type: 'object',
-    common: {name: 'Fahrzeug'},
-    native: {}
-});
-adapter.setObject(state_v_name, {
-    type: 'state',
-    common: {name: 'Name des Fahrzeugs in VW Car-Net', type: 'string', read: true, write: false, role: 'value'},
-    native: {}
-});
-adapter.setObject(state_v_VIN, {
-    type: 'state',
-    common: {name: 'Fahrgestellnummer des Fahrzeugs', type: 'string', read: true, write: false, role: 'value'},
-    native: {}
-});
-
+const channel_v = {'label':'Vehicle', 'en':'selected vehicle', 'de':'Fahrzeug'};
+const state_v_name = {'label':'Vehicle.name', 'en':'name in VW Car-Net', 'de':'Name des Fahrzeuges in VW Car-Net'};
+const state_v_VIN = {'label':'Vehicle.VIN', 'en':'vehicle identification number', 'de':'Fahrgestellnummer'};
 
 //##############################################################################################################
 // declaring names for states for status data
-const channel_s = "Vehicle.status";
-const state_s_lastConnectionTimeStamp   = "Vehicle.status.lastConnectionTimeStamp";
-const state_s_distanceCovered     = "Vehicle.status.distanceCovered";
-const state_s_hybridRange  = "Vehicle.status.hybridRange";
-const state_s_serviceInspectionDistance= "Vehicle.status.serviceInspectionDistance";
-const state_s_serviceInspectionTime= "Vehicle.status.serviceInspectionTime";
-const state_s_oilInspectionDistance= "Vehicle.status.oilInspectionDistance";
-const state_s_oilInspectionTime= "Vehicle.status.oilInspectionTime";
-const state_s_parkingLights = "Vehicle.status.ParkingLights";
-const state_s_parkingBrake = "Vehicle.status.parkingBrake";
-const state_s_carCentralLock = "Vehicle.status.carCentralLock";
-const state_s_fuelLevel = "Vehicle.status.fuelLevel";
-const state_s_fuelRange = "Vehicle.status.fuelRange";
-const state_s_batteryLevel = "Vehicle.status.batteryLevel";
-const state_s_batteryRange = "Vehicle.status.batteryRange";
-const channel_dw_DoorsAndWindows = "Vehicle.status.DoorsAndWindows";
-const state_dw_Doors = "Vehicle.status.DoorsAndWindows.doorsJSON";
-const state_dw_Windows = "Vehicle.status.DoorsAndWindows.windowsJSON";
+const channel_s = {'label':'Vehicle.status', 'en': 'status of vehicle', 'de': 'Fahrzeugstatus'};
+const state_s_lastConnectionTimeStamp   = {'label':'Vehicle.status.lastConnectionTimeStamp', 'en': 'last connection timestamp', 'de': 'Zeitpunkt der letzten Verbindung zum Fahrzeug'};
+const state_s_distanceCovered     = {'label':'Vehicle.status.distanceCovered', 'en': 'distance covered', 'de': 'Kilometerstand'};
+const state_s_hybridRange  = {'label':'Vehicle.status.hybridRange', 'en': 'total range', 'de': 'Gesamtreichweite des Fahrzeugs'};
+const state_s_serviceInspectionDistance= {'label':'Vehicle.status.serviceInspectionDistance', 'en': 'distance until next service inspection', 'de': 'km bis zur nächsten Inspektion'};
+const state_s_serviceInspectionTime= {'label':'Vehicle.status.serviceInspectionTime', 'en': 'time until next service inspecton', 'de': 'Zeit bis zur nächsten Inspektion', 'unit_de':'Tag(e)', 'unit_en':'day(s)'};
+const state_s_oilInspectionDistance= {'label':'Vehicle.status.oilInspectionDistance', 'en': 'distance until next oil inspection', 'de': 'km bis zum nächsten Ölwechsel-Service'};
+const state_s_oilInspectionTime= {'label':'Vehicle.status.oilInspectionTime', 'en': 'time until next oil inspecton', 'de': 'Zeit bis zum nächsten Ölwechsel-Service', 'unit_de':'Tag(e)', 'unit_en':'day(s)'};
+const state_s_parkingLights = {'label':'Vehicle.status.ParkingLights', 'en': 'parking lights', 'de': 'Parklichter / Standlicht'};
+//const state_s_parkingBrake = {'label':'Vehicle.status.parkingBrake', 'en': '', 'de': ''};
+const state_s_carCentralLock = {'label':'Vehicle.status.carCentralLock', 'en': 'car central lock', 'de': 'Zentralverriegelung'};
+const state_s_fuelLevel = {'label':'Vehicle.status.fuelLevel', 'en': 'fuel level', 'de': 'Füllstand Kraftstoff'};
+const state_s_fuelRange = {'label':'Vehicle.status.fuelRange', 'en': 'fuel range', 'de': 'Reichweite Kraftstoff'};
+const state_s_batteryLevel = {'label':'Vehicle.status.batteryLevel', 'en': 'battery level', 'de': 'Füllstand Batterie'};
+const state_s_batteryRange = {'label':'Vehicle.status.batteryRange', 'en': 'battery range', 'de': 'Reichweite Elektromotor'};
+const channel_dw_DoorsAndWindows = {'label':'Vehicle.status.DoorsAndWindows', 'en': 'doors and windows', 'de': 'Türen und Fenster'};
+const state_dw_Doors = {'label':'Vehicle.status.DoorsAndWindows.doorsJSON', 'en': 'JSON objekt with windowstates', 'de': 'JSON Objekt Status Türen'};
+const state_dw_Windows = {'label':'Vehicle.status.DoorsAndWindows.windowsJSON', 'en': 'JSON object with doorstates', 'de': 'JSON Objekt Status Fenster'};
 
 //##############################################################################################################
 // declaring names for states for climater data
-const channel_c = "Vehicle.climater";
-const state_c_climatisationWithoutHVPower = "Vehicle.climater.climatisationWithoutHVPower";
-const state_c_targetTemperature = "Vehicle.climater.targetTemperature";
-const state_c_heaterSource = "Vehicle.climater.heaterSource";
-const state_c_climatisationReason = "Vehicle.climater.climatisationReason";
-const state_c_windowHeatingStateFront = "Vehicle.climater.windowHeatingStateFront";
-const state_c_windowHeatingStateRear = "Vehicle.climater.windowHeatingStateRear";
-const state_c_outdoorTemperature = "Vehicle.climater.outdoorTemperature";
-const state_c_vehicleParkingClock = "Vehicle.climater.vehicleParkingClock";
-const state_c_climatisationState = "Vehicle.climater.climatisationState";
-const state_c_remainingClimatisationTime = "Vehicle.climater.remainingClimatisationTime";
+const channel_c = {'label':'Vehicle.climater', 'en': 'heating / air condition / climater', 'de': 'Heizung / Klimaanlage / Lüftung'};
+const state_c_climatisationWithoutHVPower = {'label':'Vehicle.climater.climatisationWithoutHVPower', 'en': 'allow air condition in e-mode', 'de': 'Klimaanlage über Batterie zulassen'};
+const state_c_targetTemperature = {'label':'Vehicle.climater.targetTemperature', 'en': 'target temperature', 'de': 'Zieltemperatur'};
+const state_c_heaterSource = {'label':'Vehicle.climater.heaterSource', 'en': 'heater source', 'de': 'Heizungs-Quelle'};
+const state_c_climatisationReason = {'label':'Vehicle.climater.climatisationReason', 'en': 'climatisation reason', 'de': 'Heizungsbetrieb'};
+const state_c_windowHeatingStateFront = {'label':'Vehicle.climater.windowHeatingStateFront', 'en': 'state of window heating front', 'de': 'Zustand der Heizung Windschutzscheibe'};
+const state_c_windowHeatingStateRear = {'label':'Vehicle.climater.windowHeatingStateRear', 'en': 'state of window heating rear', 'de': 'Zustand der Heckscheibenheizung'};
+const state_c_outdoorTemperature = {'label':'Vehicle.climater.outdoorTemperature', 'en': 'outdoor temperature', 'de': 'Außentemperatur'};
+const state_c_vehicleParkingClock = {'label':'Vehicle.climater.vehicleParkingClock', 'en': 'parking timestamp', 'de': 'Zeitpunkt parken des Fahrzeugs'};
+const state_c_climatisationState = {'label':'Vehicle.climater.climatisationState', 'en': 'state of climatisation', 'de': 'Zustand der Standheizung'};
+const state_c_remainingClimatisationTime = {'label':'Vehicle.climater.remainingClimatisationTime', 'en': 'remaining climatisation time', 'de': 'Verbleibende Dauer bis Zieltemperatur'};
 
 //##############################################################################################################
 // declaring names for states for eManager data
-const channel_e = "Vehicle.eManager";
-const state_e_stateOfCharge = "Vehicle.eManager.stateOfCharge";
-const state_e_remainingChargingTimeTargetSOC = "Vehicle.eManager.remainingChargingTimeTargetSOC";
-const state_e_chargingMode = "Vehicle.eManager.chargingMode";
-const state_e_chargingState = "Vehicle.eManager.chargingState";
-const state_e_chargingReason = "Vehicle.eManager.chargingReason";
-const state_e_remainingChargingTime = "Vehicle.eManager.remainingChargingTime";
-const state_e_maxChargeCurrent = "Vehicle.eManager.maxChargeCurrent";
-const state_e_plugState = "Vehicle.eManager.plugState";
-const state_e_lockState = "Vehicle.eManager.lockState";
-const state_e_extPowerSupplyState = "Vehicle.eManager.externalPowerSupplyState";
+const channel_e = {'label':'Vehicle.eManager', 'en': 'e-manager', 'de': 'e-Manager'};;
+const state_e_stateOfCharge = {'label':'Vehicle.eManager.stateOfCharge', 'en': 'chargingstate main battery', 'de': 'Ladezustand der Hauptbatterie'};
+const state_e_remainingChargingTimeTargetSOC = {'label':'Vehicle.eManager.remainingChargingTimeTargetSOC', 'en': 'remaining charging time until SOC', 'de': 'Verbleibende Ladedauer untere Batterie-Ladegrenze'};
+const state_e_chargingMode = {'label':'Vehicle.eManager.chargingMode', 'en': 'charging mode', 'de': 'Lademodus'};;
+const state_e_chargingState = {'label':'Vehicle.eManager.chargingState', 'en': 'charging state', 'de': 'Zustand des Ladevorgangs'};
+const state_e_chargingReason = {'label':'Vehicle.eManager.chargingReason', 'en': 'charging reason', 'de': 'Ladebetrieb'};
+const state_e_remainingChargingTime = {'label':'Vehicle.eManager.remainingChargingTime', 'en': 'remaining charging time until 100%', 'de': 'Verbleibende Ladedauer bis 100%'};
+const state_e_maxChargeCurrent = {'label':'Vehicle.eManager.maxChargeCurrent', 'en': 'maximun charging current', 'de': 'maximaler Ladestrom'};
+const state_e_plugState = {'label':'Vehicle.eManager.plugState', 'en': 'charging cable plugged', 'de': 'Status Ladestecker'};
+const state_e_lockState = {'label':'Vehicle.eManager.lockState', 'en': 'charging cable locked', 'de': 'Verriegelung Ladestecker'};
+const state_e_extPowerSupplyState = {'label':'Vehicle.eManager.externalPowerSupplyState', 'en': 'external power supply state', 'de': 'Status externe Stromversorgung'};
 
 //##############################################################################################################
 // declaring names for states for location data
-const channel_l = "Vehicle.location";
-const state_l_lat = "Vehicle.location.latitude";
-const state_l_lng = "Vehicle.location.longitude";
-const state_l_parkingTime = "Vehicle.location.parkingTimeUTC";
-const state_l_address = "Vehicle.location.parkingAddress";
+const channel_l = {'label':'Vehicle.location', 'en': 'location of vehicle', 'de': 'Ortungsdaten Fahrzeug'};
+const state_l_lat = {'label':'Vehicle.location.latitude', 'en': 'location latitude', 'de': 'Breitengrad der Position des Fahrzeugs'};
+const state_l_lng = {'label':'Vehicle.location.longitude', 'en': 'location longitude', 'de': 'Längengrad der Position des Fahrzeugs'};
+const state_l_parkingTime = {'label':'Vehicle.location.parkingTimeUTC', 'en': 'parking timestamp', 'de': 'Zeitpunkt parken des Fahrzeugs'};
+const state_l_address = {'label':'Vehicle.location.parkingAddress', 'en': 'parking address', 'de': 'Adresse der Position des Fahrzeugs'};
+
+function CreateStates_common(callback){
+    // creating channel/states for Vehicle Data
+    adapter.setObject(channel_v.label, {
+        type: 'object',
+        common: {name: channel_v[ioBroker_Language]},
+        native: {}
+    });
+    adapter.setObject(state_v_name.label, {
+        type: 'state',
+        common: {name: state_v_name[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_v_VIN.label, {
+        type: 'state',
+        common: {name: state_v_VIN[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    return callback(true);
+}
+
 
 function CreateStates_Status(callback){
     // creating channel/states for selectedVehicle Data
-    adapter.setObject(channel_s, {
+    adapter.setObject(channel_s.label, {
         type: 'channel',
-        common: {name: 'Fahrzeugstatus'},
+        common: {name: channel_s[ioBroker_Language]},
         native: {}
     });
-    adapter.setObject(state_s_lastConnectionTimeStamp, {
+    adapter.setObject(state_s_lastConnectionTimeStamp.label, {
         type: 'state',
-        common: {name: 'Zeitpunkt der letzten Verbindung zum Fahrzeug', type: 'string', read: true, write: false, role: 'datetime'},
+        common: {name: state_s_lastConnectionTimeStamp[ioBroker_Language], type: 'string', read: true, write: false, role: 'datetime'},
         native: {}
     });
-    adapter.setObject(state_s_distanceCovered, {
+    adapter.setObject(state_s_distanceCovered.label, {
         type: 'state',
-        common: {name: 'Kilometerstand', type: 'number', unit: 'km', read: true, write: false, role: 'value'},
+        common: {name: state_s_distanceCovered[ioBroker_Language], type: 'number', unit: 'km', read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_s_hybridRange, {
+    adapter.setObject(state_s_hybridRange.label, {
         type: 'state',
-        common: {name: 'Gesamtreichweite des Fahrzeugs', type: 'number', unit: 'km', read: true, write: false, role: 'value'},
+        common: {name: state_s_hybridRange[ioBroker_Language], type: 'number', unit: 'km', read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_s_serviceInspectionDistance, {
+    adapter.setObject(state_s_serviceInspectionDistance.label, {
         type: 'state',
-        common: {name: 'Km bis zur nächsten Inspektion', type: 'number', unit: 'km', read: true, write: false, role: 'value'},
+        common: {name: state_s_serviceInspectionDistance[ioBroker_Language], type: 'number', unit: 'km', read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_s_serviceInspectionTime, {
+    adapter.setObject(state_s_serviceInspectionTime.label, {
         type: 'state',
-        common: {name: 'Zeit bis zur nächsten Inspektion', type: 'number', unit: 'Tag(e)', read: true, write: false, role: 'value'},
+        common: {name: state_s_serviceInspectionTime[ioBroker_Language], type: 'number', unit: state_s_serviceInspectionTime['unit_' + ioBroker_Language], read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_s_oilInspectionDistance, {
+    adapter.setObject(state_s_oilInspectionDistance.label, {
         type: 'state',
-        common: {name: 'Km bis zum nächsten Ölwechsel-Service', type: 'number', unit: 'km', read: true, write: false, role: 'value'},
+        common: {name: state_s_oilInspectionDistance[ioBroker_Language], type: 'number', unit: 'km', read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_s_oilInspectionTime, {
+    adapter.setObject(state_s_oilInspectionTime.label, {
         type: 'state',
-        common: {name: 'Km bis zum nächsten Ölwechsel-Service', type: 'number', unit: 'Tag(e)', read: true, write: false, role: 'value'},
+        common: {name: state_s_oilInspectionTime[ioBroker_Language], type: 'number', unit: state_s_oilInspectionTime['unit_' + ioBroker_Language], read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_s_parkingLights, {
+    adapter.setObject(state_s_parkingLights.label, {
         type: 'state',
-        common: {name: "Parklichlichter", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_s_parkingLights[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    // adapter.setObject(state_s_parkingBrake, {
-    //     type: 'state',
-    //     common: {name: "Park-/Handbremse", type: "string", read: true, write: false, role: 'value'},
-    //     native: {}
-    // });
-    adapter.setObject(state_s_carCentralLock, {
+    adapter.setObject(state_s_carCentralLock.label, {
         type: 'state',
-        common: {name: "Zentralverriegelung", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_s_carCentralLock[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_s_fuelLevel, {
+    adapter.setObject(state_s_fuelLevel.label, {
         type: 'state',
-        common: {name: "Füllstand Kraftstoff", type: "number", unit: "%", read: true, write: false, role: 'value'},
+        common: {name: state_s_fuelLevel[ioBroker_Language], type: "number", unit: "%", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_s_fuelRange , {
+    adapter.setObject(state_s_fuelRange.label, {
         type: 'state',
-        common: {name: "Reichweite Kraftstoff", type: "number", unit: "km", read: true, write: false, role: 'value'},
+        common: {name: state_s_fuelRange[ioBroker_Language], type: "number", unit: "km", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_s_batteryLevel, {
+    adapter.setObject(state_s_batteryLevel.label, {
         type: 'state',
-        common: {name: "Füllstand Batterie", type: "number", unit: "%", read: true, write: false, role: 'value'},
+        common: {name: state_s_batteryLevel[ioBroker_Language], type: "number", unit: "%", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_s_batteryRange, {
+    adapter.setObject(state_s_batteryRange.label, {
         type: 'state',
-        common: {name: "Reichweite Batterie", type: "number", unit: "km", read: true, write: false, role: 'value'},
+        common: {name: state_s_batteryRange[ioBroker_Language], type: "number", unit: "km", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(channel_dw_DoorsAndWindows, {
+    adapter.setObject(channel_dw_DoorsAndWindows.label, {
         type: 'channel',
-        common: {name: "Türen/Fenster"},
+        common: {name: channel_dw_DoorsAndWindows[ioBroker_Language]},
         native: {}
     });
-    adapter.setObject(state_dw_Doors, {
+    adapter.setObject(state_dw_Doors.label, {
         type: 'state',
-        common: {name: "JSON Objekt Status Türen", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_dw_Doors[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_dw_Windows, {
+    adapter.setObject(state_dw_Windows.label, {
         type: 'state',
-        common: {name: "JSON Objekt Status Fenster", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_dw_Windows[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
     return callback(true);
@@ -252,59 +264,59 @@ function CreateStates_climater(callback){
         return callback(true);
     }
     // creating channel/states for climater Data
-    adapter.setObject(channel_c, {
+    adapter.setObject(channel_c.label, {
         type: 'channel',
-        common: {name: 'Heizung / Klimaanlage / Lüftung'},
+        common: {name: channel_c[ioBroker_Language]},
         native: {}
     });
-    adapter.setObject(state_c_climatisationWithoutHVPower, {
+    adapter.setObject(state_c_climatisationWithoutHVPower.label, {
         type: 'state',
-        common: {name: "Klimatisierung/Scheibenheizung über Batterie zulassen", type: "boolean", read: true, write: false, role: 'value'},
+        common: {name: state_c_climatisationWithoutHVPower[ioBroker_Language], type: "boolean", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_c_targetTemperature, {
+    adapter.setObject(state_c_targetTemperature.label, {
         type: 'state',
-        common: {name: "Zieltemperatur", type: "number", unit: "°C", read: true, write: false, role: 'value'},
+        common: {name: state_c_targetTemperature[ioBroker_Language], type: "number", unit: "°C", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_c_heaterSource, {
+    adapter.setObject(state_c_heaterSource.label, {
         type: 'state',
-        common: {name: "Heizungs-Quelle", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_c_heaterSource[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_c_climatisationReason, {
+    adapter.setObject(state_c_climatisationReason.label, {
         type: 'state',
-        common: {name: "Heizungsbetrieb", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_c_climatisationReason[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_c_windowHeatingStateFront, {
+    adapter.setObject(state_c_windowHeatingStateFront.label, {
         type: 'state',
-        common: {name: "Heizung Windschutzscheibe", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_c_windowHeatingStateFront[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_c_windowHeatingStateRear, {
+    adapter.setObject(state_c_windowHeatingStateRear.label, {
         type: 'state',
-        common: {name: "Heizung Heckscheibe", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_c_windowHeatingStateRear[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_c_outdoorTemperature, {
+    adapter.setObject(state_c_outdoorTemperature.label, {
         type: 'state',
-        common: {name: "Außentemperatur", type: "number", unit: "°C", read: true, write: false, role: 'value'},
+        common: {name: state_c_outdoorTemperature[ioBroker_Language], type: "number", unit: "°C", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_c_vehicleParkingClock, {
+    adapter.setObject(state_c_vehicleParkingClock.label, {
         type: 'state',
-        common: {name: 'Zeitpunkt parken des Fahrzeugs', type: 'string', read: true, write: false, role: 'datetime'},
+        common: {name: state_c_vehicleParkingClock[ioBroker_Language], type: 'string', read: true, write: false, role: 'datetime'},
         native: {}
     });
-    adapter.setObject(state_c_climatisationState, {
+    adapter.setObject(state_c_climatisationState.label, {
         type: 'state',
-        common: {name: "Zustand der Standheizung", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_c_climatisationState[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_c_remainingClimatisationTime, {
+    adapter.setObject(state_c_remainingClimatisationTime.label, {
         type: 'state',
-        common: {name: "Verbleibende Dauer bis Zieltemeratur", type: "number", unit: "Min", read: true, write: false, role: 'value'},
+        common: {name: state_c_remainingClimatisationTime[ioBroker_Language], type: "number", unit: "Min", read: true, write: false, role: 'value'},
         native: {}
     });
     return callback(true);
@@ -315,59 +327,59 @@ function CreateStates_eManager(callback){
         return callback(true);
     }
     // creating channel/states for eManager Data
-    adapter.setObject(channel_e, {
+    adapter.setObject(channel_e.label, {
         type: 'channel',
-        common: {name: 'e-Manager'},
+        common: {name: channel_e[ioBroker_Language]},
         native: {}
     });
-    adapter.setObject(state_e_stateOfCharge, {
+    adapter.setObject(state_e_stateOfCharge.label, {
         type: 'state',
-        common: {name: "Ladezustand der Hauptbatterie", type: "number", unit: "%", read: true, write: false, role: 'value'},
+        common: {name: state_e_stateOfCharge[ioBroker_Language], type: "number", unit: "%", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_e_remainingChargingTimeTargetSOC, {
+    adapter.setObject(state_e_remainingChargingTimeTargetSOC.label, {
         type: 'state',
-        common: {name: "Verbleibende Ladedauer untere Batterie-Ladegrenze", type: "number", read: true, write: false, role: 'value'},
+        common: {name: state_e_remainingChargingTimeTargetSOC[ioBroker_Language], type: "number", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_e_chargingMode, {
+    adapter.setObject(state_e_chargingMode.label, {
         type: 'state',
-        common: {name: "Lademodus", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_chargingMode[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_e_chargingState, {
+    adapter.setObject(state_e_chargingState.label, {
         type: 'state',
-        common: {name: "Zustand des Ladevorgangs", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_chargingState[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_e_chargingReason, {
+    adapter.setObject(state_e_chargingReason.label, {
         type: 'state',
-        common: {name: "Ladebetrieb", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_chargingReason[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_e_remainingChargingTime, {
+    adapter.setObject(state_e_remainingChargingTime.label, {
         type: 'state',
-        common: {name: "Verbleibende Ladedauer bis 100%", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_remainingChargingTime[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_e_maxChargeCurrent, {
+    adapter.setObject(state_e_maxChargeCurrent.label, {
         type: 'state',
-        common: {name: "maximaler Ladestrom", type: "number", unit: "A", read: true, write: false, role: 'value'},
+        common: {name: state_e_maxChargeCurrent[ioBroker_Language], type: "number", unit: "A", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_e_plugState, {
+    adapter.setObject(state_e_plugState.label, {
         type: 'state',
-        common: {name: "Status Ladestecker", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_plugState[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_e_lockState, {
+    adapter.setObject(state_e_lockState.label, {
         type: 'state',
-        common: {name: "Verriegelung Ladestecker", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_lockState[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_e_extPowerSupplyState, {
+    adapter.setObject(state_e_extPowerSupplyState.label, {
         type: 'state',
-        common: {name: "Status externe Stromversorgung", type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_extPowerSupplyState[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
     return callback(true);
@@ -378,30 +390,30 @@ function CreateStates_location(callback){
         return callback(true);
     }
     // creating channel/states for location Data
-    adapter.setObject(channel_l, {
+    adapter.setObject(channel_l.label, {
         type: 'channel',
-        common: {name: 'Parkposition'},
+        common: {name: channel_l[ioBroker_Language]},
         native: {}
     });
-    adapter.setObject(state_l_lat, {
+    adapter.setObject(state_l_lat.label, {
         type: 'state',
-        common: {name: "Breitengrad der Position des Fahrzeugs", type: "number", read: true, write: false, role: 'value'},
+        common: {name: state_l_lat[ioBroker_Language], type: "number", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_l_lng, {
+    adapter.setObject(state_l_lng.label, {
         type: 'state',
-        common: {name: "Längengrad der Position des Fahrzeugs", type: "number", read: true, write: false, role: 'value'},
+        common: {name: state_l_lng[ioBroker_Language], type: "number", read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_l_parkingTime, {
+    adapter.setObject(state_l_parkingTime.label, {
         type: 'state',
-        common: {name: "Zeitpunkt parken des Fahrzeugs", type: "string", read: true, write: false, role: 'datetime'},
+        common: {name: state_l_parkingTime[ioBroker_Language], type: "string", read: true, write: false, role: 'datetime'},
         native: {}
     });
     if (myGoogleMapsAPIKey !== ''){
-        adapter.setObject(state_l_address, {
+        adapter.setObject(state_l_address.label, {
             type: 'state',
-            common: {name: "Anschrift der Position des Fahrzeugs", type: "string", read: true, write: false, role: 'value'},
+            common: {name: state_l_address[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
             native: {}
         });
     }
@@ -419,13 +431,13 @@ function main() {
         myCarNetDoors['RR']={'closed':false,'locked':true,'safe':false};
         myCarNetDoors['hood']={'closed':false};
         myCarNetDoors['rear']={'closed':false,'locked':false,};
-        delete myCarNetDoors['doors'];
+        delete myCarNetDoors['doors']; //remove dummy entry
         myCarNetWindows['FL']={'closed':false, 'level':0};
         myCarNetWindows['RL']={'closed':false, 'level':0};
         myCarNetWindows['FR']={'closed':false, 'level':0};
         myCarNetWindows['RR']={'closed':false, 'level':0};
         myCarNetWindows['roof']={'closed':false, 'level':0};
-        delete myCarNetWindows['windows'];
+        delete myCarNetWindows['windows']; //remove dummy entry
         //adapter.log.info('Credentials valid?: ' +  VWCarNet_CredentialsAreValid);
         if (VWCarNet_CredentialsAreValid){
             RetrieveVehicles(function(myTmp){

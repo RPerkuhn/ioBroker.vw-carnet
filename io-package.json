@@ -1,8 +1,12 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.1.2",
+        "version": "0.1.3",
         "news": {
+		"0.1.3": {
+                "en": "implementation of dynamic switching between English and German state names",
+                "de": "Implementierung dynamischer umschaltung zwischen Deutschen und Englschen State-Namen"
+		},
 		"0.1.2": {
                 "en": "integration of door and window states",
                 "de": "Integration der Tür- und Fensterstati"
