@@ -13,6 +13,13 @@ adapter.getForeignObject('system.config', function(err, ioBroker_Settings) {
 
     } else {
         ioBroker_Language = ioBroker_Settings.common.language;
+        switch (ioBroker_Settings.common.language){
+            case 'de':
+                ioBroker_Language = 'de'
+                break;
+            default:
+                ioBroker_Language = 'en'
+        }
     }
 });
 
