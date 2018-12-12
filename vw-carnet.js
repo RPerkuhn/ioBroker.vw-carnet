@@ -12,7 +12,7 @@ adapter.getForeignObject('system.config', function(err, ioBroker_Settings) {
     if (err) {
 
     } else {
-        ioBroker_Language = ioBroker_Settings.common.language;
+        //ioBroker_Language = ioBroker_Settings.common.language;
         switch (ioBroker_Settings.common.language){
             case 'de':
                 ioBroker_Language = 'de'
@@ -455,9 +455,9 @@ function main() {
                     adapter.setState('connection', {val: VWCarNet_Connected, ack: true});
                     if(VWCarNet_VINIsValid){
                         var mySuccefulUpdate = true
-                        adapter.setState(state_v_VIN, {val: myVIN, ack: true});
+                        adapter.setState(state_v_VIN.label, {val: myVIN, ack: true});
                     } else {
-                        adapter.setState(state_v_VIN, {val: '', ack: true});
+                        adapter.setState(state_v_VIN.label, {val: '', ack: true});
                     }
                     if (VWCarNet_Connected){
                         RetrieveVehicleData_Status(function(myTmp){
@@ -546,7 +546,7 @@ function VWCarNetForceCarToSendData(){
             requestCarSendData2CarNet(function(myTmp){
                 //adapter.log.info(myTmp);
                 // mySuccefulUpdate = mySuccefulUpdate && myTmp
-             });
+            });
         }
     });
 }
@@ -558,7 +558,7 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
     var myFormdata = {'grant_type': 'password',
         'username': adapter.config.email,
         'password': adapter.config.password};
-        //'password': decrypt(my_key, adapter.config.password)};
+    //'password': decrypt(my_key, adapter.config.password)};
     request.post({url: myUrl, form: myFormdata, headers: myHeaders, json: true}, function(error, response, responseData){
         //adapter.log.info(response.statusCode);
         switch(response.statusCode){
@@ -647,7 +647,7 @@ function RetrieveVehicleData_Status(callback){
             }
             myCarNet_vehicleStatus = responseData.StoredVehicleDataResponse.vehicleData;
             //adapter.log.info(myCarNet_vehicleStatus.data[myData].field[myField].tsCarSentUtc);
-            adapter.setState(state_s_lastConnectionTimeStamp, {val: myCarNet_vehicleStatus.data[myData].field[myField].tsCarSentUtc, ack: true});
+            adapter.setState(state_s_lastConnectionTimeStamp.label, {val: myCarNet_vehicleStatus.data[myData].field[myField].tsCarSentUtc, ack: true});
 
             for (myData in myCarNet_vehicleStatus.data) {
                 for (myField in myCarNet_vehicleStatus.data[myData].field) {
@@ -655,27 +655,27 @@ function RetrieveVehicleData_Status(callback){
                     //adapter.log.info(myCarNet_vehicleStatus.data[myData].id + "." + myCarNet_vehicleStatus.data[myData].field[myField].id)
                     switch(myCarNet_vehicleStatus.data[myData].id + "." + myCarNet_vehicleStatus.data[myData].field[myField].id){
                         case '0x0101010002.0x0101010002': //distanceCovered
-                            adapter.setState(state_s_distanceCovered, {val: myReceivedDataKey.value, ack: true});
+                            adapter.setState(state_s_distanceCovered.label, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info(myReceivedDataKey.value);
                             break;
                         case '0x0203FFFFFF.0x0203010001': //oilInspectionData_km
                             myOilInspectionKm = myReceivedDataKey.value *-1;
-                            adapter.setState(state_s_oilInspectionDistance, {val: myOilInspectionKm, ack: true});
+                            adapter.setState(state_s_oilInspectionDistance.label, {val: myOilInspectionKm, ack: true});
                             //adapter.log.info(myOilInspectionKm + myReceivedDataKey.unit);
                             break;
                         case '0x0203FFFFFF.0x0203010002': //oilInspectionData_days
                             myOilInspectionDays = myReceivedDataKey.value *-1;
-                            adapter.setState(state_s_oilInspectionTime, {val: myOilInspectionDays, ack: true});
+                            adapter.setState(state_s_oilInspectionTime.label, {val: myOilInspectionDays, ack: true});
                             //adapter.log.info(myOilInspectionDays);
                             break;
                         case '0x0203FFFFFF.0x0203010003': //serciceInspectionData_km
                             myServiceInspectionKm = myReceivedDataKey.value * -1;
-                            adapter.setState(state_s_serviceInspectionDistance, {val: myServiceInspectionKm, ack: true});
+                            adapter.setState(state_s_serviceInspectionDistance.label, {val: myServiceInspectionKm, ack: true});
                             //adapter.log.info(myServiceInspectionKm + myReceivedDataKey.unit);
                             break;
                         case '0x0203FFFFFF.0x0203010004': //serviceInspectionData_days
                             myServiceInspectionDays = myReceivedDataKey.value *-1;
-                            adapter.setState(state_s_serviceInspectionTime, {val: myServiceInspectionDays, ack: true});
+                            adapter.setState(state_s_serviceInspectionTime.label, {val: myServiceInspectionDays, ack: true});
                             //adapter.log.info(myServiceInspectionDays);
                             break;
                         case '0x030101FFFF.0x0301010001':  //status_parking_light_off
@@ -687,26 +687,26 @@ function RetrieveVehicleData_Status(callback){
                         //     //adapter.log.info('ParkingBrake: ' + myReceivedDataKey.value);
                         //     var myParkingBrake = false;
                         //     if (myReceivedDataKey.value = '0'){myParkingBrake = true};
-                        //     adapter.setState(state_s_parkingBrake, {val: myParkingBrake, ack: true});
+                        //     adapter.setState(state_s_parkingBrake.label, {val: myParkingBrake, ack: true});
                         //     break;
                         case '0x030103FFFF.0x030103000A': //fuel_level_ok
-                            adapter.setState(state_s_fuelLevel, {val: myReceivedDataKey.value, ack: true});
+                            adapter.setState(state_s_fuelLevel.label, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('FuelLevel: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
                         case '0x030103FFFF.0x0301030002': //soc_ok
-                            adapter.setState(state_s_batteryLevel, {val: myReceivedDataKey.value, ack: true});
+                            adapter.setState(state_s_batteryLevel.label, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('BatteryLevel: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
                         case '0x030103FFFF.0x0301030006': //fuel_range
-                            adapter.setState(state_s_fuelRange, {val: myReceivedDataKey.value, ack: true});
+                            adapter.setState(state_s_fuelRange.label, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('FuelRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
                         case '0x030103FFFF.0x0301030008': //electric_range
-                            adapter.setState(state_s_batteryRange, {val: myReceivedDataKey.value, ack: true});
+                            adapter.setState(state_s_batteryRange.label, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('BatteryRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
                         case '0x030103FFFF.0x0301030005': //hybrid_range
-                            adapter.setState(state_s_hybridRange, {val: myReceivedDataKey.value, ack: true});
+                            adapter.setState(state_s_hybridRange.label, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('HybridRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
                         //door1 - front/left
@@ -811,24 +811,24 @@ function RetrieveVehicleData_Status(callback){
                     }
                 }
             }
-            adapter.setState(state_dw_Doors, {val: JSON.stringify(myCarNetDoors), ack: true});
+            adapter.setState(state_dw_Doors.label, {val: JSON.stringify(myCarNetDoors), ack: true});
             //adapter.log.info(JSON.stringify(myCarNetDoors));
-            adapter.setState(state_dw_Windows, {val: JSON.stringify(myCarNetWindows), ack: true});
+            adapter.setState(state_dw_Windows.label, {val: JSON.stringify(myCarNetWindows), ack: true});
             //adapter.log.info(JSON.stringify(myCarNetWindows));
-            adapter.setState(state_s_carCentralLock, {val: myCarNetDoors.FL.safe && myCarNetDoors.FR.safe, ack: true});
+            adapter.setState(state_s_carCentralLock.label, {val: myCarNetDoors.FL.safe && myCarNetDoors.FR.safe, ack: true});
 
             switch (myParkingLight) {
                 case '3':
-                    adapter.setState(state_s_parkingLights, {val: 'left=on, right=off', ack: true});
+                    adapter.setState(state_s_parkingLights.label, {val: 'left=on, right=off', ack: true});
                     break;
                 case '4':
-                    adapter.setState(state_s_parkingLights, {val: 'left=off, right=on', ack: true});
+                    adapter.setState(state_s_parkingLights.label, {val: 'left=off, right=on', ack: true});
                     break;
                 case '5':
-                    adapter.setState(state_s_parkingLights, {val: 'left=on, right=on', ack: true});
+                    adapter.setState(state_s_parkingLights.label, {val: 'left=on, right=on', ack: true});
                     break;
                 default:
-                    adapter.setState(state_s_parkingLights, {val: 'off', ack: true});
+                    adapter.setState(state_s_parkingLights.label, {val: 'off', ack: true});
             }
             return callback(true);
         });
@@ -857,24 +857,24 @@ function RetrieveVehicleData_Climater(callback){
         } else {
             myTemperatureCelsius = parseFloat((myCarNet_Climater.targetTemperature.content)/10) - 273
         }
-        adapter.setState(state_c_targetTemperature, {val: myTemperatureCelsius.toFixed(1), ack: true});
+        adapter.setState(state_c_targetTemperature.label, {val: myTemperatureCelsius.toFixed(1), ack: true});
         myTemperatureCelsius = null
-        adapter.setState(state_c_climatisationWithoutHVPower, {val: myCarNet_Climater.climatisationWithoutHVpower.content, ack: true});
-        adapter.setState(state_c_heaterSource, {val: myCarNet_Climater.heaterSource.content.toUpperCase(), ack: true});
+        adapter.setState(state_c_climatisationWithoutHVPower.label, {val: myCarNet_Climater.climatisationWithoutHVpower.content, ack: true});
+        adapter.setState(state_c_heaterSource.label, {val: myCarNet_Climater.heaterSource.content.toUpperCase(), ack: true});
 
         var myCarNet_Climater = responseData.climater.status.climatisationStatusData;
-        adapter.setState(state_c_climatisationState, {val: myCarNet_Climater.climatisationState.content.toUpperCase(), ack: true});
+        adapter.setState(state_c_climatisationState.label, {val: myCarNet_Climater.climatisationState.content.toUpperCase(), ack: true});
         //adapter.log.info(myCarNet_Climater.climatisationStateErrorCode.content);
         var myRemainingTime = myCarNet_Climater.remainingClimatisationTime.content
         //var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
         var myRemainingTimeStr = myRemainingTime
         if (myRemainingTime <0 ){myRemainingTimeStr = null}
-        adapter.setState(state_c_remainingClimatisationTime, {val: myRemainingTimeStr, ack: true});
-        adapter.setState(state_c_climatisationReason, {val: myCarNet_Climater.climatisationReason.content.toUpperCase(), ack: true});
+        adapter.setState(state_c_remainingClimatisationTime.label, {val: myRemainingTimeStr, ack: true});
+        adapter.setState(state_c_climatisationReason.label, {val: myCarNet_Climater.climatisationReason.content.toUpperCase(), ack: true});
 
         var myCarNet_Climater = responseData.climater.status.windowHeatingStatusData;
-        adapter.setState(state_c_windowHeatingStateFront, {val: myCarNet_Climater.windowHeatingStateFront.content.toUpperCase(), ack: true});
-        adapter.setState(state_c_windowHeatingStateRear, {val: myCarNet_Climater.windowHeatingStateRear.content.toUpperCase(), ack: true});
+        adapter.setState(state_c_windowHeatingStateFront.label, {val: myCarNet_Climater.windowHeatingStateFront.content.toUpperCase(), ack: true});
+        adapter.setState(state_c_windowHeatingStateRear.label, {val: myCarNet_Climater.windowHeatingStateRear.content.toUpperCase(), ack: true});
         //adapter.log.info(myCarNet_Climater.windowHeatingErrorCode.content);
 
         var myCarNet_Climater = responseData.climater.status.temperatureStatusData;
@@ -884,16 +884,16 @@ function RetrieveVehicleData_Climater(callback){
         } else {
             myTemperatureCelsius = parseFloat((myCarNet_Climater.outdoorTemperature.content)/10) - 273
         }
-        adapter.setState(state_c_outdoorTemperature, {val: myTemperatureCelsius.toFixed(1), ack: true});
+        adapter.setState(state_c_outdoorTemperature.label, {val: myTemperatureCelsius.toFixed(1), ack: true});
         myTemperatureCelsius = null
 
         var myCarNet_Climater = responseData.climater.status.vehicleParkingClockStatusData;
         if (myCarNet_Climater !== undefined){
-            adapter.setState(state_c_vehicleParkingClock, {val: myCarNet_Climater.vehicleParkingClock.content, ack: true});
+            adapter.setState(state_c_vehicleParkingClock.label, {val: myCarNet_Climater.vehicleParkingClock.content, ack: true});
         } else {
-            adapter.setState(state_c_vehicleParkingClock, {val: 'MOVING', ack: true});
+            adapter.setState(state_c_vehicleParkingClock.label, {val: 'MOVING', ack: true});
         }
-        //adapter.setState(state_c_vehicleParkingClock, {val: myCarNet_Climater.vehicleParkingClock.content, ack: true});
+        //adapter.setState(state_c_vehicleParkingClock.label, {val: myCarNet_Climater.vehicleParkingClock.content, ack: true});
 
         return callback(true);
     });
@@ -914,15 +914,15 @@ function RetrieveVehicleData_eManager(callback){
             responseData = JSON.parse(result);
 
             myCarNet_eManager = responseData.charger.settings;
-            adapter.setState(state_e_maxChargeCurrent, {val: myCarNet_eManager.maxChargeCurrent.content, ack: true});
+            adapter.setState(state_e_maxChargeCurrent.label, {val: myCarNet_eManager.maxChargeCurrent.content, ack: true});
 
             myCarNet_eManager = responseData.charger.status.chargingStatusData;
-            adapter.setState(state_e_chargingMode, {val: myCarNet_eManager.chargingMode.content.toUpperCase(), ack: true});
+            adapter.setState(state_e_chargingMode.label, {val: myCarNet_eManager.chargingMode.content.toUpperCase(), ack: true});
             //adapter.log.info('eManager/chargingStateErrorCode: ' + myCarNet_eManager.chargingStateErrorCode.content);
-            adapter.setState(state_e_chargingReason, {val: myCarNet_eManager.chargingReason.content.toUpperCase(), ack: true});
-            adapter.setState(state_e_extPowerSupplyState, {val: myCarNet_eManager.externalPowerSupplyState.content.toUpperCase(), ack: true});
+            adapter.setState(state_e_chargingReason.label, {val: myCarNet_eManager.chargingReason.content.toUpperCase(), ack: true});
+            adapter.setState(state_e_extPowerSupplyState.label, {val: myCarNet_eManager.externalPowerSupplyState.content.toUpperCase(), ack: true});
             //adapter.log.info('eManager/energyFlow: ' + myCarNet_eManager.energyFlow.content);
-            adapter.setState(state_e_chargingState, {val: myCarNet_eManager.chargingState.content.toUpperCase(), ack: true});
+            adapter.setState(state_e_chargingState.label, {val: myCarNet_eManager.chargingState.content.toUpperCase(), ack: true});
 
             myCarNet_eManager = responseData.charger.status.cruisingRangeStatusData;
             // adapter.log.info(myCarNet_eManager.engineTypeFirstEngine.content);
@@ -937,16 +937,16 @@ function RetrieveVehicleData_eManager(callback){
 
             myCarNet_eManager = responseData.charger.status.batteryStatusData;
 
-            adapter.setState(state_e_stateOfCharge, {val: myCarNet_eManager.stateOfCharge.content, ack: true});
+            adapter.setState(state_e_stateOfCharge.label, {val: myCarNet_eManager.stateOfCharge.content, ack: true});
             var myRemainingTime = myCarNet_eManager.remainingChargingTime.content;
             var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
             if (myRemainingTime <0 ){myRemainingTimeStr = null}
-            adapter.setState(state_e_remainingChargingTime, {val: myRemainingTimeStr, ack: true});
-            adapter.setState(state_e_remainingChargingTimeTargetSOC, {val: myCarNet_eManager.remainingChargingTimeTargetSOC.content, ack: true});
+            adapter.setState(state_e_remainingChargingTime.label, {val: myRemainingTimeStr, ack: true});
+            adapter.setState(state_e_remainingChargingTimeTargetSOC.label, {val: myCarNet_eManager.remainingChargingTimeTargetSOC.content, ack: true});
 
             myCarNet_eManager = responseData.charger.status.plugStatusData;
-            adapter.setState(state_e_plugState, {val: myCarNet_eManager.plugState.content.toUpperCase(), ack: true});
-            adapter.setState(state_e_lockState, {val: myCarNet_eManager.lockState.content.toUpperCase(), ack: true});
+            adapter.setState(state_e_plugState.label, {val: myCarNet_eManager.plugState.content.toUpperCase(), ack: true});
+            adapter.setState(state_e_lockState.label, {val: myCarNet_eManager.lockState.content.toUpperCase(), ack: true});
 
             return callback(true);
         });
@@ -968,10 +968,10 @@ function RetrieveVehicleData_Location(callback) {
         return callback(false)
     };
     if (VWCarNet_GetLocation === false) {
-        adapter.setState(state_l_lat, {val: null, ack: true});
-        adapter.setState(state_l_lng, {val: null, ack: true});
-        adapter.setState(state_l_parkingTime, {val: null, ack: true});
-        adapter.setState(state_l_address, {val: null, ack: true});
+        adapter.setState(state_l_lat.label, {val: null, ack: true});
+        adapter.setState(state_l_lng.label, {val: null, ack: true});
+        adapter.setState(state_l_parkingTime.label, {val: null, ack: true});
+        adapter.setState(state_l_address.label, {val: null, ack: true});
     };
     try {
         request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData){
@@ -984,27 +984,27 @@ function RetrieveVehicleData_Location(callback) {
             if ('findCarResponse' in responseData){
                 myCarNet_locationStatus = responseData.findCarResponse;
                 if (myCarNet_locationStatus !== undefined && myCarNet_locationStatus !== null) {
-                    adapter.setState(state_l_lat, {
+                    adapter.setState(state_l_lat.label, {
                         val: myCarNet_locationStatus.Position.carCoordinate.latitude/1000000,
                         ack: true
                     });
-                    adapter.setState(state_l_lng, {
+                    adapter.setState(state_l_lng.label, {
                         val: myCarNet_locationStatus.Position.carCoordinate.longitude/1000000,
                         ack: true
                     });
-                    adapter.setState(state_l_parkingTime, {val: myCarNet_locationStatus.parkingTimeUTC, ack: true});
+                    adapter.setState(state_l_parkingTime.label, {val: myCarNet_locationStatus.parkingTimeUTC, ack: true});
                     requestGeocoding(myCarNet_locationStatus.Position.carCoordinate.latitude, myCarNet_locationStatus.Position.carCoordinate.longitude);
                 } else {
-                    adapter.setState(state_l_lat, {val: null, ack: true});
-                    adapter.setState(state_l_lng, {val: null, ack: true});
-                    adapter.setState(state_l_parkingTime, {val: null, ack: true});
-                    adapter.setState(state_l_address, {val: 'MOVING', ack: true});
+                    adapter.setState(state_l_lat.label, {val: null, ack: true});
+                    adapter.setState(state_l_lng.label, {val: null, ack: true});
+                    adapter.setState(state_l_parkingTime.label, {val: null, ack: true});
+                    adapter.setState(state_l_address.label, {val: 'MOVING', ack: true});
                 }
             } else {
-                adapter.setState(state_l_lat, {val: null, ack: true});
-                adapter.setState(state_l_lng, {val: null, ack: true});
-                adapter.setState(state_l_parkingTime, {val: null, ack: true});
-                adapter.setState(state_l_address, {val: 'MOVING', ack: true});
+                adapter.setState(state_l_lat.label, {val: null, ack: true});
+                adapter.setState(state_l_lng.label, {val: null, ack: true});
+                adapter.setState(state_l_parkingTime.label, {val: null, ack: true});
+                adapter.setState(state_l_address.label, {val: 'MOVING', ack: true});
             }
             return callback(true);
         });
@@ -1028,11 +1028,11 @@ function requestGeocoding(lat, lng) {
                 if ((result.results.length > 0) & result.results[0].formatted_address !== ""){
                     myAddress = result.results[0].formatted_address;
                 }
-                adapter.setState(state_l_address, {val: myAddress, ack: true});
+                adapter.setState(state_l_address.label, {val: myAddress, ack: true});
                 //adapter.log.info(myAddress);
             });
         } catch (err){
-            adapter.setState(state_l_address, {val: null, ack: true});
+            adapter.setState(state_l_address.label, {val: null, ack: true});
             adapter.log.error(response.statusCode);
         }
     } else {
