@@ -1,9 +1,9 @@
 ![Logo](admin/vw-logo.png)
 # ioBroker.vw-carnet
-Adapter for connecting to Volkswagen Car-Net and get access to the data of yout car.
+Adapter for connecting to Volkswagen Car-Net and get access to the data of your car.
 After installing the only thing to configure is the Car-Net username and password.
 
-The Google API Key is optional and is only nescessary to retreive geo-location details (address) of the parked car. The adapter works of course also fine without this function.
+The Google API Key is optional and is only nescessary to retreive geo-location details (address) of the parked car. The adapter works of course also fine without this information.
 
 ## Usage
 After starting the adapter the data is received immediately but only once.
