@@ -5,6 +5,8 @@ Adapter for connecting to Volkswagen Car-Net
 
 
 ## Changelog
+### 0.1.4 (2018-12-12)
+* (RPerkuhn) bugfixes
 ### 0.1.3 (2018-12-10)
 * (RPerkuhn) implementation of dynamic display of state names in English or German depending on ioBroker systemlanguage
 ### 0.1.2 (2018-12-08)
