@@ -41,7 +41,7 @@ or simply restart the adapter. It always starts with logging disabled.
 
 ## Changelog
 ### 0.1.5 (2018-12-14)
-* (RPerkuhn) bugfixes
+* (RPerkuhn) implementation of loggingmode
 ### 0.1.4 (2018-12-12)
 * (RPerkuhn) bugfixes
 ### 0.1.3 (2018-12-10)
