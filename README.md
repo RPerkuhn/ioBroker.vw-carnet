@@ -10,12 +10,12 @@ After starting the adapter the data is received immediately but only once.
 For frequently data-update you have to create an additional script to send a command to the adapter.
 I would recomment a minimum interval of 15 minutes.
 
-Example for an update-command every 30 minutes:
+Example for an update-command every 30 minutes: (vw-carnet instance is 0)
 
 ```javascript
 var schedule;
 
-schedule = schedule('*/15 * * * *', function () {
+schedule = schedule('*/30 * * * *', function () {
     if (getState('vw-carnet.0.connection'))/*If connected to VW car-net server*/{
     sendTo('vw-carnet.0', 'update', {
         'parameter1': 'tmp'
