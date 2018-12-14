@@ -3,6 +3,10 @@
         "name": "vw-carnet",
         "version": "0.1.5",
         "news": {
+		"0.1.5": {
+                "en": "implementing of loggingMode",
+                "de": "Hinzufügen des loggingMode"
+		},
 		"0.1.4": {
                 "en": "bugfixing",
                 "de": "Fehlerbereinigung"
