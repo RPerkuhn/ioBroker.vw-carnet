@@ -1,8 +1,12 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.1.5",
+        "version": "0.1.6",
         "news": {
+		"0.1.6": {
+                "en": "implementing of Golf GTE built modelyear - 2017",
+                "de": "Unterstützung von Golf GTE Baujahr - 2017"
+		},
 		"0.1.5": {
                 "en": "implementing of loggingMode",
                 "de": "Hinzufügen des loggingMode"

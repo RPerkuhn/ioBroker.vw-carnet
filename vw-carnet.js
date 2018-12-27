@@ -1,5 +1,5 @@
-//version 0.1.5
-'use strict';
+//version 0.1.6
+// 'use strict';
 const utils =    require(__dirname + '/lib/utils'); // Get common adapter utils
 const adapter = new utils.Adapter('vw-carnet');
 
@@ -643,6 +643,8 @@ function RetrieveVehicleData_Status(callback){
     var myReceivedDataKey;
     var myOilInspectionDays=0, myOilInspectionKm=0;
     var myServiceInspectionDays=0, myServiceInspectionKm=0;
+    var myPrimaryEngineTyp = '', mySecondaryEngineTyp = '';
+    var myPrimaryRange=-1, mySecondaryRange = -1;
     var myParkingLight;
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/VW/DE/vehicles/' + myVIN + '/status';
     if (VWCarNet_Connected===false){return callback(false)};
@@ -696,12 +698,6 @@ function RetrieveVehicleData_Status(callback){
                             myParkingLight = myReceivedDataKey.value
 
                             break;
-                        // case '0x030103FFFF.0x0301030001': //parking_brake_inactive
-                        //     //adapter.log.info('ParkingBrake: ' + myReceivedDataKey.value);
-                        //     var myParkingBrake = false;
-                        //     if (myReceivedDataKey.value = '0'){myParkingBrake = true};
-                        //     adapter.setState(state_s_parkingBrake.label, {val: myParkingBrake, ack: true});
-                        //     break;
                         case '0x030103FFFF.0x030103000A': //fuel_level_ok
                             adapter.setState(state_s_fuelLevel.label, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('FuelLevel: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
@@ -710,15 +706,25 @@ function RetrieveVehicleData_Status(callback){
                             adapter.setState(state_s_batteryLevel.label, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('BatteryLevel: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
-                        case '0x030103FFFF.0x0301030006': //fuel_range
-                            adapter.setState(state_s_fuelRange.label, {val: myReceivedDataKey.value, ack: true});
+                        case '0x030103FFFF.0x0301030006': //primary_range
+                            myPrimaryRange=myReceivedDataKey.value;
+                            //adapter.setState(state_s_fuelRange.label, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('FuelRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
-                        case '0x030103FFFF.0x0301030008': //electric_range
-                            adapter.setState(state_s_batteryRange.label, {val: myReceivedDataKey.value, ack: true});
+                        case '0x030103FFFF.0x0301030007': //primary_typ
+                            myPrimaryEngineTyp=myReceivedDataKey.value;
+                            //adapter.log.info('PrimaryEngineType: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
+                            break;
+                        case '0x030103FFFF.0x0301030008': // secondary_range - erst ab Modelljahr 2018
+                            mySecondaryRange=myReceivedDataKey.value;
+                            //adapter.setState(state_s_batteryRange.label, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('BatteryRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
-                        case '0x030103FFFF.0x0301030005': //hybrid_range
+                        case '0x030103FFFF.0x0301030009': //secondary_typ - erst ab Modelljahr 2018
+                            mySecondaryEngineTyp=myReceivedDataKey.value;
+                            //adapter.log.info('SecondaryEngineType: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
+                            break;
+                        case '0x030103FFFF.0x0301030005': //hybrid_range - erst ab Modelljahr 2018
                             adapter.setState(state_s_hybridRange.label, {val: myReceivedDataKey.value, ack: true});
                             //adapter.log.info('HybridRange: ' + myReceivedDataKey.value + myReceivedDataKey.unit);
                             break;
@@ -824,6 +830,14 @@ function RetrieveVehicleData_Status(callback){
                     }
                 }
             }
+            var myFuelRange, myBatteryRange;
+            if (myPrimaryEngineTyp==='3'){myBatteryRange=myPrimaryRange}
+            if (myPrimaryEngineTyp==='6'){myFuelRange=myPrimaryRange}
+            if (mySecondaryEngineTyp==='3'){myBatteryRange=mySecondaryRange}
+            if (mySecondaryEngineTyp==='6'){myFuelRange=mySecondaryRange}
+            adapter.setState(state_s_fuelRange.label, {val: myFuelRange, ack: true});
+            adapter.setState(state_s_batteryRange.label, {val: myBatteryRange, ack: true});
+
             adapter.setState(state_dw_Doors.label, {val: JSON.stringify(myCarNetDoors), ack: true});
             //adapter.log.info(JSON.stringify(myCarNetDoors));
             adapter.setState(state_dw_Windows.label, {val: JSON.stringify(myCarNetWindows), ack: true});
@@ -1051,6 +1065,7 @@ function requestGeocoding(lat, lng) {
         adapter.setState(state_l_address, {val: null, ack: true});
     }
 }
+
 function requestCarSendData2CarNet(callback){
     //Requesting car to send it's data to the server
     var responseData;
