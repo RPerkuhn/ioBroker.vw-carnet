@@ -1128,5 +1128,3 @@ function requestCarSendData2CarNet(callback){
         return callback(false);
     }
 }
-
-Initialize();
