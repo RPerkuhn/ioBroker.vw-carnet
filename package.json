@@ -1,6 +1,6 @@
 {
   "name": "iobroker.vw-carnet",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "ioBroker Volkswagen Car-Net adapter",
   "author": {
     "name": "Ralf Perkuhn",
@@ -10,6 +10,10 @@
     {
       "name": "RPerkuhn",
       "email": "rperkuhn@online.de"
+    },
+    {
+      "name": "BasGo",
+      "email": "basgo@gmx.de"
     }
   ],
   "homepage": "https://github.com/RPerkuhn/ioBroker.vw-carnet",
@@ -25,7 +29,8 @@
     "url": "https://github.com/RPerkuhn/ioBroker.vw-carnet"
   },
   "dependencies": {
-    "request": "^2.87.0"
+    "request": "^2.87.0",
+    "@iobroker/adapter-core": "^1.0.2"
   },
   "devDependencies": {
     "gulp": "^3.9.1",

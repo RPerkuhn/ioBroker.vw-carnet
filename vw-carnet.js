@@ -4,13 +4,67 @@
 /*jshint sub:true*/
 
 // 'use strict';
-const utils =    require(__dirname + '/lib/utils'); // Get common adapter utils
-const adapter = new utils.Adapter('vw-carnet');
-
+const utils = require('@iobroker/adapter-core'); 
 const my_key = 'Zgfr56gFe87jJOM';
+
+let adapter; 
 
 //var ioBroker_Settings
 var ioBroker_Language = 'en';
+
+function startAdapter(options) { 
+    options = options || {}; 
+    Object.assign(options,{ 
+        name:  "vw-carnetical", 
+        message: function (obj) {
+            if (typeof obj === 'object' && obj.message) {
+                adapter.log.info('Received message in VW CarNet adapter :' + obj.command);
+                if (obj.command === 'update') {
+                    VWCarNetReadData(); // sendto command 'update' received
+                }
+                if (obj.command === 'activateLogging') {
+                    myLoggingEnabled=true;
+                    adapter.log.info('Logging mode activated');
+                }
+                if (obj.command === 'deactivateLogging') {
+                    myLoggingEnabled=false;
+                    adapter.log.info('Logging mode deactivated');
+                }
+                if (obj.command === 'CarSendData') {
+                    VWCarNetForceCarToSendData(); // sendto command 'update' received
+                }
+            }
+        },
+        unload: function (callback) { 
+            try {
+                VWCarNet_Connected = false;
+                adapter.setState('connection', {val: VWCarNet_Connected, ack: true}); //connection to Threema gateway not established
+                adapter.log.info('VW CarNet adapter stopped - cleaned everything up...');
+                callback();
+            } catch (e) {
+                callback();
+            }
+        }, 
+        ready: function () { 
+            var myTmp;
+            //adapter.log.info(ioBroker_Language)
+            CreateStates_common(function(myTmp){});
+            myGoogleMapsAPIKey = adapter.config.GoogleAPIKey;
+            VWCarNet_GetClimater = adapter.config.adapterGetClimater;
+            VWCarNet_GetEManager = adapter.config.adapterGetEManager;
+            VWCarNet_GetLocation = adapter.config.adapterGetLocation;
+            CreateStates_Status(function(myTmp){});
+            CreateStates_climater(function(myTmp){});
+            CreateStates_eManager(function(myTmp){});
+            CreateStates_location(function(myTmp){});
+            main();
+        } 
+    }); 
+ 
+    adapter = new utils.Adapter(options); 
+ 
+    return adapter; 
+} 
 
 adapter.getForeignObject('system.config', function(err, ioBroker_Settings) {
     if (err) {
@@ -56,54 +110,6 @@ var myGoogleDefaulHeader = {
     'Accept': 'application/json, ' + 'text/plain, */*',
     'Content-Type': 'application/json;charset=UTF-8',
     'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0.1; D5803 Build/23.5.A.1.291; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/63.0.3239.111 Mobile Safari/537.36'};
-
-// is called when adapter shuts down - callback has to be called under any circumstances!
-adapter.on('unload', function (callback) {
-    try {
-        VWCarNet_Connected = false;
-        adapter.setState('connection', {val: VWCarNet_Connected, ack: true}); //connection to Threema gateway not established
-        adapter.log.info('VW CarNet adapter stopped - cleaned everything up...');
-        callback();
-    } catch (e) {
-        callback();
-    }
-});
-
-// Some message was sent to adapter instance over message box.
-adapter.on('message', function (obj) {
-    if (typeof obj === 'object' && obj.message) {
-        adapter.log.info('Received message in VW CarNet adapter :' + obj.command);
-        if (obj.command === 'update') {
-            VWCarNetReadData(); // sendto command 'update' received
-        }
-        if (obj.command === 'activateLogging') {
-            myLoggingEnabled=true;
-            adapter.log.info('Logging mode activated');
-        }
-        if (obj.command === 'deactivateLogging') {
-            myLoggingEnabled=false;
-            adapter.log.info('Logging mode deactivated');
-        }
-        if (obj.command === 'CarSendData') {
-            VWCarNetForceCarToSendData(); // sendto command 'update' received
-        }
-    }
-});
-
-adapter.on('ready', function () {
-    var myTmp;
-    //adapter.log.info(ioBroker_Language)
-    CreateStates_common(function(myTmp){});
-    myGoogleMapsAPIKey = adapter.config.GoogleAPIKey;
-    VWCarNet_GetClimater = adapter.config.adapterGetClimater;
-    VWCarNet_GetEManager = adapter.config.adapterGetEManager;
-    VWCarNet_GetLocation = adapter.config.adapterGetLocation;
-    CreateStates_Status(function(myTmp){});
-    CreateStates_climater(function(myTmp){});
-    CreateStates_eManager(function(myTmp){});
-    CreateStates_location(function(myTmp){});
-    main();
-});
 
 //##############################################################################################################
 // declaring names for states for Vehicle data
@@ -493,22 +499,18 @@ function main() {
                     }
                     if (VWCarNet_Connected){
                         RetrieveVehicleData_Status(function(myTmp){
-                            //adapter.log.info(myTmp);
                             mySuccefulUpdate = mySuccefulUpdate && myTmp;
                         });
 
                         RetrieveVehicleData_Location(function(myTmp){
-                            //adapter.log.info(myTmp);
                             mySuccefulUpdate = mySuccefulUpdate && myTmp;
                         });
 
                         RetrieveVehicleData_eManager(function(myTmp) {
-                            //adapter.log.info(myTmp);
                             mySuccefulUpdate = mySuccefulUpdate && myTmp;
                         });
 
                         RetrieveVehicleData_Climater(function(myTmp){
-                            //adapter.log.info(myTmp);
                             mySuccefulUpdate = mySuccefulUpdate && myTmp;
                         });
 
@@ -545,26 +547,21 @@ function VWCarNetReadData(){
         if (myLoggingEnabled) {adapter.log.info('Are credentials valid: ' + VWCarNet_CredentialsAreValid);}
         if (VWCarNet_Connected){
             RetrieveVehicleData_Status(function(myTmp){
-                //adapter.log.info(myTmp);
                 mySuccefulUpdate = mySuccefulUpdate && myTmp;
             });
 
             RetrieveVehicleData_Location(function(myTmp){
-                //adapter.log.info(myTmp);
                 mySuccefulUpdate = mySuccefulUpdate && myTmp;
             });
 
             RetrieveVehicleData_eManager(function(myTmp) {
-                //adapter.log.info(myTmp);
                 mySuccefulUpdate = mySuccefulUpdate && myTmp;
             });
 
             RetrieveVehicleData_Climater(function(myTmp){
-                //adapter.log.info(myTmp);
                 mySuccefulUpdate = mySuccefulUpdate && myTmp;
             });
 
-            //adapter.log.info(myLastCarNetAnswer);
             if (mySuccefulUpdate){
                 var myDate = Date.now();
                 adapter.setState('lastUpdate', {val: myDate, ack: true});
@@ -578,7 +575,7 @@ function VWCarNetForceCarToSendData(){
     CarNetLogon(function(myTmp){
         VWCarNet_CredentialsAreValid=myTmp;
         VWCarNet_Connected = VWCarNet_CredentialsAreValid && VWCarNet_VINIsValid;
-        //adapter.log.info(VWCarNet_CredentialsAreValid);
+
         if (VWCarNet_Connected){
             requestCarSendData2CarNet(function(myTmp){
                 //adapter.log.info(myTmp);
@@ -600,7 +597,6 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
         //adapter.log.info(response.statusCode);
         switch(response.statusCode){
             case 200:
-                //adapter.log.info("Answer fom Car-Net: 200 - connection successful");
                 myConnected=true;  //connection to VW Car-Net successful established
                 myLastCarNetAnswer='200 - connection successful';
                 break;
@@ -610,11 +606,10 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
                 myLastCarNetAnswer='401 - Username or PW are incorrect';
                 break;
             default:
-                //adapter.log.info("000 - undefined");
                 myConnected=false;  //connection to VW Car-Net not established
                 myLastCarNetAnswer='Answer fom Car-Net: ' + response.statusCode + ' undefined';
         }
-        //responseData = JSON.parse(result);
+
         myAuthHeaders.Authorization = 'AudiAuth 1 ' + responseData.access_token;
         myToken = responseData.access_token;
         return callback(myConnected);
@@ -1127,4 +1122,12 @@ function requestCarSendData2CarNet(callback){
         //adapter.log.error('Fehler bei Post-Befehl')
         return callback(false);
     }
+}
+
+// If started as allInOne/compact mode => return function to create instance 
+if (module && module.parent) { 
+    module.exports = startAdapter; 
+} else { 
+    // or start the instance directly 
+    startAdapter(); 
 }

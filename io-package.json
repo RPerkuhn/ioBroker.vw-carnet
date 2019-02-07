@@ -1,52 +1,56 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.1.6",
+        "version": "0.1.7",
         "news": {
-		"0.1.6": {
-                "en": "implementing of Golf GTE built modelyear - 2017",
+            "0.1.7": {
+                "en": "Added adBlue remaining distance, added compact mode",
+                "de": "Auswertung der verbleibenden Strecke für adBlue, Kompaktmodus hinzugefügt",
+            },
+            "0.1.6": {
+                "en": "Implementation of Golf GTE modelyear - 2017",
                 "de": "Unterstützung von Golf GTE Baujahr - 2017"
-		},
-		"0.1.5": {
-                "en": "implementing of loggingMode",
+            },
+            "0.1.5": {
+                "en": "Implementation of loggingMode",
                 "de": "Hinzufügen des loggingMode"
-		},
-		"0.1.4": {
-                "en": "bugfixing",
+            },
+            "0.1.4": {
+                "en": "Bugfixing",
                 "de": "Fehlerbereinigung"
-		},
-		"0.1.3": {
-                "en": "implementation of dynamic switching between English and German state names",
-                "de": "Implementierung dynamischer umschaltung zwischen Deutschen und Englschen State-Namen"
-		},
-		"0.1.2": {
-                "en": "integration of door and window states",
+            },
+            "0.1.3": {
+                "en": "Implementation of dynamic switching between english and german state names",
+                "de": "Implementierung dynamischer Umschaltung zwischen deutschen und englischen State-Namen"
+            },
+            "0.1.2": {
+                "en": "Integration of door and window states",
                 "de": "Integration der Tür- und Fensterstati"
-		},
-		"0.1.1": {
-                "en": "checkboxes to enable/disable retrieve of climater-, eManager- and locationdata",
+            },
+            "0.1.1": {
+                "en": "Checkboxes to enable/disable retrieve of climater-, eManager- and locationdata",
                 "de": "Checkboxen zum ein-/ausschalten von Klimaanlagen-, eManager- und Ortungsdaten"
-		},
-		"0.1.0": {
-                "en": "first alpha release",
+            },
+            "0.1.0": {
+                "en": "First alpha release",
                 "de": "Erste testbare Alpha-Version"
-		},
-		"0.0.x": {
-                "en": "developement versions",
+            },
+            "0.0.x": {
+                "en": "Developement versions",
                 "de": "Entwicklungsstand-Versionen"
-		},
-	    "0.0.1": {
-                "en": "initial adapter",
+            },
+            "0.0.1": {
+                "en": "Initial adapter",
                 "de": "Initiale Version"
-		}
+            }
         },
-		"title": "Volkswagen Car-Net data adapter",
+		"title": "Volkswagen Car-Net",
         "titleLang": {
-            "en": "Volkswagen Car-Net data adapter",
-            "de": "Volkswagen Car-Net Data Adapter"
+            "en": "Volkswagen Car-Net",
+            "de": "Volkswagen Car-Net"
         },
         "desc": {
-            "en": "Adapter for connection to VW Car-Net for a specific car",
+            "en": "Adapter for connection to VW Car-Net",
             "de": "Adapter zur Verbindung mit VW Car-Net"
         },
         "authors": [
@@ -60,6 +64,7 @@
         "mode": "daemon",
         "icon": "vw-logo.png",
         "materialize": true,
+        "compact": true,
         "enabled": false,
         "extIcon": "https://raw.githubusercontent.com/RPerkuhn/ioBroker.vw-carnet/master/admin/vw-logo.png",
         "keywords": ["Volkswagen Car-Net"],

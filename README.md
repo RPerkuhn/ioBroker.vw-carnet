@@ -40,6 +40,11 @@ or simply restart the adapter. It always starts with logging disabled.
 
 
 ## Changelog
+### 0.1.7 (2019-02-07)
+* (BasGo) Added adBlue remaining distance
+* (BasGo) Added compact mode
+### 0.1.6 (2018-12-28)
+* (RPerkuhn) Implementation of Golf GTE modelyear - 2017
 ### 0.1.5 (2018-12-14)
 * (RPerkuhn) implementation of loggingmode
 ### 0.1.4 (2018-12-12)
