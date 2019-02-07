@@ -5,7 +5,7 @@
         "news": {
             "0.1.7": {
                 "en": "Added adBlue remaining distance, added compact mode",
-                "de": "Auswertung der verbleibenden Strecke für adBlue, Kompaktmodus hinzugefügt",
+                "de": "Auswertung der verbleibenden Strecke für adBlue, Kompaktmodus hinzugefügt"
             },
             "0.1.6": {
                 "en": "Implementation of Golf GTE modelyear - 2017",
