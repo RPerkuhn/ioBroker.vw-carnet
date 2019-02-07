@@ -15,7 +15,7 @@ var ioBroker_Language = 'en';
 function startAdapter(options) { 
     options = options || {}; 
     Object.assign(options,{ 
-        name:  "vw-carnetical", 
+        name:  "vw-carnet", 
         message: function (obj) {
             if (typeof obj === 'object' && obj.message) {
                 adapter.log.info('Received message in VW CarNet adapter :' + obj.command);
