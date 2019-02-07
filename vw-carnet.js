@@ -62,24 +62,24 @@ function startAdapter(options) {
     }); 
  
     adapter = new utils.Adapter(options); 
- 
+
+    adapter.getForeignObject('system.config', function(err, ioBroker_Settings) {
+        if (err) {
+    
+        } else {
+            //ioBroker_Language = ioBroker_Settings.common.language;
+            switch (ioBroker_Settings.common.language){
+                case 'de':
+                    ioBroker_Language = 'de';
+                    break;
+                default:
+                    ioBroker_Language = 'en';
+            }
+        }
+    });
+    
     return adapter; 
 } 
-
-adapter.getForeignObject('system.config', function(err, ioBroker_Settings) {
-    if (err) {
-
-    } else {
-        //ioBroker_Language = ioBroker_Settings.common.language;
-        switch (ioBroker_Settings.common.language){
-            case 'de':
-                ioBroker_Language = 'de';
-                break;
-            default:
-                ioBroker_Language = 'en';
-        }
-    }
-});
 
 var VWCarNet_CredentialsAreValid = false;
 var VWCarNet_VINIsValid = false;
