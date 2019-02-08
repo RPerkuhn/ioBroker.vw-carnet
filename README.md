@@ -55,7 +55,7 @@ or simply restart the adapter. It always starts with logging disabled.
 ### 0.0.x (2018-11-09)
 * (RPerkuhn) initial setup of adapter and lab-versions until 0.1.x
 
-p.s.: I like to give many thanks to https://github.com/wez3/volkswagen-carnet-client from where I learned to get access to all the CarNet informations.
+p.s.: I like to give many thanks to https://github.com/wez3/volkswagen-carnet-client from where I learned to get access to all the CarNet informations. I also like to thank Sneak-L8 for motivating me to start this project with his script to access CarNet via ioBroker.
 
 ## License
 
