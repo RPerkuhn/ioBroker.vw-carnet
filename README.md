@@ -40,6 +40,8 @@ or simply restart the adapter. It always starts with logging disabled.
 
 
 ## Changelog
+### 0.2.0 (2019-02-10)
+* (RPerkuhn) start a new release for more stability
 ### 0.1.7 (2019-02-07)
 * (BasGo) Added adBlue remaining distance
 * (BasGo) Added compact mode
