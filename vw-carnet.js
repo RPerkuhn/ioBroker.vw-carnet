@@ -1,5 +1,7 @@
 //version 0.2.0
-//brandnew features
+// to start debugging in vscode:
+// node --inspect-brk vw-carnet.js --force --logs
+
 /*jshint esversion: 6 */
 /*jshint sub:true*/
 
