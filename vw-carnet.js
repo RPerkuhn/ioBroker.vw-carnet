@@ -727,7 +727,7 @@ function RetrieveVehicleData_VINValid(callback){
     });
 }
 
-function RetrieveVehicleData_Status(callback){
+function RetrieveVehicleData_operationList(callback){
 
 }
 
