@@ -7,7 +7,10 @@
 
 // 'use strict';
 const utils = require('@iobroker/adapter-core'); 
+
+/* comment out before delete
 const my_key = 'Zgfr56gFe87jJOM';
+*/
 
 let adapter; 
 
@@ -52,9 +55,11 @@ function startAdapter(options) {
             //adapter.log.info(ioBroker_Language)
             CreateStates_common(function(myTmp){});
             myGoogleMapsAPIKey = adapter.config.GoogleAPIKey;
+            //VWCarNet_GetStatus = adapter.config.adapterGetStatus;
             VWCarNet_GetClimater = adapter.config.adapterGetClimater;
             VWCarNet_GetEManager = adapter.config.adapterGetEManager;
             VWCarNet_GetLocation = adapter.config.adapterGetLocation;
+            CreateStates_Services(function(myTmp){});
             CreateStates_Status(function(myTmp){});
             CreateStates_climater(function(myTmp){});
             CreateStates_eManager(function(myTmp){});
@@ -84,12 +89,17 @@ function startAdapter(options) {
 } 
 
 var VWCarNet_CredentialsAreValid = false;
+var VWCarNet_Country = 'DE';
+var VWCarNet_Brand = 'VW';
 var VWCarNet_VINIsValid = false;
 var VWCarNet_Connected = false;
 var myLastCarNetAnswer = '';
-var VWCarNet_GetClimater = true;
-var VWCarNet_GetEManager = true;
-var VWCarNet_GetLocation = true;
+var VWCarNet_GetStatus = false;
+var VWCarNet_GetClimater = false;
+var VWCarNet_GetEManager = false;
+var VWCarNet_GetLocation = false;
+var myCarNet_vehicleStatus;
+var myCarNet_requestID;
 var myCarNetDoors={'doors':'dummy'};
 var myCarNetWindows={'windows':'dummy'};
 var myLoggingEnabled=false;
@@ -101,17 +111,27 @@ var myTmp;
 var request = require('request');
 
 // Fake the VW CarNet mobile app headers
-var myHeaders = { 'Accept': 'application/json',
-    'X-App-Name': 'eRemote',
-    'X-App-Version': '4.6.1',
-    'User-Agent': 'okhttp/2.3.0' };
-var myAuthHeaders = myHeaders;
+var myHeaders = {'accept': 'application/json'}
+    myHeaders['x-app-name'] = 'eRemote';
+    myHeaders['clientid'] = 'CarNetApp';
+    myHeaders['x-app-version'] = '4.6.1';
+    myHeaders['user-agent'] = 'okhttp/3.7.0';
+
+var myAuthHeaders = JSON.parse(JSON.stringify(myHeaders));
 
 var myGoogleMapsAPIKey = '';
 var myGoogleDefaulHeader = {
     'Accept': 'application/json, ' + 'text/plain, */*',
     'Content-Type': 'application/json;charset=UTF-8',
     'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0.1; D5803 Build/23.5.A.1.291; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/63.0.3239.111 Mobile Safari/537.36'};
+
+//##############################################################################################################
+// declaring names for states for CarNet Services data
+const channel_sv = {'label':'CarNet-Servcies', 'en':'status of available carnet services', 'de':'Status der verfügbaren CarNet Services'};
+const state_sv_statusreport_v1 = {'label':'CarNet-Servcies.StatusReport', 'en':'general status data', 'de':'allgemeine Status Daten'};
+const state_sv_rclima_v1 = {'label':'CarNet-Servcies.Climater', 'en':'climaterdata', 'de':'Lüftung/Klimaanlage'};
+const state_sv_carfinder_v1 = {'label':'CarNet-Servcies.CarFinder', 'en':'locationdata', 'de':'Standortdaten'};
+const state_sv_rbatterycharge_v1 = {'label':'CarNet-Servcies.eManager', 'en':'electric data (electric/hybrid cars only)', 'de':'Daten für Elektro- Hybridfahrzeuge'};
 
 //##############################################################################################################
 // declaring names for states for Vehicle data
@@ -198,6 +218,35 @@ function CreateStates_common(callback){
     return callback(true);
 }
 
+function CreateStates_Services(callback){
+    // creating channel/states for available CarNet services
+    adapter.setObject(channel_sv.label, {
+        type: 'object',
+        common: {name: channel_sv[ioBroker_Language]},
+        native: {}
+    });
+    adapter.setObject(state_sv_statusreport_v1.label, {
+        type: 'state',
+        common: {name: state_sv_statusreport_v1[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_sv_rclima_v1.label, {
+        type: 'state',
+        common: {name: state_sv_rclima_v1[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_sv_carfinder_v1.label, {
+        type: 'state',
+        common: {name: state_sv_carfinder_v1[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_sv_rbatterycharge_v1.label, {
+        type: 'state',
+        common: {name: state_sv_rbatterycharge_v1[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    return callback(true);
+}
 
 function CreateStates_Status(callback){
     // creating channel/states for selectedVehicle Data
@@ -528,6 +577,7 @@ function main() {
     });
 }
 
+/* comment out before delete
 function decrypt(key, value) {
     var result = '';
     for(var i = 0; i < value.length; i++) {
@@ -535,6 +585,7 @@ function decrypt(key, value) {
     }
     return result;
 }
+*/
 
 String.prototype.Capitalize = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
@@ -594,8 +645,7 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
     var myFormdata = {'grant_type': 'password',
         'username': adapter.config.email,
         'password': adapter.config.password};
-    //'password': decrypt(my_key, adapter.config.password)};
-    request.post({url: myUrl, form: myFormdata, headers: myHeaders, json: true}, function(error, response, responseData){
+        request.post({url: myUrl, form: myFormdata, headers: myHeaders, json: true}, function(error, response, result){
         //adapter.log.info(response.statusCode);
         switch(response.statusCode){
             case 200:
@@ -612,33 +662,30 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
                 myLastCarNetAnswer='Answer fom Car-Net: ' + response.statusCode + ' undefined';
         }
 
-        myAuthHeaders.Authorization = 'AudiAuth 1 ' + responseData.access_token;
-        myToken = responseData.access_token;
+        myAuthHeaders.Authorization = 'AudiAuth 1 ' + result.access_token;
+        myToken = result.access_token;
         return callback(myConnected);
     });
 }
 
 function RetrieveVehicles(callback){ //retrieve VIN of the first vehicle (Fahrgestellnummer)
-    var responseData;
     var myVehicleID = 0;
     var myUrl = 'https://msg.volkswagen.de/fs-car/usermanagement/users/v1/VW/DE/vehicles';
-
     if (VWCarNet_CredentialsAreValid===false){
         return callback('not authenticated');
     }
     if (adapter.config.VIN === ''){
-        request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData){
-            //adapter.log.debug(JSON.stringify(responseData));
-            myVIN = responseData.userVehicles.vehicle[myVehicleID];
-            //adapter.log.info(responseData.userVehicles.vehicle.length);
-            return callback('Count: ' + responseData.userVehicles.vehicle.length);
+        request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result){
+            //adapter.log.debug(JSON.stringify(result));
+            myVIN = result.userVehicles.vehicle[myVehicleID];
+            return callback('Count: ' + result.userVehicles.vehicle.length);
         });
     } else {
         myVIN = adapter.config.VIN;
         return callback('default');
     }
 }
-
+/*  ###old funtion###
 function RetrieveVehicleData_VINValid(callback){
     var responseData;
     var myVINIsValid=false;
@@ -657,6 +704,31 @@ function RetrieveVehicleData_VINValid(callback){
             return callback(false);
         }
     });
+}
+*/
+
+function RetrieveVehicleData_VINValid(callback){
+    var myVINIsValid=false; 
+    var myUrl = 'https://msg.volkswagen.de/fs-car/vehicleMgmt/vehicledata/v2/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/'+ myVIN
+    request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result){
+        console.log('RetrieveVehicleData_VINValid:    ' + JSON.stringify(result));
+        try {
+    
+            if(result.vehicleData.vin===myVIN){
+                myVINIsValid=true;
+                VWCarNet_Brand=result.vehicleData.brand
+                VWCarNet_Country=result.vehicleData.country
+            }
+        }
+        catch (ex) {
+            myVINIsValid=false;
+        }
+        return callback(myVINIsValid); 
+    });
+}
+
+function RetrieveVehicleData_Status(callback){
+
 }
 
 function RetrieveVehicleData_Status(callback){
