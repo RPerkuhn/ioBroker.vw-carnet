@@ -128,10 +128,14 @@ var myGoogleDefaulHeader = {
 //##############################################################################################################
 // declaring names for states for CarNet Services data
 const channel_sv = {'label':'CarNet-Servcies', 'en':'status of available carnet services', 'de':'Status der verfügbaren CarNet Services'};
-const state_sv_statusreport_v1 = {'label':'CarNet-Servcies.StatusReport', 'en':'general status data', 'de':'allgemeine Status Daten'};
-const state_sv_rclima_v1 = {'label':'CarNet-Servcies.Climater', 'en':'climaterdata', 'de':'Lüftung/Klimaanlage'};
-const state_sv_carfinder_v1 = {'label':'CarNet-Servcies.CarFinder', 'en':'locationdata', 'de':'Standortdaten'};
-const state_sv_rbatterycharge_v1 = {'label':'CarNet-Servcies.eManager', 'en':'electric data (electric/hybrid cars only)', 'de':'Daten für Elektro- Hybridfahrzeuge'};
+const state_sv_statusreport_v1_status = {'label':'CarNet-Servcies.StatusReport.serviceStatus', 'en':'general status data', 'de':'allgemeine Status Daten'};
+const state_sv_statusreport_v1_eol = {'label':'CarNet-Servcies.StatusReport.serviceEOL', 'en':'end of life general status data', 'de':'Vertragsende'};
+const state_sv_rclima_v1_status = {'label':'CarNet-Servcies.Climater.serviceStatus', 'en':'climaterdata', 'de':'Lüftung/Klimaanlage'};
+const state_sv_rclima_v1_eol = {'label':'CarNet-Servcies.Climater.serviceEOL', 'en':'end of life', 'de':'Vertragsende'};
+const state_sv_carfinder_v1_status = {'label':'CarNet-Servcies.CarFinder.serviceStatus', 'en':'locationdata', 'de':'Standortdaten'};
+const state_sv_carfinder_v1_eol = {'label':'CarNet-Servcies.CarFinder.serviceEOL', 'en':'end of life', 'de':'Vertragsende'};
+const state_sv_rbatterycharge_v1_status = {'label':'CarNet-Servcies.eManager.serviceStatus', 'en':'electric data (electric/hybrid cars only)', 'de':'Daten für Elektro- Hybridfahrzeuge'};
+const state_sv_rbatterycharge_v1_eol = {'label':'CarNet-Servcies.eManager.serviceEOL', 'en':'end of life', 'de':'Vertragsende'};
 
 //##############################################################################################################
 // declaring names for states for Vehicle data
@@ -225,24 +229,50 @@ function CreateStates_Services(callback){
         common: {name: channel_sv[ioBroker_Language]},
         native: {}
     });
-    adapter.setObject(state_sv_statusreport_v1.label, {
+    adapter.setObject(state_sv_statusreport_v1_status.label, {
         type: 'state',
-        common: {name: state_sv_statusreport_v1[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        common: {name: state_sv_statusreport_v1_status[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_sv_rclima_v1.label, {
+    adapter.setState(state_sv_statusreport_v1_status.label, {val: 'Disabled', ack: true});
+    adapter.setObject(state_sv_statusreport_v1_eol.label, {
         type: 'state',
-        common: {name: state_sv_rclima_v1[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        common: {name: state_sv_statusreport_v1_eol[ioBroker_Language], type: 'string', read: true, write: false, role: 'datetime'},
         native: {}
     });
-    adapter.setObject(state_sv_carfinder_v1.label, {
+
+    adapter.setObject(state_sv_rclima_v1_status.label, {
         type: 'state',
-        common: {name: state_sv_carfinder_v1[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        common: {name: state_sv_rclima_v1_status[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
-    adapter.setObject(state_sv_rbatterycharge_v1.label, {
+    adapter.setState(state_sv_rclima_v1_status.label, {val: 'Disabled', ack: true});
+    adapter.setObject(state_sv_rclima_v1_eol.label, {
         type: 'state',
-        common: {name: state_sv_rbatterycharge_v1[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        common: {name: state_sv_rclima_v1_eol[ioBroker_Language], type: 'string', read: true, write: false, role: 'datetime'},
+        native: {}
+    });
+
+    adapter.setObject(state_sv_carfinder_v1_status.label, {
+        type: 'state',
+        common: {name: state_sv_carfinder_v1_status[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setState(state_sv_carfinder_v1_status.label, {val: 'Disabled', ack: true});
+    adapter.setObject(state_sv_carfinder_v1_eol.label, {
+        type: 'state',
+        common: {name: state_sv_carfinder_v1_eol[ioBroker_Language], type: 'string', read: true, write: false, role: 'datetime'},
+        native: {}
+    });
+    adapter.setObject(state_sv_rbatterycharge_v1_status.label, {
+        type: 'state',
+        common: {name: state_sv_rbatterycharge_v1_status[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setState(state_sv_rbatterycharge_v1_status.label, {val: 'Disabled', ack: true});
+    adapter.setObject(state_sv_rbatterycharge_v1_eol.label, {
+        type: 'state',
+        common: {name: state_sv_rbatterycharge_v1_eol[ioBroker_Language], type: 'string', read: true, write: false, role: 'datetime'},
         native: {}
     });
     return callback(true);
@@ -725,22 +755,25 @@ function RetrieveVehicleData_operationList(callback){
                 switch(myOperations[myService].serviceId){
                     case 'statusreport_v1':
                         //adapter.log.info(myOperations[myService].serviceId);
-                        adapter.setState(state_sv_statusreport_v1.label, {val: myOperations[myService].serviceStatus.status, ack: true});
-                        //adapter.log.info(myOperations[myService].serviceEol);
+                        adapter.setState(state_sv_statusreport_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
+                        adapter.setState(state_sv_statusreport_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
                         break;
                     case 'rclima_v1':
                         //adapter.log.info(myOperations[myService].serviceId);
-                        adapter.setState(state_sv_rclima_v1.label, {val: myOperations[myService].serviceStatus.status, ack: true});
+                        adapter.setState(state_sv_rclima_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
+                        adapter.setState(state_sv_rclima_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
                         //adapter.log.info(myOperations[myService].serviceEol);
                         break;
                     case 'rbatterycharge_v1':
                         //adapter.log.info(myOperations[myService].serviceId)
-                        adapter.setState(state_sv_rbatterycharge_v1.label, {val: myOperations[myService].serviceStatus.status, ack: true});
+                        adapter.setState(state_sv_rbatterycharge_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
+                        adapter.setState(state_sv_rbatterycharge_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
                         //adapter.log.info(myOperations[myService].serviceEol);
                         break;
                     case 'carfinder_v1':
                         //adapter.log.info(myOperations[myService].serviceId)
-                        adapter.setState(state_sv_carfinder_v1.label, {val: myOperations[myService].serviceStatus.status, ack: true});
+                        adapter.setState(state_sv_carfinder_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
+                        adapter.setState(state_sv_carfinder_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
                         //adapter.log.info(myOperations[myService].serviceEol);
                         break;
                     default:       
