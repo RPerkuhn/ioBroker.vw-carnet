@@ -4,8 +4,8 @@
         "version": "0.2.1",
         "news": {
             "0.2.1": {
-                "en": "additional states to show which services are available/show last update of each service",
-                "de": "neues State für Verfügbarkeit von Services und deren letzte Aktualisierung"
+                "en": "Bugfixing",
+                "de": "Fehlerbereinigung"
             },
             "0.2.0": {
                 "en": "start a new release for more stability",
