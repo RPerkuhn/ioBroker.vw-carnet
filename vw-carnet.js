@@ -633,13 +633,13 @@ function VWCarNetReadData(){
 }
 
 function VWCarNetForceCarToSendData(){
-	// startUpdateProcess(4);   // Es steht ein Calls an
     CarNetLogon(function(myTmp){
         VWCarNet_CredentialsAreValid=myTmp;
         VWCarNet_Connected = VWCarNet_CredentialsAreValid && VWCarNet_VINIsValid;
 
         if (VWCarNet_Connected){
-            requestCarSendData2CarNet(dummyFunc /* updateSuccessfulFlag */);
+        	// startUpdateProcess(1);   // Es steht ein Calls an
+        	requestCarSendData2CarNet(dummyFunc /* updateSuccessfulFlag */);
         }
     });
 }
