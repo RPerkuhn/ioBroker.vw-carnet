@@ -4,8 +4,8 @@
         "version": "0.2.1",
         "news": {
             "0.2.1": {
-                "en": "Bugfixing",
-                "de": "Fehlerbereinigung"
+                "en": "automatic update option, Bugfixing",
+                "de": "Option zur automatischen Aktualisierung, Fehlerbereinigung"
             },
             "0.2.0": {
                 "en": "start a new release for more stability",
