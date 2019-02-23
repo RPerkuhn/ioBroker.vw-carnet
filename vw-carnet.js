@@ -59,6 +59,7 @@ function startAdapter(options) {
         },
         unload: function (callback) { 
             try {
+            	stopUpdateTimer();
                 VWCarNet_Connected = false;
                 adapter.setState('connection', {val: VWCarNet_Connected, ack: true}); //connection to Threema gateway not established
                 adapter.log.info('VW CarNet adapter stopped - cleaned everything up...');
@@ -82,6 +83,7 @@ function startAdapter(options) {
             CreateStates_eManager(dummyFunc);
             CreateStates_location(dummyFunc);
             main();
+            restartUpdateTimer();
         } 
     }); 
  
@@ -122,6 +124,7 @@ var myCarNetWindows={'windows':'dummy'};
 var myLoggingEnabled=false;
 var mySuccessfulUpdate = true;
 var myUpdateCount = 0;
+var myUpdateTimer = null;
 
 var myToken = '';
 var myVIN = '';
@@ -220,6 +223,26 @@ const state_l_lat = {'label':'Vehicle.location.latitude', 'en': 'Latitude', 'de'
 const state_l_lng = {'label':'Vehicle.location.longitude', 'en': 'Longitude', 'de': 'Längengrad'};
 const state_l_parkingTime = {'label':'Vehicle.location.parkingTimeUTC', 'en': 'Parking timestamp', 'de': 'Parkzeit'};
 const state_l_address = {'label':'Vehicle.location.parkingAddress', 'en': 'Parking address', 'de': 'Parkadresse'};
+
+function stopUpdateTimer() {
+    if (myUpdateTimer) {
+        clearInterval(myUpdateTimer);
+        myUpdateTimer = null;
+    }
+}
+function startUpdateTimer() {
+	stopUpdateTimer();
+    var updateInterval = parseInt(adapter.config.autoUpdate);
+    if (updateInterval > 0) {
+        myUpdateTimer = setInterval(autoUpdate, 1000 * 60 * Math.max(updateInterval, 5));
+    }
+}
+
+function autoUpdate() {
+    if (getState('vw-carnet.0.connection')) { // If connected to VW car-net server
+        sendTo('vw-carnet.0', 'update', {'parameter1': 'tmp'});
+    }
+}
 
 function CreateStates_common(callback){
     // creating channel/states for Vehicle Data
