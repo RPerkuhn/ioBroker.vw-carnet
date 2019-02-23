@@ -83,7 +83,7 @@ function startAdapter(options) {
             CreateStates_eManager(dummyFunc);
             CreateStates_location(dummyFunc);
             main();
-            restartUpdateTimer();
+            startUpdateTimer();
         } 
     }); 
  
