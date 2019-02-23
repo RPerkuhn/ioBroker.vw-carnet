@@ -239,8 +239,8 @@ function startUpdateTimer() {
 }
 
 function autoUpdate() {
-    if (getState('vw-carnet.0.connection')) { // If connected to VW car-net server
-        sendTo('vw-carnet.0', 'update', {'parameter1': 'tmp'});
+    if (VWCarNet_Connected) { // If connected to VW car-net server
+    	VWCarNetReadData();
     }
 }
 
