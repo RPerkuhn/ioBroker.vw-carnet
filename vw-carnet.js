@@ -239,9 +239,11 @@ function startUpdateTimer() {
 }
 
 function autoUpdate() {
-    if (VWCarNet_Connected) { // If connected to VW car-net server
+	// Always try to update data. If not logged on, funxction will try to
+	// Otherwise: In case of a suspended VW server Connected will become false 
+	// an there would be no further updates anymore.
+    //if (VWCarNet_Connected) // If connected to VW car-net server
     	VWCarNetReadData();
-    }
 }
 
 function CreateStates_common(callback){
@@ -674,7 +676,7 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
     var myFormdata = {'grant_type': 'password',
         'username': adapter.config.email,
         'password': adapter.config.password};
-        request.post({url: myUrl, form: myFormdata, headers: myHeaders, json: true}, function(error, response, result){
+    request.post({url: myUrl, form: myFormdata, headers: myHeaders, json: true}, function(error, response, result){
         //adapter.log.info(response.statusCode);
         switch(response.statusCode){
             case 200:
@@ -682,13 +684,14 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
                 myLastCarNetAnswer='200 - connection successful';
                 break;
             case 401:
-                adapter.log.error("Answer fom Car-Net: 401 - Username or PW are incorrect");
                 myConnected=false;  //connection to VW Car-Net not established
                 myLastCarNetAnswer='401 - Username or PW are incorrect';
+                adapter.log.error("Answer fom Car-Net: " + myLastCarNetAnswer + " (" + body + ")");
                 break;
             default:
                 myConnected=false;  //connection to VW Car-Net not established
-                myLastCarNetAnswer='Answer fom Car-Net: ' + response.statusCode + ' undefined';
+                myLastCarNetAnswer= "" + response.statusCode + " - undefined";
+                adapter.log.error("Answer fom Car-Net: " + myLastCarNetAnswer + " (" + body + ")");
         }
         myAuthHeaders.Authorization = 'AudiAuth 1 ' + result.access_token;
         myToken = result.access_token;
