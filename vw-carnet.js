@@ -119,6 +119,7 @@ var VWCarNet_GetEManager = false;
 var VWCarNet_GetLocation = false;
 var myCarNet_vehicleStatus;
 var myCarNet_requestID;
+var myCarNet_MaxChargeCurrent = 16
 var myCarNetDoors={'doors':'dummy'};
 var myCarNetWindows={'windows':'dummy'};
 var myLoggingEnabled=false;
@@ -140,6 +141,7 @@ var myHeaders = {'accept': 'application/json'}
     myHeaders['user-agent'] = 'okhttp/3.7.0';
 
 var myAuthHeaders = JSON.parse(JSON.stringify(myHeaders));
+var myPushHeaders = JSON.parse(JSON.stringify(myHeaders));
 
 var myGoogleMapsAPIKey = '';
 var myGoogleDefaulHeader = {
@@ -1210,6 +1212,94 @@ function requestCarSendData2CarNet(callback){
         return callback(false);
     }
 }
+
+
+function requestCarSwitchCharger(myAction, callback){
+    //if (VWCarNet_Connected===false) { return callback(false); }; 
+    //if (getstate ChargingState === 'OFF') { returen callback(false); };
+    myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
+    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml;charset=utf-8'
+    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml, application/vnd.vwg.mbb.genericError_v1_0_2+xml'
+    //Requesting car start charge with it's max allowed current
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/charger/actions'
+    var myData
+    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>start</type> <settings> <maxChargeCurrent>' + myCarNet_MaxChargeCurrent + '</maxChargeCurrent> </settings> </action>'};
+    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stop</type> </action>'};
+    if (myData === ''){ return callback (false); };
+    try {
+        request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
+            if (response.statusCode===202){
+                console.log('charger-command successful')
+                return callback(true);
+            } else {
+                console.log('charger-command failed')
+                return callback(false);
+            }
+        });
+    } catch (err){
+        return callback(false);
+    }
+}
+
+function requestCarSwitchClimater(myAction, callback){
+    //if (VWCarNet_Connected===false) { return callback(false); }; 
+    //if (getstate ChargingState === 'OFF') { returen callback(false); };
+    myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
+    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml;charset=utf-8'
+    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml'
+    //Requesting car start climater/heating or windowmelt
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions'
+    var myData
+    if (myAction === 'set'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>setSettings</type> <settings> <targetTemperature>2950</targetTemperature> <climatisationWithoutHVpower>false</climatisationWithoutHVpower> <heaterSource>electric</heaterSource> </settings> </action>'};
+    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startClimatisation</type> </action>'};
+    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopClimatisation</type> </action>'};
+    if (myAction === 'meltstart'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startWindowHeating</type> </action>'};
+    if (myAction === 'meltstop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopWindowHeating</type> </action>'};
+    if (myData === ''){ return callback (false); };
+    try {
+        request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
+            if (response.statusCode===202){
+                console.log('climater-command successful')
+                return callback(true);
+            } else {
+                console.log('climater-command failed')
+                console.log(result)
+                return callback(false);
+            }
+        });
+    } catch (err){
+        return callback(false);
+    }
+}
+
+function requestCarSwitchWindowHeater(myAction, callback){
+    //if (VWCarNet_Connected===false) { return callback(false); }; 
+    //if (getstate ChargingState === 'OFF') { returen callback(false); };
+    myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
+    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml'
+    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml'
+    //Requesting car start climater/heating or windowmelt
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions'
+    var myData
+    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startWindowHeating</type> </action>'};
+    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopWindowHeating</type> </action>'};
+    if (myData === ''){ return callback (false); };
+    try {
+        request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
+            if (response.statusCode===202){
+                console.log('windowheater-command successful')
+                return callback(true);
+            } else {
+                console.log('windowheater-command failed')
+                console.log(result)
+                return callback(false);
+            }
+        });
+    } catch (err){
+        return callback(false);
+    }
+}
+
 
 // If started as allInOne/compact mode => return function to create instance 
 if (module && module.parent) { 
