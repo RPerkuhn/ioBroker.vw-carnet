@@ -40,8 +40,13 @@ or simply restart the adapter. It always starts with logging disabled.
 
 
 ## Changelog
+### 0.2.1 (2019-02-23)
+* (Sneak-L8) internal code cleaning
+* (Sneak-L8) option to update data automatically by timer
 ### 0.2.0 (2019-02-10)
 * (RPerkuhn) start a new release for more stability
+* (RPerkuhn) additional states to show which services are available
+* (RPerkuhn) additional states to show last update of each service
 ### 0.1.7 (2019-02-07)
 * (BasGo) Added adBlue remaining distance
 * (BasGo) Added compact mode

@@ -1,8 +1,16 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.1.7",
+        "version": "0.2.1",
         "news": {
+            "0.2.1": {
+                "en": "automatic update option, Bugfixing",
+                "de": "Option zur automatischen Aktualisierung, Fehlerbereinigung"
+            },
+            "0.2.0": {
+                "en": "start a new release for more stability",
+                "de": "neues Release für mehr Stabilität"
+            },
             "0.1.7": {
                 "en": "Added adBlue remaining distance, added compact mode",
                 "de": "Auswertung der verbleibenden Strecke für adBlue, Kompaktmodus hinzugefügt"
