@@ -1229,10 +1229,10 @@ function requestCarSwitchCharger(myAction, callback){
     try {
         request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
             if (response.statusCode===202){
-                console.log('charger-command successful')
+                adapter.log.info('charger-command successful')
                 return callback(true);
             } else {
-                console.log('charger-command failed')
+                adapter.log.info('charger-command failed')
                 return callback(false);
             }
         });
@@ -1259,10 +1259,10 @@ function requestCarSwitchClimater(myAction, callback){
     try {
         request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
             if (response.statusCode===202){
-                console.log('climater-command successful')
+                adapter.log.info('climater-command successful')
                 return callback(true);
             } else {
-                console.log('climater-command failed')
+                adapter.log.info('climater-command failed')
                 console.log(result)
                 return callback(false);
             }
@@ -1287,11 +1287,10 @@ function requestCarSwitchWindowHeater(myAction, callback){
     try {
         request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
             if (response.statusCode===202){
-                console.log('windowheater-command successful')
+                adapter.log.info('windowheater-command successful')
                 return callback(true);
             } else {
-                console.log('windowheater-command failed')
-                console.log(result)
+                adapter.log.info('windowheater-command failed')
                 return callback(false);
             }
         });
