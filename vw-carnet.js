@@ -1215,7 +1215,7 @@ function requestCarSendData2CarNet(callback){
 
 
 function requestCarSwitchCharger(myAction, callback){
-    //if (VWCarNet_Connected===false) { return callback(false); }; 
+    if (VWCarNet_Connected===false) { return callback(false); };
     //if (getstate ChargingState === 'OFF') { returen callback(false); };
     myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
     myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml;charset=utf-8'
@@ -1242,19 +1242,17 @@ function requestCarSwitchCharger(myAction, callback){
 }
 
 function requestCarSwitchClimater(myAction, callback){
-    //if (VWCarNet_Connected===false) { return callback(false); }; 
-    //if (getstate ChargingState === 'OFF') { returen callback(false); };
+    if (VWCarNet_Connected===false) { return callback(false); };
+
     myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
     myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml;charset=utf-8'
     myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml'
-    //Requesting car start climater/heating or windowmelt
+    //Requesting car start climater/heating
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions'
     var myData
     if (myAction === 'set'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>setSettings</type> <settings> <targetTemperature>2950</targetTemperature> <climatisationWithoutHVpower>false</climatisationWithoutHVpower> <heaterSource>electric</heaterSource> </settings> </action>'};
     if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startClimatisation</type> </action>'};
     if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopClimatisation</type> </action>'};
-    if (myAction === 'meltstart'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startWindowHeating</type> </action>'};
-    if (myAction === 'meltstop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopWindowHeating</type> </action>'};
     if (myData === ''){ return callback (false); };
     try {
         request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
@@ -1273,12 +1271,12 @@ function requestCarSwitchClimater(myAction, callback){
 }
 
 function requestCarSwitchWindowHeater(myAction, callback){
-    //if (VWCarNet_Connected===false) { return callback(false); }; 
-    //if (getstate ChargingState === 'OFF') { returen callback(false); };
+    if (VWCarNet_Connected===false) { return callback(false); };
+
     myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
     myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml'
     myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml'
-    //Requesting car start climater/heating or windowmelt
+    //Requesting car start window defrost
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions'
     var myData
     if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startWindowHeating</type> </action>'};
