@@ -1,6 +1,6 @@
 ![Logo](admin/vw-logo.png)
 # ioBroker.vw-carnet
-Adapter for connecting to Volkswagen Car-Net and get access to the data of your car.
+Adapter for connecting to Volkswagen Car-Net and get access to the data of your car. (An active "security and service plus" contract in VW CarNet is nescessary for this adapter to work!)
 After installing the only thing to configure is the Car-Net username and password.
 
 The Google API Key is optional and is only nescessary to retreive geo-location details (address) of the parked car. The adapter works of course also fine without this information.
@@ -40,6 +40,13 @@ or simply restart the adapter. It always starts with logging disabled.
 
 
 ## Changelog
+### 0.2.1 (2019-02-23)
+* (Sneak-L8) internal code cleaning
+* (Sneak-L8) option to update data automatically by timer
+### 0.2.0 (2019-02-10)
+* (RPerkuhn) start a new release for more stability
+* (RPerkuhn) additional states to show which services are available
+* (RPerkuhn) additional states to show last update of each service
 ### 0.1.7 (2019-02-07)
 * (BasGo) Added adBlue remaining distance
 * (BasGo) Added compact mode
