@@ -1,4 +1,4 @@
-//version 0.2.1
+//version 0.3.0
 // to start debugging in vscode:
 // node --inspect-brk vw-carnet.js --force --logs
 
