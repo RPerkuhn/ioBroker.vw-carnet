@@ -26,20 +26,10 @@ schedule = schedule('*/30 * * * *', function () {
 
 This might be changed in a future update but it is the current state.
 
-## Loggingmode
-Activating Logging mode with:
-```javascript
-sendto("vw-carnet.0","activateLogging",'tmp');
-```
-
-Deactivating Logging mode with:
-```javascript
-sendto("vw-carnet.0","deactivateLogging",'tmp');
-```
-or simply restart the adapter. It always starts with logging disabled. 
-
 
 ## Changelog
+### x.x.x (2019-02-26)
+* (BasGo) Changed logging to use ioBroker logging severities
 ### 0.2.1 (2019-02-23)
 * (Sneak-L8) internal code cleaning
 * (Sneak-L8) option to update data automatically by timer
