@@ -699,7 +699,7 @@ function RetrieveVehicles(callback){ //retrieve VIN of the first vehicle (Fahrge
     }
     if (adapter.config.VIN === ''){
         request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result){
-            //adapter.log.debug(JSON.stringify(result));
+            adapter.log.debug('Retrieve vehicles: ' + JSON.stringify(result));
             myVIN = result.userVehicles.vehicle[myVehicleID];
             return callback('Count: ' + result.userVehicles.vehicle.length);
         });
