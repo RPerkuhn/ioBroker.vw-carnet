@@ -1,6 +1,6 @@
 {
   "name": "iobroker.vw-carnet",
-  "version": "0.1.7",
+  "version": "0.2.1",
   "description": "ioBroker Volkswagen Car-Net adapter",
   "author": {
     "name": "Ralf Perkuhn",
@@ -14,6 +14,10 @@
     {
       "name": "BasGo",
       "email": "basgo@gmx.de"
+    },
+    {
+      "name": "Sneak-L8",
+      "email": "git@sengler.de"
     }
   ],
   "homepage": "https://github.com/RPerkuhn/ioBroker.vw-carnet",
