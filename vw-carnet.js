@@ -25,7 +25,7 @@ function updateSuccessfulFlag(myTmp) {
     mySuccessfulUpdate = mySuccessfulUpdate && myTmp;
     myUpdateCount --;
     if (myUpdateCount <= 0) {
-    	myUpdateCount = 0;
+        myUpdateCount = 0;
         //adapter.log.info('VW Car-Net connected?: ' + VWCarNet_Connected);
         if (mySuccessfulUpdate){
             var myDate = Date.now();
@@ -40,29 +40,22 @@ function startAdapter(options) {
         name:  "vw-carnet", 
         message: function (obj) {
             if (typeof obj === 'object' && obj.message) {
-                adapter.log.info('Received message in VW CarNet adapter :' + obj.command);
-                if (obj.command === 'update') {
+                var lCommand = obj.command.toLowerCase();
+                adapter.log.info('Received message: ' + lCommand);
+                if (lCommand === 'update') {
                     VWCarNetReadData(); // sendto command 'update' received
                 }
-                if (obj.command === 'activateLogging') {
-                    myLoggingEnabled=true;
-                    adapter.log.info('Logging mode activated');
-                }
-                if (obj.command === 'deactivateLogging') {
-                    myLoggingEnabled=false;
-                    adapter.log.info('Logging mode deactivated');
-                }
-                if (obj.command === 'CarSendData') {
+                if (lCommand === 'carsenddata') {
                     VWCarNetForceCarToSendData(); // sendto command 'update' received
                 }
             }
         },
         unload: function (callback) { 
             try {
-            	stopUpdateTimer();
+                stopUpdateTimer();
                 VWCarNet_Connected = false;
                 adapter.setState('connection', {val: VWCarNet_Connected, ack: true}); //connection to Threema gateway not established
-                adapter.log.info('VW CarNet adapter stopped - cleaned everything up...');
+                adapter.log.info('Adapter stopped - cleaned everything up...');
                 callback();
             } catch (e) {
                 callback();
@@ -91,16 +84,16 @@ function startAdapter(options) {
 
     adapter.getForeignObject('system.config', function(err, ioBroker_Settings) {
         if (err) {
-    
-        } else {
-            //ioBroker_Language = ioBroker_Settings.common.language;
-            switch (ioBroker_Settings.common.language){
-                case 'de':
-                    ioBroker_Language = 'de';
-                    break;
-                default:
-                    ioBroker_Language = 'en';
-            }
+            adapter.log.error('Error while fetching system.config: ' + err);
+            return;
+        }
+
+        switch (ioBroker_Settings.common.language){
+            case 'de':
+                ioBroker_Language = 'de';
+                break;
+            default:
+                ioBroker_Language = 'en';
         }
     });
     
@@ -121,7 +114,6 @@ var myCarNet_vehicleStatus;
 var myCarNet_requestID;
 var myCarNetDoors={'doors':'dummy'};
 var myCarNetWindows={'windows':'dummy'};
-var myLoggingEnabled=false;
 var mySuccessfulUpdate = true;
 var myUpdateCount = 0;
 var myUpdateTimer = null;
@@ -133,7 +125,7 @@ var myTmp;
 var request = require('request');
 
 // Fake the VW CarNet mobile app headers
-var myHeaders = {'accept': 'application/json'}
+var myHeaders = {'accept': 'application/json'};
     myHeaders['x-app-name'] = 'eRemote';
     myHeaders['clientid'] = 'CarNetApp';
     myHeaders['x-app-version'] = '4.6.1';
@@ -231,7 +223,7 @@ function stopUpdateTimer() {
     }
 }
 function startUpdateTimer() {
-	stopUpdateTimer();
+    stopUpdateTimer();
     var updateInterval = parseInt(adapter.config.autoUpdate);
     if (updateInterval > 0) {
         myUpdateTimer = setInterval(autoUpdate, 1000 * 60 * Math.max(updateInterval, 5));
@@ -239,11 +231,11 @@ function startUpdateTimer() {
 }
 
 function autoUpdate() {
-	// Always try to update data. If not logged on, funxction will try to
-	// Otherwise: In case of a suspended VW server Connected will become false 
-	// an there would be no further updates anymore.
+    // Always try to update data. If not logged on, funxction will try to
+    // Otherwise: In case of a suspended VW server Connected will become false 
+    // an there would be no further updates anymore.
     //if (VWCarNet_Connected) // If connected to VW car-net server
-    	VWCarNetReadData();
+    VWCarNetReadData();
 }
 
 function CreateStates_common(callback){
@@ -621,7 +613,7 @@ function main() {
             RetrieveVehicles(function(myTmp){
                 RetrieveVehicleData_VINValid(function(myTmp){
                     VWCarNet_VINIsValid=myTmp;
-                    if (myLoggingEnabled) { adapter.log.info('VIN valid?: ' + VWCarNet_VINIsValid); }
+                    adapter.log.debug('VIN valid: ' + VWCarNet_VINIsValid);
                     VWCarNet_Connected = VWCarNet_CredentialsAreValid && VWCarNet_VINIsValid;
                     adapter.setState('connection', {val: VWCarNet_Connected, ack: true});
                     if(VWCarNet_VINIsValid){
@@ -631,9 +623,9 @@ function main() {
                     }
                     RetrieveVehicleData_operationList(function(myTmp){
                         if (VWCarNet_Connected){
-                        	readCarNetData();
+                            readCarNetData();
                         }
-                    })
+                    });
 
                     //adapter.log.info('VW Car-Net connected?: ' + VWCarNet_Connected);
                 });
@@ -650,9 +642,9 @@ function VWCarNetReadData(){
     CarNetLogon(function(myTmp){
         VWCarNet_CredentialsAreValid=myTmp;
         VWCarNet_Connected = VWCarNet_CredentialsAreValid && VWCarNet_VINIsValid;
-        if (myLoggingEnabled) {	adapter.log.info('Are credentials valid: ' + VWCarNet_CredentialsAreValid); }
+        adapter.log.debug('Credentials valid: ' + VWCarNet_CredentialsAreValid);
         if (VWCarNet_Connected){
-        	readCarNetData();
+            readCarNetData();
         }
     });
 }
@@ -663,8 +655,8 @@ function VWCarNetForceCarToSendData(){
         VWCarNet_Connected = VWCarNet_CredentialsAreValid && VWCarNet_VINIsValid;
 
         if (VWCarNet_Connected){
-        	// startUpdateProcess(1);   // Es steht ein Calls an
-        	requestCarSendData2CarNet(dummyFunc /* updateSuccessfulFlag */);
+            // startUpdateProcess(1);   // Es steht ein Calls an
+            requestCarSendData2CarNet(dummyFunc /* updateSuccessfulFlag */);
         }
     });
 }
@@ -686,12 +678,12 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
             case 401:
                 myConnected=false;  //connection to VW Car-Net not established
                 myLastCarNetAnswer='401 - Username or PW are incorrect';
-                adapter.log.error("Answer fom Car-Net: " + myLastCarNetAnswer + " (" + body + ")");
+                adapter.log.error("Fetching access token: " + myLastCarNetAnswer + " (" + result + ")");
                 break;
             default:
                 myConnected=false;  //connection to VW Car-Net not established
                 myLastCarNetAnswer= "" + response.statusCode + " - undefined";
-                adapter.log.error("Answer fom Car-Net: " + myLastCarNetAnswer + " (" + body + ")");
+                adapter.log.error("Retrieve access token: " + myLastCarNetAnswer + " (" + result + ")");
         }
         myAuthHeaders.Authorization = 'AudiAuth 1 ' + result.access_token;
         myToken = result.access_token;
@@ -707,7 +699,7 @@ function RetrieveVehicles(callback){ //retrieve VIN of the first vehicle (Fahrge
     }
     if (adapter.config.VIN === ''){
         request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result){
-            //adapter.log.debug(JSON.stringify(result));
+            adapter.log.debug('Retrieve vehicles: ' + JSON.stringify(result));
             myVIN = result.userVehicles.vehicle[myVehicleID];
             return callback('Count: ' + result.userVehicles.vehicle.length);
         });
@@ -719,14 +711,14 @@ function RetrieveVehicles(callback){ //retrieve VIN of the first vehicle (Fahrge
 
 function RetrieveVehicleData_VINValid(callback){
     var myVINIsValid=false; 
-    var myUrl = 'https://msg.volkswagen.de/fs-car/vehicleMgmt/vehicledata/v2/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/'+ myVIN
+    var myUrl = 'https://msg.volkswagen.de/fs-car/vehicleMgmt/vehicledata/v2/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/'+ myVIN;
     request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result){
-        if (myLoggingEnabled){adapter.log.info('RetrieveVehicleData_VINValid:    ' + JSON.stringify(result))};
+        adapter.log.debug('Retrieve brand and country: ' + JSON.stringify(result));
         try {
             if(result.vehicleData.vin===myVIN){
                 myVINIsValid=true;
-                VWCarNet_Brand=result.vehicleData.brand
-                VWCarNet_Country=result.vehicleData.country
+                VWCarNet_Brand=result.vehicleData.brand;
+                VWCarNet_Country=result.vehicleData.country;
             }
         }
         catch (ex) {
@@ -737,77 +729,74 @@ function RetrieveVehicleData_VINValid(callback){
 }
 
 function RetrieveVehicleData_operationList(callback){
-    if (VWCarNet_Connected===false) { return callback(false); };
+    if (VWCarNet_Connected===false) { return callback(false); }
     var myUrl;
     var myService = 0;
     //######### Request Operations
     myUrl = 'https://msg.volkswagen.de/fs-car/rolesrights/operationlist/v2/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/operations'; //Möglichkeiten von Carnet für entsprechendes FZ abrufen
-        request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result){   
+        request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result) {
         if (response.statusCode == 200){
-            var myOperations = result.operationList.serviceInfo
+            adapter.log.debug('Retrieve operations: ' + JSON.stringify(result));
+            var myOperations = result.operationList.serviceInfo;
             for (myService in myOperations){
                 switch(myOperations[myService].serviceId){
                     case 'statusreport_v1':
                         //adapter.log.info(myOperations[myService].serviceId);
                         adapter.setState(state_sv_statusreport_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
                         adapter.setState(state_sv_statusreport_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
-                        VWCarNet_GetStatus = (myOperations[myService].serviceStatus.status === 'Enabled')
+                        VWCarNet_GetStatus = (myOperations[myService].serviceStatus.status === 'Enabled');
                         break;
                     case 'rclima_v1':
                         //adapter.log.info(myOperations[myService].serviceId);
                         adapter.setState(state_sv_rclima_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
                         adapter.setState(state_sv_rclima_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
-                        VWCarNet_GetClimater = adapter.config.adapterGetClimater && (myOperations[myService].serviceStatus.status === 'Enabled')
+                        VWCarNet_GetClimater = adapter.config.adapterGetClimater && (myOperations[myService].serviceStatus.status === 'Enabled');
                         break;
                     case 'rbatterycharge_v1':
                         //adapter.log.info(myOperations[myService].serviceId)
                         adapter.setState(state_sv_rbatterycharge_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
                         adapter.setState(state_sv_rbatterycharge_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
-                        VWCarNet_GetEManager = adapter.config.adapterGetEManager && (myOperations[myService].serviceStatus.status === 'Enabled')
+                        VWCarNet_GetEManager = adapter.config.adapterGetEManager && (myOperations[myService].serviceStatus.status === 'Enabled');
                         break;
                     case 'carfinder_v1':
                         //adapter.log.info(myOperations[myService].serviceId)
                         adapter.setState(state_sv_carfinder_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
                         adapter.setState(state_sv_carfinder_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
-                        VWCarNet_GetLocation = adapter.config.adapterGetLocation && (myOperations[myService].serviceStatus.status === 'Enabled')
+                        VWCarNet_GetLocation = adapter.config.adapterGetLocation && (myOperations[myService].serviceStatus.status === 'Enabled');
                         break;
-                    default:       
+                    default:
                 }
             }
             return callback(true);
         } else {
-            adapter.log.error('RetrieveOperations:     ##fehler## ' +result.error.errorCode + ': ' + result.error.description)
+            adapter.log.error('Retrieve operations: ' +result.error.errorCode + ': ' + result.error.description);
             return callback(false);
-        };
+        }
     });
 }
 
 function RetrieveVehicleData_Status(callback){
-    if (VWCarNet_GetStatus === false) { return callback(true); };
-    if (VWCarNet_Connected===false) { return callback(false); };
+    if (VWCarNet_GetStatus === false) { return callback(true); }
+    if (VWCarNet_Connected===false) { return callback(false); }
     var myData = 0;
     var myField = 0;
     var myReceivedDataKey;
     var myParkingLight;
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/status';
     try{
-        request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result){
-            try {
-                
-            } catch (err) {
-                adapter.log.error(result.error.errorCode + ': ' + result.error.description);
+        request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result) {
+            if (error) {
+                adapter.log.error('Error while retrieving status: ' + error);
                 return callback(false);
             }
 
             if (result.error !== undefined) {
-                adapter.log.error(JSON.stringify(result.error));
+                adapter.log.error('Error while retrieving status: ' + JSON.stringify(result.error));
                 return callback(false);
             }
 
-            if (myLoggingEnabled) {
-                result.StoredVehicleDataResponse.vin = 'ANONYMIZED_VIN_FOR_LOGGING';
-                adapter.log.info('received status data:' + JSON.stringify(result));
-            }
+            result.StoredVehicleDataResponse.vin = 'ANONYMIZED_VIN_FOR_LOGGING';
+            adapter.log.debug('Retrieve status: ' + JSON.stringify(result));
 
             var vehicleData = result.StoredVehicleDataResponse.vehicleData;
 
@@ -916,7 +905,7 @@ function RetrieveVehicleData_Status(callback){
                         //door6 - hood
                         case '0x030104FFFF.0x0301040010':
                             //myCarNetDoors.hood.locked = myReceivedDataKey.value === '2';
-                            break;RR
+                            break;
                         case '0x030104FFFF.0x0301040011':
                             myCarNetDoors.hood.closed = myReceivedDataKey.value === '3';
                             break;
@@ -984,19 +973,24 @@ function RetrieveVehicleData_Status(callback){
             return callback(true);
         });
     } catch (err) {
-        adapter.log.error('Fehler bei der Auswertung im status Modul');
+        adapter.log.error('Error while retrieving status: ' + err);
         return callback(false);
     }
 }
 
 function RetrieveVehicleData_Climater(callback){
-    if (VWCarNet_GetClimater === false) { return callback(true); };
-    if (VWCarNet_Connected===false) { return callback(false); };
+    if (VWCarNet_GetClimater === false) { return callback(true); }
+    if (VWCarNet_Connected===false) { return callback(false); }
 
     var myTemperatureCelsius = 0;
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater';
     request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData){
-        if (myLoggingEnabled) { adapter.log.info('received climater data:' + JSON.stringify(responseData)); }
+        if (error) {
+            adapter.log.error('Error while retrieving climater: ' + error);
+            return callback(false);
+        }
+
+        adapter.log.debug('Retrieve climater: ' + JSON.stringify(responseData));
 
         var climaterSettings = responseData.climater.settings;
         if (climaterSettings !== null) {
@@ -1049,13 +1043,18 @@ function RetrieveVehicleData_Climater(callback){
 }
 
 function RetrieveVehicleData_eManager(callback){
-    if (VWCarNet_GetEManager === false){ return callback(true); };
-    if (VWCarNet_Connected===false) { return callback(false); };
+    if (VWCarNet_GetEManager === false){ return callback(true); }
+    if (VWCarNet_Connected===false) { return callback(false); }
 
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/charger';
     try {
         request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result){
-            if (myLoggingEnabled) {adapter.log.info('received eManager data:' + JSON.stringify(result));}
+            if (error) {
+                adapter.log.error('Error while retrieving charger: ' + error);
+                return callback(false);
+            }
+
+            adapter.log.debug('Retrieve charger: ' + JSON.stringify(result));
 
             var chargerSettings = result.charger.settings;
             if (chargerSettings !== '' ) {
@@ -1104,14 +1103,14 @@ function RetrieveVehicleData_eManager(callback){
             return callback(true);
         });
     } catch (err) {
-        adapter.log.error('Fehler bei der Auswertung im eManager Modul');
+        adapter.log.error('Error while retrieving charger: '+ err);
         return callback(false);
     }
 }
 
 function RetrieveVehicleData_Location(callback) {
-    if (VWCarNet_GetLocation === false) { return callback(true); };
-    if (VWCarNet_Connected===false) { return callback(false); };    
+    if (VWCarNet_GetLocation === false) { return callback(true); }
+    if (VWCarNet_Connected===false) { return callback(false); }
 
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/cf/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/position';
 
@@ -1124,12 +1123,17 @@ function RetrieveVehicleData_Location(callback) {
 
     try {
         request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData) {
-            if (error !== null) {
+            if (error) {
+                adapter.log.error('Error while retrieving position: ' + error);
                 return callback(false);
             }
+
             if (responseData === undefined) {
                 return callback(false);
             }
+
+            adapter.log.debug('Retrieve position: ' + JSON.stringify(responseData));
+
             if ('findCarResponse' in responseData) {
                 var findCarResponse = responseData.findCarResponse;
                 if (findCarResponse !== undefined && findCarResponse !== null) {
@@ -1190,16 +1194,16 @@ function requestGeocoding(lat, lng) {
 }
 
 function requestCarSendData2CarNet(callback){
-    if (VWCarNet_Connected===false) { return callback(false); }; 
+    if (VWCarNet_Connected===false) { return callback(false); }
 
     //Requesting car to send it's data to the server
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/requests';
     try {
         request.post({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result) {
-            if (myLoggingEnabled){adapter.log.info(response.statusCode);}
+            adapter.log.debug('Status-Code: ' + response.statusCode);
 
             if (response.statusCode===202){
-                if (myLoggingEnabled){adapter.log.info('RequestID: ' + result.CurrentVehicleDataResponse.requestId);}
+                adapter.log.debug('RequestID: ' + result.CurrentVehicleDataResponse.requestId);
                 return callback(true);
             } else {
                 return callback(false);
