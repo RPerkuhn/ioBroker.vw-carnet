@@ -1,8 +1,16 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.2.1",
+        "version": "0.2.3",
         "news": {
+            "0.2.3": {
+                "en": "improved stability, moving car is now recognized correctly",
+                "de": "verbesserte Stabilität, bessere Erkennung, wenn Fahrzeug in Bewegung ist"
+            },
+            "0.2.2": {
+                "en": "changed logging to use ioBroker logging severities",
+                "de": "Umstellung auf Standard-Logging über Debug-Level"
+            },
             "0.2.1": {
                 "en": "automatic update option, Bugfixing",
                 "de": "Option zur automatischen Aktualisierung, Fehlerbereinigung"

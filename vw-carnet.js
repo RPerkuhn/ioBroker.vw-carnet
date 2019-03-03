@@ -669,25 +669,31 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
         'username': adapter.config.email,
         'password': adapter.config.password};
     request.post({url: myUrl, form: myFormdata, headers: myHeaders, json: true}, function(error, response, result){
-        //adapter.log.info(response.statusCode);
-        switch(response.statusCode){
-            case 200:
-                myConnected=true;  //connection to VW Car-Net successful established
-                myLastCarNetAnswer='200 - connection successful';
-                break;
-            case 401:
-                myConnected=false;  //connection to VW Car-Net not established
-                myLastCarNetAnswer='401 - Username or PW are incorrect';
-                adapter.log.error("Fetching access token: " + myLastCarNetAnswer + " (" + result + ")");
-                break;
-            default:
-                myConnected=false;  //connection to VW Car-Net not established
-                myLastCarNetAnswer= "" + response.statusCode + " - undefined";
-                adapter.log.error("Retrieve access token: " + myLastCarNetAnswer + " (" + result + ")");
-        }
-        myAuthHeaders.Authorization = 'AudiAuth 1 ' + result.access_token;
-        myToken = result.access_token;
-        return callback(myConnected);
+    	if (error) {
+    		adapter.log.error('error at CarNetLogin: ' + error);
+			myConnected=false;  //connection to VW Car-Net not established
+			callback(myConnected);
+    	} else {
+    		//adapter.log.info(response.statusCode);
+    		switch(response.statusCode){
+    		case 200:
+    			myConnected=true;  //connection to VW Car-Net successful established
+    			myLastCarNetAnswer='200 - connection successful';
+    			break;
+    		case 401:
+    			myConnected=false;  //connection to VW Car-Net not established
+    			myLastCarNetAnswer='401 - Username or PW are incorrect';
+    			adapter.log.error("Fetching access token: " + myLastCarNetAnswer + " (" + result + ")");
+    			break;
+    		default:
+    			myConnected=false;  //connection to VW Car-Net not established
+    		myLastCarNetAnswer= "" + response.statusCode + " - undefined";
+    		adapter.log.error("Retrieve access token: " + myLastCarNetAnswer + " (" + result + ")");
+    		}
+    		myAuthHeaders.Authorization = 'AudiAuth 1 ' + result.access_token;
+    		myToken = result.access_token;
+    		return callback(myConnected);
+    	}
     });
 }
 
@@ -735,43 +741,48 @@ function RetrieveVehicleData_operationList(callback){
     //######### Request Operations
     myUrl = 'https://msg.volkswagen.de/fs-car/rolesrights/operationlist/v2/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/operations'; //Möglichkeiten von Carnet für entsprechendes FZ abrufen
         request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result) {
-        if (response.statusCode == 200){
-            adapter.log.debug('Retrieve operations: ' + JSON.stringify(result));
-            var myOperations = result.operationList.serviceInfo;
-            for (myService in myOperations){
-                switch(myOperations[myService].serviceId){
-                    case 'statusreport_v1':
-                        //adapter.log.info(myOperations[myService].serviceId);
-                        adapter.setState(state_sv_statusreport_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
-                        adapter.setState(state_sv_statusreport_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
-                        VWCarNet_GetStatus = (myOperations[myService].serviceStatus.status === 'Enabled');
-                        break;
-                    case 'rclima_v1':
-                        //adapter.log.info(myOperations[myService].serviceId);
-                        adapter.setState(state_sv_rclima_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
-                        adapter.setState(state_sv_rclima_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
-                        VWCarNet_GetClimater = adapter.config.adapterGetClimater && (myOperations[myService].serviceStatus.status === 'Enabled');
-                        break;
-                    case 'rbatterycharge_v1':
-                        //adapter.log.info(myOperations[myService].serviceId)
-                        adapter.setState(state_sv_rbatterycharge_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
-                        adapter.setState(state_sv_rbatterycharge_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
-                        VWCarNet_GetEManager = adapter.config.adapterGetEManager && (myOperations[myService].serviceStatus.status === 'Enabled');
-                        break;
-                    case 'carfinder_v1':
-                        //adapter.log.info(myOperations[myService].serviceId)
-                        adapter.setState(state_sv_carfinder_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
-                        adapter.setState(state_sv_carfinder_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
-                        VWCarNet_GetLocation = adapter.config.adapterGetLocation && (myOperations[myService].serviceStatus.status === 'Enabled');
-                        break;
-                    default:
-                }
-            }
-            return callback(true);
-        } else {
-            adapter.log.error('Retrieve operations: ' +result.error.errorCode + ': ' + result.error.description);
-            return callback(false);
-        }
+        	if (error) {
+    			adapter.log.error('Retrieve operations error:e ' + error);
+    			return callback(false);
+        	} else {
+        		if (response.statusCode == 200){
+        			adapter.log.debug('Retrieve operations: ' + JSON.stringify(result));
+        			var myOperations = result.operationList.serviceInfo;
+        			for (myService in myOperations){
+        				switch(myOperations[myService].serviceId){
+        				case 'statusreport_v1':
+        					//adapter.log.info(myOperations[myService].serviceId);
+        					adapter.setState(state_sv_statusreport_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
+        					adapter.setState(state_sv_statusreport_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
+        					VWCarNet_GetStatus = (myOperations[myService].serviceStatus.status === 'Enabled');
+        					break;
+        				case 'rclima_v1':
+        					//adapter.log.info(myOperations[myService].serviceId);
+        					adapter.setState(state_sv_rclima_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
+        					adapter.setState(state_sv_rclima_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
+        					VWCarNet_GetClimater = adapter.config.adapterGetClimater && (myOperations[myService].serviceStatus.status === 'Enabled');
+        					break;
+        				case 'rbatterycharge_v1':
+        					//adapter.log.info(myOperations[myService].serviceId)
+        					adapter.setState(state_sv_rbatterycharge_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
+        					adapter.setState(state_sv_rbatterycharge_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
+        					VWCarNet_GetEManager = adapter.config.adapterGetEManager && (myOperations[myService].serviceStatus.status === 'Enabled');
+        					break;
+        				case 'carfinder_v1':
+        					//adapter.log.info(myOperations[myService].serviceId)
+        					adapter.setState(state_sv_carfinder_v1_status.label, {val: myOperations[myService].serviceStatus.status, ack: true});
+        					adapter.setState(state_sv_carfinder_v1_eol.label, {val: myOperations[myService].cumulatedLicenseV2.expirationDate, ack: true});
+        					VWCarNet_GetLocation = adapter.config.adapterGetLocation && (myOperations[myService].serviceStatus.status === 'Enabled');
+        					break;
+        				default:
+        				}
+        			}
+        			return callback(true);
+        		} else {
+        			adapter.log.error('Retrieve operations: statusCode ' + response.statusCode + ' - ' + JSON.stringify(response) + ' - ' + JSON.stringify(result));
+        			return callback(false);
+        		}
+        	}
     });
 }
 
@@ -1108,6 +1119,13 @@ function RetrieveVehicleData_eManager(callback){
     }
 }
 
+function setCarIsMoving() {
+    adapter.setState(state_l_lat.label, {val: null, ack: true});
+    adapter.setState(state_l_lng.label, {val: null, ack: true});
+    adapter.setState(state_l_parkingTime.label, {val: null, ack: true});
+    adapter.setState(state_l_address.label, {val: 'MOVING', ack: true});
+}
+
 function RetrieveVehicleData_Location(callback) {
     if (VWCarNet_GetLocation === false) { return callback(true); }
     if (VWCarNet_Connected===false) { return callback(false); }
@@ -1128,8 +1146,9 @@ function RetrieveVehicleData_Location(callback) {
                 return callback(false);
             }
 
-            if (responseData === undefined) {
-                return callback(false);
+            if (response.statusCode == 204) {
+            	setCarIsMoving();
+                return callback(true);
             }
 
             adapter.log.debug('Retrieve position: ' + JSON.stringify(responseData));
@@ -1148,16 +1167,10 @@ function RetrieveVehicleData_Location(callback) {
                     adapter.setState(state_l_parkingTime.label, {val: findCarResponse.parkingTimeUTC, ack: true});
                     requestGeocoding(findCarResponse.Position.carCoordinate.latitude, findCarResponse.Position.carCoordinate.longitude);
                 } else {
-                    adapter.setState(state_l_lat.label, {val: null, ack: true});
-                    adapter.setState(state_l_lng.label, {val: null, ack: true});
-                    adapter.setState(state_l_parkingTime.label, {val: null, ack: true});
-                    adapter.setState(state_l_address.label, {val: 'MOVING', ack: true});
+                	setCarIsMoving();
                 }
             } else {
-                adapter.setState(state_l_lat.label, {val: null, ack: true});
-                adapter.setState(state_l_lng.label, {val: null, ack: true});
-                adapter.setState(state_l_parkingTime.label, {val: null, ack: true});
-                adapter.setState(state_l_address.label, {val: 'MOVING', ack: true});
+                setCarIsMoving();
             }
             return callback(true);
         });
