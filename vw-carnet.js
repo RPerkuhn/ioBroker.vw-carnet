@@ -1123,7 +1123,15 @@ function setCarIsMoving() {
     adapter.setState(state_l_lat.label, {val: null, ack: true});
     adapter.setState(state_l_lng.label, {val: null, ack: true});
     adapter.setState(state_l_parkingTime.label, {val: null, ack: true});
-    adapter.setState(state_l_address.label, {val: 'MOVING', ack: true});
+    var newAddr = adapter.getState(state_l_address.label).val;
+    if (newAddr.substr(0, 6) != 'MOVING') {
+    	if (newAddr)
+    		newAddr = 'MOVING from ' + newAddr;
+    	else
+    		newAddr = 'MOVING';
+    }   
+    	
+    adapter.setState(state_l_address.label, {val: newAddr, ack: true});
 }
 
 function RetrieveVehicleData_Location(callback) {
