@@ -75,6 +75,13 @@ function startAdapter(options) {
             CreateStates_climater(dummyFunc);
             CreateStates_eManager(dummyFunc);
             CreateStates_location(dummyFunc);
+            adapter.getState(state_l_address.label, function (err, obj) {
+                if (err) {
+                    adapter.log.error(err);
+                } else {
+                    myLastAddress = obj.val;
+                }
+            });
             main();
             startUpdateTimer();
         } 
@@ -117,6 +124,7 @@ var myCarNetWindows={'windows':'dummy'};
 var mySuccessfulUpdate = true;
 var myUpdateCount = 0;
 var myUpdateTimer = null;
+var myLastAddress = '';
 
 var myToken = '';
 var myVIN = '';
@@ -1123,15 +1131,14 @@ function setCarIsMoving() {
     adapter.setState(state_l_lat.label, {val: null, ack: true});
     adapter.setState(state_l_lng.label, {val: null, ack: true});
     adapter.setState(state_l_parkingTime.label, {val: null, ack: true});
-    var newAddr = adapter.getState(state_l_address.label).val;
-    if (newAddr.substr(0, 6) != 'MOVING') {
-    	if (newAddr)
-    		newAddr = 'MOVING from ' + newAddr;
+    if (myLastAddress.substr(0, 6) != 'MOVING') {
+    	if (myLastAddress)
+    		myLastAddress = 'MOVING from ' + myLastAddress;
     	else
-    		newAddr = 'MOVING';
+    		myLastAddress = 'MOVING';
     }   
     	
-    adapter.setState(state_l_address.label, {val: newAddr, ack: true});
+    adapter.setState(state_l_address.label, {val: myLastAddress, ack: true});
 }
 
 function RetrieveVehicleData_Location(callback) {
