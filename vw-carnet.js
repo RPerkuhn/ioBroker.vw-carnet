@@ -75,13 +75,6 @@ function startAdapter(options) {
             CreateStates_climater(dummyFunc);
             CreateStates_eManager(dummyFunc);
             CreateStates_location(dummyFunc);
-            adapter.getState(state_l_address.label, function (err, obj) {
-                if (err) {
-                    adapter.log.error(err);
-                } else {
-                    myLastAddress = obj.val;
-                }
-            });
             main();
             startUpdateTimer();
         } 
@@ -124,7 +117,6 @@ var myCarNetWindows={'windows':'dummy'};
 var mySuccessfulUpdate = true;
 var myUpdateCount = 0;
 var myUpdateTimer = null;
-var myLastAddress = '';
 
 var myToken = '';
 var myVIN = '';
@@ -1128,17 +1120,24 @@ function RetrieveVehicleData_eManager(callback){
 }
 
 function setCarIsMoving() {
-    adapter.setState(state_l_lat.label, {val: null, ack: true});
-    adapter.setState(state_l_lng.label, {val: null, ack: true});
-    adapter.setState(state_l_parkingTime.label, {val: null, ack: true});
-    if (myLastAddress.substr(0, 6) != 'MOVING') {
-    	if (myLastAddress)
-    		myLastAddress = 'MOVING from ' + myLastAddress;
-    	else
-    		myLastAddress = 'MOVING';
-    }   
-    	
-    adapter.setState(state_l_address.label, {val: myLastAddress, ack: true});
+    adapter.getState(state_l_address.label, function (err, obj) {
+        if (err) {
+            adapter.log.error(err);
+        } else {
+            adapter.setState(state_l_lat.label, {val: null, ack: true});
+            adapter.setState(state_l_lng.label, {val: null, ack: true});
+            adapter.setState(state_l_parkingTime.label, {val: null, ack: true});
+            var newAddress = obj.val;
+            if (newAddress.substr(0, 6) != 'MOVING') {
+            	if (newAddress)
+            		newAddress = 'MOVING from ' + newAddress;
+            	else
+            		newAddress = 'MOVING';
+            }   
+            adapter.setState(state_l_address.label, {val: newAddress, ack: true});
+        }
+    });
+	
 }
 
 function RetrieveVehicleData_Location(callback) {
