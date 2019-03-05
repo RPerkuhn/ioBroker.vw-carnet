@@ -28,7 +28,10 @@ This might be changed in a future update but it is the current state.
 
 
 ## Changelog
-### x.x.x (2019-02-26)
+### 0.2.3 (2019-03-03)
+* (Sneak-L8) catch some errors
+* (Sneak-L8) correct handling of data when car is moving 
+### 0.2.2 (2019-02-26)
 * (BasGo) Changed logging to use ioBroker logging severities
 ### 0.2.1 (2019-02-23)
 * (Sneak-L8) internal code cleaning
