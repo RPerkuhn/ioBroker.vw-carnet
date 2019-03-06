@@ -1,8 +1,12 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.2.3",
+        "version": "0.2.3a",
         "news": {
+            "0.2.3a": {
+                "en": "improved stability, catch empty responses",
+                "de": "verbesserte Stabilität, leere Rückmeldungen abfangen"
+            },
             "0.2.3": {
                 "en": "improved stability, moving car is now recognized correctly",
                 "de": "verbesserte Stabilität, bessere Erkennung, wenn Fahrzeug in Bewegung ist"
