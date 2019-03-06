@@ -28,6 +28,10 @@ This might be changed in a future update but it is the current state.
 
 
 ## Changelog
+### 0.3.1 (2019-03-06)
+* (RPerkuhn) implemented option to update via button in admin
+### 0.3.0 (2019-03-06)
+* (RPerkuhn) implemented enhanced function start and stop charge via button in admin
 ### 0.2.3a (2019-03-06)
 * (Sneak-L8) improved stability, catch empty responses
 ### 0.2.3 (2019-03-03)

@@ -8,8 +8,8 @@
                 "de": "Option zum Update per Button aus Admin"
 			},
 			"0.3.0": {
-                "en": "Enhanced functions load",
-                "de": "Erweiterte Funktionen für laden"
+                "en": "Enhanced function start and stop charge via button in admin",
+                "de": "Erweiterte Funktionen für start und stop Batterie laden"
 			},
 			"0.2.3a": {
                 "en": "improved stability, catch empty responses",
