@@ -1,4 +1,4 @@
-//version 0.2.1
+//version 0.2.3a
 // to start debugging in vscode:
 // node --inspect-brk vw-carnet.js --force --logs
 
@@ -801,187 +801,192 @@ function RetrieveVehicleData_Status(callback){
                 return callback(false);
             }
 
-            if (result.error !== undefined) {
-                adapter.log.error('Error while retrieving status: ' + JSON.stringify(result.error));
-                return callback(false);
-            }
+    		if (response.statusCode == 200) {
+    			if (result.error !== undefined) {
+    				adapter.log.error('Error while retrieving status: ' + JSON.stringify(result.error));
+    				return callback(false);
+    			}
 
-            result.StoredVehicleDataResponse.vin = 'ANONYMIZED_VIN_FOR_LOGGING';
-            adapter.log.debug('Retrieve status: ' + JSON.stringify(result));
+    			result.StoredVehicleDataResponse.vin = 'ANONYMIZED_VIN_FOR_LOGGING';
+    			adapter.log.debug('Retrieve status: ' + JSON.stringify(result));
 
-            var vehicleData = result.StoredVehicleDataResponse.vehicleData;
+    			var vehicleData = result.StoredVehicleDataResponse.vehicleData;
 
-            adapter.setState(state_s_lastConnectionTimeStamp.label, {val: vehicleData.data[myData].field[myField].tsCarSentUtc, ack: true});
+    			adapter.setState(state_s_lastConnectionTimeStamp.label, {val: vehicleData.data[myData].field[myField].tsCarSentUtc, ack: true});
 
-            var vdj = JSON.stringify(vehicleData.data);
-            for (myData in vehicleData.data) {
-                for (myField in vehicleData.data[myData].field) {
-                    myReceivedDataKey = vehicleData.data[myData].field[myField];
-                    switch(vehicleData.data[myData].id + "." + vehicleData.data[myData].field[myField].id){
-                        case '0x0101010002.0x0101010002': //distanceCovered
-                            adapter.setState(state_s_distanceCovered.label, {val: myReceivedDataKey.value, ack: true});
-                            break;
-                        case '0x0204FFFFFF.0x02040C0001': //adBlueInspectionData_km
-                            adapter.setState(state_s_adBlueInspectionDistance.label, {val: myReceivedDataKey.value, ack: true});
-                            break;
-                        case '0x0203FFFFFF.0x0203010001': //oilInspectionData_km
-                            adapter.setState(state_s_oilInspectionDistance.label, {val: myReceivedDataKey.value *-1, ack: true});
-                            break;
-                        case '0x0203FFFFFF.0x0203010002': //oilInspectionData_days
-                            adapter.setState(state_s_oilInspectionTime.label, {val: myReceivedDataKey.value *-1, ack: true});
-                            break;
-                        case '0x0203FFFFFF.0x0203010003': //serviceInspectionData_km
-                            adapter.setState(state_s_serviceInspectionDistance.label, {val: myReceivedDataKey.value * -1, ack: true});
-                            break;
-                        case '0x0203FFFFFF.0x0203010004': //serviceInspectionData_days
-                            adapter.setState(state_s_serviceInspectionTime.label, {val: myReceivedDataKey.value *-1, ack: true});
-                            break;
-                        case '0x030101FFFF.0x0301010001': //status_parking_light_off
-                            myParkingLight = myReceivedDataKey.value;
-                            break;
-                        case '0x030103FFFF.0x0301030001': //parking brake
-                            adapter.setState(state_s_parkingBrake.label, {val: 'textId' in myReceivedDataKey ? myReceivedDataKey.textId : myReceivedDataKey.value, ack: true});
-                            break;
-                        case '0x030103FFFF.0x0301030007': //fuel type
-                            adapter.setState(state_s_fuelType.label, {val: 'textId' in myReceivedDataKey ? myReceivedDataKey.textId.replace('engine_type_','').replace('unsupported','-').Capitalize() : myReceivedDataKey.value, ack: true});
-                            break;
-                        case '0x030103FFFF.0x030103000A': //fuel level
-                            adapter.setState(state_s_fuelLevel.label, {val: myReceivedDataKey.value, ack: true});
-                            break;
-                        case '0x030103FFFF.0x0301030006': //fuel range
-                            adapter.setState(state_s_fuelRange.label, {val: 'value' in myReceivedDataKey ? myReceivedDataKey.value * 1 : 0, ack: true});
-                            break;
-                        case '0x030103FFFF.0x0301030009': //secondary_typ - erst ab Modelljahr 2018
-                            var secondaryType = 'textId' in myReceivedDataKey ? myReceivedDataKey.textId.replace('engine_type_','').replace('unsupported','-').Capitalize() : myReceivedDataKey.value;
-                            break;
-                        case '0x030103FFFF.0x0301030002': //soc_ok
-                            adapter.setState(state_s_batteryLevel.label, {val: myReceivedDataKey.value, ack: true});
-                            break;
-                        case '0x030103FFFF.0x0301030008': //secondary_range - erst ab Modelljahr 2018
-                            adapter.setState(state_s_batteryRange.label, {val: 'value' in myReceivedDataKey ? myReceivedDataKey.value * 1 : 0, ack: true});
-                            break;
-                        case '0x030103FFFF.0x0301030005': //hybrid_range - erst ab Modelljahr 2018
-                            adapter.setState(state_s_hybridRange.label, {val: myReceivedDataKey.value, ack: true});
-                            break;
-                        //door1 - front/left
-                        case '0x030104FFFF.0x0301040001':
-                            myCarNetDoors.FL.locked = myReceivedDataKey.value === '2';
-                            break;
-                        case '0x030104FFFF.0x0301040002':
-                            myCarNetDoors.FL.closed = myReceivedDataKey.value === '3';
-                            break;
-                        case '0x030104FFFF.0x0301040003':
-                            myCarNetDoors.FL.safe = myReceivedDataKey.value === '2';
-                            break;
-                        //door2 - rear/left
-                        case '0x030104FFFF.0x0301040004':
-                            myCarNetDoors.RL.locked = myReceivedDataKey.value === '2';
-                            break;
-                        case '0x030104FFFF.0x0301040005':
-                            myCarNetDoors.RL.closed = myReceivedDataKey.value === '3';
-                            break;
-                        case '0x030104FFFF.0x0301040006':
-                            myCarNetDoors.RL.safe = myReceivedDataKey.value === '2';
-                            break;
-                        //door3 - front/right
-                        case '0x030104FFFF.0x0301040007':
-                            myCarNetDoors.FR.locked = myReceivedDataKey.value === '2';
-                            break;
-                        case '0x030104FFFF.0x0301040008':
-                            myCarNetDoors.FR.closed = myReceivedDataKey.value === '3';
-                            break;
-                        case '0x030104FFFF.0x0301040009':
-                            myCarNetDoors.FR.safe = myReceivedDataKey.value === '2';
-                            break;
-                        //door4 - rear/right
-                        case '0x030104FFFF.0x030104000A':
-                            myCarNetDoors.RR.locked = myReceivedDataKey.value === '2';
-                            break;
-                        case '0x030104FFFF.0x030104000B':
-                            myCarNetDoors.RR.closed = myReceivedDataKey.value === '3';
-                            break;
-                        case '0x030104FFFF.0x030104000C':
-                            myCarNetDoors.RR.safe = myReceivedDataKey.value === '2';
-                            break;
-                        //door5 - rear
-                        case '0x030104FFFF.0x030104000D':
-                            myCarNetDoors.rear.locked = myReceivedDataKey.value === '2';
-                            break;
-                        case '0x030104FFFF.0x030104000E':
-                            myCarNetDoors.rear.closed = myReceivedDataKey.value === '3';
-                            break;
-                        case '0x030104FFFF.0x030104000F':
-                            //myCarNetDoors.rear.safe = myReceivedDataKey.value === '2';
-                            break;
-                        //door6 - hood
-                        case '0x030104FFFF.0x0301040010':
-                            //myCarNetDoors.hood.locked = myReceivedDataKey.value === '2';
-                            break;
-                        case '0x030104FFFF.0x0301040011':
-                            myCarNetDoors.hood.closed = myReceivedDataKey.value === '3';
-                            break;
-                        case '0x030104FFFF.0x0301040012':
-                            //myCarNetDoors.RR.safe = myReceivedDataKey.value === '2';
-                            break;
-                        //window1 - front/left
-                        case '0x030105FFFF.0x0301050001':
-                            myCarNetWindows.FL.closed = myReceivedDataKey.value === '3';
-                            break;
-                        case '0x030105FFFF.0x0301050002':
-                            myCarNetWindows.FL.level = myReceivedDataKey.value;
-                            break;
-                        //window2 - rear/left
-                        case '0x030105FFFF.0x0301050003':
-                            myCarNetWindows.RL.closed = myReceivedDataKey.value === '3';
-                            break;
-                        case '0x030105FFFF.0x0301050004':
-                            myCarNetWindows.RL.level = myReceivedDataKey.value;
-                            break;
-                        //window3 - front/right
-                        case '0x030105FFFF.0x0301050005':
-                            myCarNetWindows.FR.closed = myReceivedDataKey.value === '3';
-                            break;
-                        case '0x030105FFFF.0x0301050006':
-                            myCarNetWindows.FR.level = myReceivedDataKey.value;
-                            break;
-                        //window4 - rear/right
-                        case '0x030105FFFF.0x0301050007':
-                            myCarNetWindows.RR.closed = myReceivedDataKey.value === '3';
-                            break;
-                        case '0x030105FFFF.0x0301050008':
-                            myCarNetWindows.RR.level = myReceivedDataKey.value;
-                            break;
-                        //window4 - roof window
-                        case '0x030105FFFF.0x030105000B':
-                            myCarNetWindows.roof.closed = myReceivedDataKey.value === '3';
-                            break;
-                        case '0x030105FFFF.0x030105000C':
-                            myCarNetWindows.roof.level = myReceivedDataKey.value;
-                            break;
-                        default: //this should not be possible
-                    }
-                }
-            }
+    			var vdj = JSON.stringify(vehicleData.data);
+    			for (myData in vehicleData.data) {
+    				for (myField in vehicleData.data[myData].field) {
+    					myReceivedDataKey = vehicleData.data[myData].field[myField];
+    					switch(vehicleData.data[myData].id + "." + vehicleData.data[myData].field[myField].id){
+    					case '0x0101010002.0x0101010002': //distanceCovered
+    						adapter.setState(state_s_distanceCovered.label, {val: myReceivedDataKey.value, ack: true});
+    						break;
+    					case '0x0204FFFFFF.0x02040C0001': //adBlueInspectionData_km
+    						adapter.setState(state_s_adBlueInspectionDistance.label, {val: myReceivedDataKey.value, ack: true});
+    						break;
+    					case '0x0203FFFFFF.0x0203010001': //oilInspectionData_km
+    						adapter.setState(state_s_oilInspectionDistance.label, {val: myReceivedDataKey.value *-1, ack: true});
+    						break;
+    					case '0x0203FFFFFF.0x0203010002': //oilInspectionData_days
+    						adapter.setState(state_s_oilInspectionTime.label, {val: myReceivedDataKey.value *-1, ack: true});
+    						break;
+    					case '0x0203FFFFFF.0x0203010003': //serviceInspectionData_km
+    						adapter.setState(state_s_serviceInspectionDistance.label, {val: myReceivedDataKey.value * -1, ack: true});
+    						break;
+    					case '0x0203FFFFFF.0x0203010004': //serviceInspectionData_days
+    						adapter.setState(state_s_serviceInspectionTime.label, {val: myReceivedDataKey.value *-1, ack: true});
+    						break;
+    					case '0x030101FFFF.0x0301010001': //status_parking_light_off
+    						myParkingLight = myReceivedDataKey.value;
+    						break;
+    					case '0x030103FFFF.0x0301030001': //parking brake
+    						adapter.setState(state_s_parkingBrake.label, {val: 'textId' in myReceivedDataKey ? myReceivedDataKey.textId : myReceivedDataKey.value, ack: true});
+    						break;
+    					case '0x030103FFFF.0x0301030007': //fuel type
+    						adapter.setState(state_s_fuelType.label, {val: 'textId' in myReceivedDataKey ? myReceivedDataKey.textId.replace('engine_type_','').replace('unsupported','-').Capitalize() : myReceivedDataKey.value, ack: true});
+    						break;
+    					case '0x030103FFFF.0x030103000A': //fuel level
+    						adapter.setState(state_s_fuelLevel.label, {val: myReceivedDataKey.value, ack: true});
+    						break;
+    					case '0x030103FFFF.0x0301030006': //fuel range
+    						adapter.setState(state_s_fuelRange.label, {val: 'value' in myReceivedDataKey ? myReceivedDataKey.value * 1 : 0, ack: true});
+    						break;
+    					case '0x030103FFFF.0x0301030009': //secondary_typ - erst ab Modelljahr 2018
+    						var secondaryType = 'textId' in myReceivedDataKey ? myReceivedDataKey.textId.replace('engine_type_','').replace('unsupported','-').Capitalize() : myReceivedDataKey.value;
+    						break;
+    					case '0x030103FFFF.0x0301030002': //soc_ok
+    						adapter.setState(state_s_batteryLevel.label, {val: myReceivedDataKey.value, ack: true});
+    						break;
+    					case '0x030103FFFF.0x0301030008': //secondary_range - erst ab Modelljahr 2018
+    						adapter.setState(state_s_batteryRange.label, {val: 'value' in myReceivedDataKey ? myReceivedDataKey.value * 1 : 0, ack: true});
+    						break;
+    					case '0x030103FFFF.0x0301030005': //hybrid_range - erst ab Modelljahr 2018
+    						adapter.setState(state_s_hybridRange.label, {val: myReceivedDataKey.value, ack: true});
+    						break;
+    						//door1 - front/left
+    					case '0x030104FFFF.0x0301040001':
+    						myCarNetDoors.FL.locked = myReceivedDataKey.value === '2';
+    						break;
+    					case '0x030104FFFF.0x0301040002':
+    						myCarNetDoors.FL.closed = myReceivedDataKey.value === '3';
+    						break;
+    					case '0x030104FFFF.0x0301040003':
+    						myCarNetDoors.FL.safe = myReceivedDataKey.value === '2';
+    						break;
+    						//door2 - rear/left
+    					case '0x030104FFFF.0x0301040004':
+    						myCarNetDoors.RL.locked = myReceivedDataKey.value === '2';
+    						break;
+    					case '0x030104FFFF.0x0301040005':
+    						myCarNetDoors.RL.closed = myReceivedDataKey.value === '3';
+    						break;
+    					case '0x030104FFFF.0x0301040006':
+    						myCarNetDoors.RL.safe = myReceivedDataKey.value === '2';
+    						break;
+    						//door3 - front/right
+    					case '0x030104FFFF.0x0301040007':
+    						myCarNetDoors.FR.locked = myReceivedDataKey.value === '2';
+    						break;
+    					case '0x030104FFFF.0x0301040008':
+    						myCarNetDoors.FR.closed = myReceivedDataKey.value === '3';
+    						break;
+    					case '0x030104FFFF.0x0301040009':
+    						myCarNetDoors.FR.safe = myReceivedDataKey.value === '2';
+    						break;
+    						//door4 - rear/right
+    					case '0x030104FFFF.0x030104000A':
+    						myCarNetDoors.RR.locked = myReceivedDataKey.value === '2';
+    						break;
+    					case '0x030104FFFF.0x030104000B':
+    						myCarNetDoors.RR.closed = myReceivedDataKey.value === '3';
+    						break;
+    					case '0x030104FFFF.0x030104000C':
+    						myCarNetDoors.RR.safe = myReceivedDataKey.value === '2';
+    						break;
+    						//door5 - rear
+    					case '0x030104FFFF.0x030104000D':
+    						myCarNetDoors.rear.locked = myReceivedDataKey.value === '2';
+    						break;
+    					case '0x030104FFFF.0x030104000E':
+    						myCarNetDoors.rear.closed = myReceivedDataKey.value === '3';
+    						break;
+    					case '0x030104FFFF.0x030104000F':
+    						//myCarNetDoors.rear.safe = myReceivedDataKey.value === '2';
+    						break;
+    						//door6 - hood
+    					case '0x030104FFFF.0x0301040010':
+    						//myCarNetDoors.hood.locked = myReceivedDataKey.value === '2';
+    						break;
+    					case '0x030104FFFF.0x0301040011':
+    						myCarNetDoors.hood.closed = myReceivedDataKey.value === '3';
+    						break;
+    					case '0x030104FFFF.0x0301040012':
+    						//myCarNetDoors.RR.safe = myReceivedDataKey.value === '2';
+    						break;
+    						//window1 - front/left
+    					case '0x030105FFFF.0x0301050001':
+    						myCarNetWindows.FL.closed = myReceivedDataKey.value === '3';
+    						break;
+    					case '0x030105FFFF.0x0301050002':
+    						myCarNetWindows.FL.level = myReceivedDataKey.value;
+    						break;
+    						//window2 - rear/left
+    					case '0x030105FFFF.0x0301050003':
+    						myCarNetWindows.RL.closed = myReceivedDataKey.value === '3';
+    						break;
+    					case '0x030105FFFF.0x0301050004':
+    						myCarNetWindows.RL.level = myReceivedDataKey.value;
+    						break;
+    						//window3 - front/right
+    					case '0x030105FFFF.0x0301050005':
+    						myCarNetWindows.FR.closed = myReceivedDataKey.value === '3';
+    						break;
+    					case '0x030105FFFF.0x0301050006':
+    						myCarNetWindows.FR.level = myReceivedDataKey.value;
+    						break;
+    						//window4 - rear/right
+    					case '0x030105FFFF.0x0301050007':
+    						myCarNetWindows.RR.closed = myReceivedDataKey.value === '3';
+    						break;
+    					case '0x030105FFFF.0x0301050008':
+    						myCarNetWindows.RR.level = myReceivedDataKey.value;
+    						break;
+    						//window4 - roof window
+    					case '0x030105FFFF.0x030105000B':
+    						myCarNetWindows.roof.closed = myReceivedDataKey.value === '3';
+    						break;
+    					case '0x030105FFFF.0x030105000C':
+    						myCarNetWindows.roof.level = myReceivedDataKey.value;
+    						break;
+    					default: //this should not be possible
+    					}
+    				}
+    			}
 
-            adapter.setState(state_dw_Doors.label, {val: JSON.stringify(myCarNetDoors), ack: true});
-            adapter.setState(state_dw_Windows.label, {val: JSON.stringify(myCarNetWindows), ack: true});
+    			adapter.setState(state_dw_Doors.label, {val: JSON.stringify(myCarNetDoors), ack: true});
+    			adapter.setState(state_dw_Windows.label, {val: JSON.stringify(myCarNetWindows), ack: true});
 
-            adapter.setState(state_s_carCentralLock.label, {val: myCarNetDoors.FL.locked && myCarNetDoors.FR.locked, ack: true});
+    			adapter.setState(state_s_carCentralLock.label, {val: myCarNetDoors.FL.locked && myCarNetDoors.FR.locked, ack: true});
 
-            switch (myParkingLight) {
-                case '3':
-                    adapter.setState(state_s_parkingLights.label, {val: 'left=on, right=off', ack: true});
-                    break;
-                case '4':
-                    adapter.setState(state_s_parkingLights.label, {val: 'left=off, right=on', ack: true});
-                    break;
-                case '5':
-                    adapter.setState(state_s_parkingLights.label, {val: 'left=on, right=on', ack: true});
-                    break;
-                default:
-                    adapter.setState(state_s_parkingLights.label, {val: 'off', ack: true});
-            }
-            return callback(true);
+    			switch (myParkingLight) {
+    			case '3':
+    				adapter.setState(state_s_parkingLights.label, {val: 'left=on, right=off', ack: true});
+    				break;
+    			case '4':
+    				adapter.setState(state_s_parkingLights.label, {val: 'left=off, right=on', ack: true});
+    				break;
+    			case '5':
+    				adapter.setState(state_s_parkingLights.label, {val: 'left=on, right=on', ack: true});
+    				break;
+    			default:
+    				adapter.setState(state_s_parkingLights.label, {val: 'off', ack: true});
+    			}
+    			return callback(true);
+    		} else {
+    			adapter.log.error('Retrieve VehicleStatus: statusCode ' + response.statusCode + ' - ' + JSON.stringify(response) + ' - ' + JSON.stringify(result));
+    	        return callback(false);
+    		}
         });
     } catch (err) {
         adapter.log.error('Error while retrieving status: ' + err);
@@ -1001,55 +1006,60 @@ function RetrieveVehicleData_Climater(callback){
             return callback(false);
         }
 
-        adapter.log.debug('Retrieve climater: ' + JSON.stringify(responseData));
+		if (response.statusCode == 200) {
+			adapter.log.debug('Retrieve climater: ' + JSON.stringify(responseData));
 
-        var climaterSettings = responseData.climater.settings;
-        if (climaterSettings !== null) {
-            if (isNaN(climaterSettings.targetTemperature.content)) {
-                myTemperatureCelsius = 999;
-            } else {
-                myTemperatureCelsius = parseFloat((climaterSettings.targetTemperature.content)/10) - 273;
-            }
-            adapter.setState(state_c_targetTemperature.label, {val: myTemperatureCelsius.toFixed(1), ack: true});
-            myTemperatureCelsius = null;
-            adapter.setState(state_c_climatisationWithoutHVPower.label, {val: climaterSettings.climatisationWithoutHVpower.content, ack: true});
-            adapter.setState(state_c_heaterSource.label, {val: climaterSettings.heaterSource.content.toUpperCase(), ack: true});
-        }
+			var climaterSettings = responseData.climater.settings;
+			if (climaterSettings !== null) {
+				if (isNaN(climaterSettings.targetTemperature.content)) {
+					myTemperatureCelsius = 999;
+				} else {
+					myTemperatureCelsius = parseFloat((climaterSettings.targetTemperature.content)/10) - 273;
+				}
+				adapter.setState(state_c_targetTemperature.label, {val: myTemperatureCelsius.toFixed(1), ack: true});
+				myTemperatureCelsius = null;
+				adapter.setState(state_c_climatisationWithoutHVPower.label, {val: climaterSettings.climatisationWithoutHVpower.content, ack: true});
+				adapter.setState(state_c_heaterSource.label, {val: climaterSettings.heaterSource.content.toUpperCase(), ack: true});
+			}
 
-        var climatisationStatusData = responseData.climater.status.climatisationStatusData;
-        if (climatisationStatusData !== undefined) {
-            adapter.setState(state_c_climatisationState.label, {val: climatisationStatusData.climatisationState.content.toUpperCase(), ack: true});
-            //adapter.log.info(climatisationStatusData.climatisationStateErrorCode.content);
+			var climatisationStatusData = responseData.climater.status.climatisationStatusData;
+			if (climatisationStatusData !== undefined) {
+				adapter.setState(state_c_climatisationState.label, {val: climatisationStatusData.climatisationState.content.toUpperCase(), ack: true});
+				//adapter.log.info(climatisationStatusData.climatisationStateErrorCode.content);
 
-            var myRemainingTime = climatisationStatusData.remainingClimatisationTime.content;
-            //var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
-            var myRemainingTimeStr = myRemainingTime;
-            if (myRemainingTime <0 ){ myRemainingTimeStr = null; }
-            adapter.setState(state_c_remainingClimatisationTime.label, {val: myRemainingTimeStr, ack: true});
-            adapter.setState(state_c_climatisationReason.label, {val: climatisationStatusData.climatisationReason.content.toUpperCase(), ack: true});
-        }
-        var windowHeatingStatusData = responseData.climater.status.windowHeatingStatusData;
-        if (windowHeatingStatusData !== undefined) {
-            adapter.setState(state_c_windowHeatingStateFront.label, {val: windowHeatingStatusData.windowHeatingStateFront.content.toUpperCase(), ack: true});
-            adapter.setState(state_c_windowHeatingStateRear.label, {val: windowHeatingStatusData.windowHeatingStateRear.content.toUpperCase(), ack: true});
-            //adapter.log.info(windowHeatingStatusData.windowHeatingErrorCode.content);
-        }
-        var temperatureStatusData = responseData.climater.status.temperatureStatusData;
-        if (isNaN(temperatureStatusData.outdoorTemperature.content)){
-            myTemperatureCelsius = 999;
-        } else {
-            myTemperatureCelsius = parseFloat((temperatureStatusData.outdoorTemperature.content)/10) - 273;
-        }
-        adapter.setState(state_c_outdoorTemperature.label, {val: myTemperatureCelsius.toFixed(1), ack: true});
-        myTemperatureCelsius = null;
+				var myRemainingTime = climatisationStatusData.remainingClimatisationTime.content;
+				//var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
+				var myRemainingTimeStr = myRemainingTime;
+				if (myRemainingTime <0 ){ myRemainingTimeStr = null; }
+				adapter.setState(state_c_remainingClimatisationTime.label, {val: myRemainingTimeStr, ack: true});
+				adapter.setState(state_c_climatisationReason.label, {val: climatisationStatusData.climatisationReason.content.toUpperCase(), ack: true});
+			}
+			var windowHeatingStatusData = responseData.climater.status.windowHeatingStatusData;
+			if (windowHeatingStatusData !== undefined) {
+				adapter.setState(state_c_windowHeatingStateFront.label, {val: windowHeatingStatusData.windowHeatingStateFront.content.toUpperCase(), ack: true});
+				adapter.setState(state_c_windowHeatingStateRear.label, {val: windowHeatingStatusData.windowHeatingStateRear.content.toUpperCase(), ack: true});
+				//adapter.log.info(windowHeatingStatusData.windowHeatingErrorCode.content);
+			}
+			var temperatureStatusData = responseData.climater.status.temperatureStatusData;
+			if (isNaN(temperatureStatusData.outdoorTemperature.content)){
+				myTemperatureCelsius = 999;
+			} else {
+				myTemperatureCelsius = parseFloat((temperatureStatusData.outdoorTemperature.content)/10) - 273;
+			}
+			adapter.setState(state_c_outdoorTemperature.label, {val: myTemperatureCelsius.toFixed(1), ack: true});
+			myTemperatureCelsius = null;
 
-        var vehicleParkingClockStatusData = responseData.climater.status.vehicleParkingClockStatusData;
-        if (vehicleParkingClockStatusData !== undefined){
-            adapter.setState(state_c_vehicleParkingClock.label, {val: vehicleParkingClockStatusData.vehicleParkingClock.content, ack: true});
-        } else {
-            adapter.setState(state_c_vehicleParkingClock.label, {val: 'MOVING', ack: true});
-        }
-        return callback(true);
+			var vehicleParkingClockStatusData = responseData.climater.status.vehicleParkingClockStatusData;
+			if (vehicleParkingClockStatusData !== undefined){
+				adapter.setState(state_c_vehicleParkingClock.label, {val: vehicleParkingClockStatusData.vehicleParkingClock.content, ack: true});
+			} else {
+				adapter.setState(state_c_vehicleParkingClock.label, {val: 'MOVING', ack: true});
+			}
+			return callback(true);
+		} else {
+			adapter.log.error('Retrieve VehicleClimater: statusCode ' + response.statusCode + ' - ' + JSON.stringify(response) + ' - ' + JSON.stringify(result));
+			return callback(false);
+		}
     });
 }
 
@@ -1065,53 +1075,58 @@ function RetrieveVehicleData_eManager(callback){
                 return callback(false);
             }
 
-            adapter.log.debug('Retrieve charger: ' + JSON.stringify(result));
+    		if (response.statusCode == 200) {
+    			adapter.log.debug('Retrieve charger: ' + JSON.stringify(result));
 
-            var chargerSettings = result.charger.settings;
-            if (chargerSettings !== '' ) {
-                adapter.setState(state_e_maxChargeCurrent.label, {val: chargerSettings.maxChargeCurrent.content, ack: true});
-            }
+    			var chargerSettings = result.charger.settings;
+    			if (chargerSettings !== '' ) {
+    				adapter.setState(state_e_maxChargeCurrent.label, {val: chargerSettings.maxChargeCurrent.content, ack: true});
+    			}
 
-            var chargingStatusData = result.charger.status.chargingStatusData;
-            if (chargingStatusData !== undefined) {
-                adapter.setState(state_e_chargingMode.label, {val: chargingStatusData.chargingMode.content.toUpperCase(), ack: true});
-                //adapter.log.info('eManager/chargingStateErrorCode: ' + chargingStatusData.chargingStateErrorCode.content);
-                adapter.setState(state_e_chargingReason.label, {val: chargingStatusData.chargingReason.content.toUpperCase(), ack: true});
-                adapter.setState(state_e_extPowerSupplyState.label, {val: chargingStatusData.externalPowerSupplyState.content.toUpperCase(), ack: true});
-                //adapter.log.info('eManager/energyFlow: ' + chargingStatusData.energyFlow.content);
-                adapter.setState(state_e_chargingState.label, {val: chargingStatusData.chargingState.content.toUpperCase(), ack: true});
-            }
+    			var chargingStatusData = result.charger.status.chargingStatusData;
+    			if (chargingStatusData !== undefined) {
+    				adapter.setState(state_e_chargingMode.label, {val: chargingStatusData.chargingMode.content.toUpperCase(), ack: true});
+    				//adapter.log.info('eManager/chargingStateErrorCode: ' + chargingStatusData.chargingStateErrorCode.content);
+    				adapter.setState(state_e_chargingReason.label, {val: chargingStatusData.chargingReason.content.toUpperCase(), ack: true});
+    				adapter.setState(state_e_extPowerSupplyState.label, {val: chargingStatusData.externalPowerSupplyState.content.toUpperCase(), ack: true});
+    				//adapter.log.info('eManager/energyFlow: ' + chargingStatusData.energyFlow.content);
+    				adapter.setState(state_e_chargingState.label, {val: chargingStatusData.chargingState.content.toUpperCase(), ack: true});
+    			}
 
-            var cruisingRangeStatusData = result.charger.status.cruisingRangeStatusData;
-            // adapter.log.info(cruisingRangeStatusData.engineTypeFirstEngine.content);
-            // adapter.log.info(cruisingRangeStatusData.primaryEngineRange.content);
-            // adapter.log.info(cruisingRangeStatusData.hybridRange.content);
-            // adapter.log.info(cruisingRangeStatusData.engineTypeSecondEngine.content);
-            // adapter.log.info(cruisingRangeStatusData.secondaryEngineRange.content);
+    			var cruisingRangeStatusData = result.charger.status.cruisingRangeStatusData;
+    			// adapter.log.info(cruisingRangeStatusData.engineTypeFirstEngine.content);
+    			// adapter.log.info(cruisingRangeStatusData.primaryEngineRange.content);
+    			// adapter.log.info(cruisingRangeStatusData.hybridRange.content);
+    			// adapter.log.info(cruisingRangeStatusData.engineTypeSecondEngine.content);
+    			// adapter.log.info(cruisingRangeStatusData.secondaryEngineRange.content);
 
-            var ledStatusData = result.charger.status.ledStatusData;
-            if (ledStatusData !== undefined) {
-                //adapter.log.info('eManager/ledColor: ' + ledStatusData.ledColor.content);
-                //adapter.log.info('eManager/ledState: ' + ledStatusData.ledState.content);
-            }
+    			var ledStatusData = result.charger.status.ledStatusData;
+    			if (ledStatusData !== undefined) {
+    				//adapter.log.info('eManager/ledColor: ' + ledStatusData.ledColor.content);
+    				//adapter.log.info('eManager/ledState: ' + ledStatusData.ledState.content);
+    			}
 
-            var batteryStatusData = result.charger.status.batteryStatusData;
-            if (batteryStatusData !== undefined) {
-                adapter.setState(state_e_stateOfCharge.label, {val: batteryStatusData.stateOfCharge.content, ack: true});
-                var myRemainingTime = batteryStatusData.remainingChargingTime.content;
-                var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
-                if (myRemainingTime <0 ) { myRemainingTimeStr = null; }
-                adapter.setState(state_e_remainingChargingTime.label, {val: myRemainingTimeStr, ack: true});
-                adapter.setState(state_e_remainingChargingTimeTargetSOC.label, {val: batteryStatusData.remainingChargingTimeTargetSOC.content, ack: true});
-            }
+    			var batteryStatusData = result.charger.status.batteryStatusData;
+    			if (batteryStatusData !== undefined) {
+    				adapter.setState(state_e_stateOfCharge.label, {val: batteryStatusData.stateOfCharge.content, ack: true});
+    				var myRemainingTime = batteryStatusData.remainingChargingTime.content;
+    				var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
+    				if (myRemainingTime <0 ) { myRemainingTimeStr = null; }
+    				adapter.setState(state_e_remainingChargingTime.label, {val: myRemainingTimeStr, ack: true});
+    				adapter.setState(state_e_remainingChargingTimeTargetSOC.label, {val: batteryStatusData.remainingChargingTimeTargetSOC.content, ack: true});
+    			}
 
-            var plugStatusData = result.charger.status.plugStatusData;
-            if (plugStatusData !== undefined) {
-                adapter.setState(state_e_plugState.label, {val: plugStatusData.plugState.content.toUpperCase(), ack: true});
-                adapter.setState(state_e_lockState.label, {val: plugStatusData.lockState.content.toUpperCase(), ack: true});
-            }
+    			var plugStatusData = result.charger.status.plugStatusData;
+    			if (plugStatusData !== undefined) {
+    				adapter.setState(state_e_plugState.label, {val: plugStatusData.plugState.content.toUpperCase(), ack: true});
+    				adapter.setState(state_e_lockState.label, {val: plugStatusData.lockState.content.toUpperCase(), ack: true});
+    			}
 
-            return callback(true);
+    			return callback(true);
+    		} else {
+    			adapter.log.error('Retrieve VehicleeManager: statusCode ' + response.statusCode + ' - ' + JSON.stringify(response) + ' - ' + JSON.stringify(result));
+    			return callback(false);
+    		}
         });
     } catch (err) {
         adapter.log.error('Error while retrieving charger: '+ err);
@@ -1165,28 +1180,33 @@ function RetrieveVehicleData_Location(callback) {
                 return callback(true);
             }
 
-            adapter.log.debug('Retrieve position: ' + JSON.stringify(responseData));
+    		if (response.statusCode == 200) {
+    			adapter.log.debug('Retrieve position: ' + JSON.stringify(responseData));
 
-            if ('findCarResponse' in responseData) {
-                var findCarResponse = responseData.findCarResponse;
-                if (findCarResponse !== undefined && findCarResponse !== null) {
-                    adapter.setState(state_l_lat.label, {
-                        val: findCarResponse.Position.carCoordinate.latitude/1000000,
-                        ack: true
-                    });
-                    adapter.setState(state_l_lng.label, {
-                        val: findCarResponse.Position.carCoordinate.longitude/1000000,
-                        ack: true
-                    });
-                    adapter.setState(state_l_parkingTime.label, {val: findCarResponse.parkingTimeUTC, ack: true});
-                    requestGeocoding(findCarResponse.Position.carCoordinate.latitude, findCarResponse.Position.carCoordinate.longitude);
-                } else {
-                	setCarIsMoving();
-                }
-            } else {
-                setCarIsMoving();
-            }
-            return callback(true);
+    			if ('findCarResponse' in responseData) {
+    				var findCarResponse = responseData.findCarResponse;
+    				if (findCarResponse !== undefined && findCarResponse !== null) {
+    					adapter.setState(state_l_lat.label, {
+    						val: findCarResponse.Position.carCoordinate.latitude/1000000,
+    						ack: true
+    					});
+    					adapter.setState(state_l_lng.label, {
+    						val: findCarResponse.Position.carCoordinate.longitude/1000000,
+    						ack: true
+    					});
+    					adapter.setState(state_l_parkingTime.label, {val: findCarResponse.parkingTimeUTC, ack: true});
+    					requestGeocoding(findCarResponse.Position.carCoordinate.latitude, findCarResponse.Position.carCoordinate.longitude);
+    				} else {
+    					setCarIsMoving();
+    				}
+    			} else {
+    				setCarIsMoving();
+    			}
+    			return callback(true);
+    		} else {
+    			adapter.log.error('Retrieve VehicleLocation: statusCode ' + response.statusCode + ' - ' + JSON.stringify(response) + ' - ' + JSON.stringify(result));
+    			return callback(false);
+    		}
         });
     } catch (err) {
         adapter.log.error('Fehler bei der Auswertung im location Modul');

@@ -28,6 +28,8 @@ This might be changed in a future update but it is the current state.
 
 
 ## Changelog
+### 0.2.3a (2019-03-06)
+* (Sneak-L8) improved stability, catch empty responses
 ### 0.2.3 (2019-03-03)
 * (Sneak-L8) catch some errors
 * (Sneak-L8) correct handling of data when car is moving 
