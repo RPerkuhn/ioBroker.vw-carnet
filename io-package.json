@@ -1,9 +1,17 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.2.3a",
+        "version": "0.3.1
         "news": {
-            "0.2.3a": {
+			"0.3.1": {
+                "en": "Option to update via button in admin",
+                "de": "Option zum Update per Button aus Admin"
+			},
+			"0.3.0": {
+                "en": "Enhanced functions load",
+                "de": "Erweiterte Funktionen für laden"
+			},
+			"0.2.3a": {
                 "en": "improved stability, catch empty responses",
                 "de": "verbesserte Stabilität, leere Rückmeldungen abfangen"
             },

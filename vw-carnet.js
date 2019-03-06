@@ -1,4 +1,4 @@
-//version 0.2.3a
+// version 0.3.1
 // to start debugging in vscode:
 // node --inspect-brk vw-carnet.js --force --logs
 
@@ -38,6 +38,23 @@ function startAdapter(options) {
     options = options || {}; 
     Object.assign(options,{ 
         name:  "vw-carnet", 
+        //ab hier neu V 0.3.x
+        stateChange: function (id, state) {
+            var myTmp1
+            var myCommand = id.split('.');
+            myCommand = myCommand[myCommand.length -1];
+            adapter.log.info(myCommand);
+            if (myCommand === 'btn_update') {
+                VWCarNetReadData(); // command 'update' received
+            }
+            if (myCommand === 'btn_chargerStart') {
+                requestCarSwitchCharger('start', dummyFunc); //command stop charging received
+            }
+            if (myCommand === 'btn_chargerStop') {
+                requestCarSwitchCharger('stop', dummyFunc); //command stop charging received
+            }
+        },
+        //bis hier neu V 0.3.x
         message: function (obj) {
             if (typeof obj === 'object' && obj.message) {
                 var lCommand = obj.command.toLowerCase();
@@ -110,6 +127,9 @@ var VWCarNet_GetStatus = false;
 var VWCarNet_GetClimater = false;
 var VWCarNet_GetEManager = false;
 var VWCarNet_GetLocation = false;
+var myCarNet_myChargingState;
+var myCarNet_MaxChargeCurrent;
+var myCarNet_PowerSupplyState;
 var myCarNet_vehicleStatus;
 var myCarNet_requestID;
 var myCarNetDoors={'doors':'dummy'};
@@ -140,7 +160,7 @@ var myGoogleDefaulHeader = {
     'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0.1; D5803 Build/23.5.A.1.291; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/63.0.3239.111 Mobile Safari/537.36'};
 
 //##############################################################################################################
-// declaring names for states for CarNet Services data
+// declaring names of states for CarNet Services data
 const channel_sv = {'label':'CarNet-Servcies', 'en':'status of available carnet services', 'de':'Status der verfügbaren CarNet Services'};
 const state_sv_statusreport_v1_status = {'label':'CarNet-Servcies.StatusReport.serviceStatus', 'en':'general status data', 'de':'allgemeine Status Daten'};
 const state_sv_statusreport_v1_eol = {'label':'CarNet-Servcies.StatusReport.serviceEOL', 'en':'end of life general status data', 'de':'Vertragsende'};
@@ -152,13 +172,14 @@ const state_sv_rbatterycharge_v1_status = {'label':'CarNet-Servcies.eManager.ser
 const state_sv_rbatterycharge_v1_eol = {'label':'CarNet-Servcies.eManager.serviceEOL', 'en':'end of life', 'de':'Vertragsende'};
 
 //##############################################################################################################
-// declaring names for states for Vehicle data
+// declaring names of states for Vehicle data
 const channel_v = {'label':'Vehicle', 'en':'selected vehicle', 'de':'Fahrzeug'};
 const state_v_name = {'label':'Vehicle.name', 'en':'name in VW Car-Net', 'de':'Name des Fahrzeuges in VW Car-Net'};
 const state_v_VIN = {'label':'Vehicle.VIN', 'en':'vehicle identification number', 'de':'Fahrgestellnummer'};
+const state_v_Update = {'label':'Vehicle.btn_update', 'en': 'load data from CarNet', 'de': 'Daten von CarNet laden'};
 
 //##############################################################################################################
-// declaring names for states for status data
+// declaring names of states for status data
 const channel_s = {'label':'Vehicle.Status', 'en': 'Status of vehicle', 'de': 'Fahrzeugstatus'};
 const state_s_lastConnectionTimeStamp   = {'label':'Vehicle.Status.lastConnectionTimeStamp', 'en': 'Last connection timestamp', 'de': 'Zeitpunkt der letzten Verbindung'};
 const state_s_distanceCovered     = {'label':'Vehicle.Status.distanceCovered', 'en': 'Distance covered', 'de': 'Kilometerstand'};
@@ -181,7 +202,7 @@ const state_dw_Doors = {'label':'Vehicle.Status.DoorsAndWindows.doorsJSON', 'en'
 const state_dw_Windows = {'label':'Vehicle.Status.DoorsAndWindows.windowsJSON', 'en': 'JSON object with doorstates', 'de': 'JSON Objekt Status Fenster'};
 
 //##############################################################################################################
-// declaring names for states for climater data
+// declaring names of states for climater data
 const channel_c = {'label':'Vehicle.climater', 'en': 'heating / air condition / climater', 'de': 'Heizung / Klimaanlage / Lüftung'};
 const state_c_climatisationWithoutHVPower = {'label':'Vehicle.climater.climatisationWithoutHVPower', 'en': 'Allow air condition in e-mode', 'de': 'Klimaanlage über Batterie zulassen'};
 const state_c_targetTemperature = {'label':'Vehicle.climater.targetTemperature', 'en': 'Target temperature', 'de': 'Zieltemperatur'};
@@ -193,9 +214,13 @@ const state_c_outdoorTemperature = {'label':'Vehicle.climater.outdoorTemperature
 const state_c_vehicleParkingClock = {'label':'Vehicle.climater.vehicleParkingClock', 'en': 'Parking timestamp', 'de': 'Parkzeit'};
 const state_c_climatisationState = {'label':'Vehicle.climater.climatisationState', 'en': 'State of climatisation', 'de': 'Zustand der Standheizung'};
 const state_c_remainingClimatisationTime = {'label':'Vehicle.climater.remainingClimatisationTime', 'en': 'Remaining climatisation time', 'de': 'Verbleibende Dauer bis Zieltemperatur'};
+const state_c_climaterStart = {'label':'Vehicle.climater.btn_climaterStart', 'en': 'start heating process', 'de': 'Klimatisieren starten'};
+const state_c_climaterStop = {'label':'Vehicle.climater.btn_climaterStop', 'en': 'stop heating process', 'de': 'Klimatisieren stoppen'};
+const state_c_windowheatStart = {'label':'Vehicle.climater.btn_windowheatStart', 'en': 'start windowmelt', 'de': 'Scheibenheizung starten'};
+const state_c_windowheatStop = {'label':'Vehicle.climater.btn_windowheatStop', 'en': 'stop windowmelt', 'de': 'Scheibenheizung stoppen'};
 
 //##############################################################################################################
-// declaring names for states for eManager data
+// declaring names of states for eManager data
 const channel_e = {'label':'Vehicle.eManager', 'en': 'e-manager', 'de': 'e-Manager'};
 const state_e_stateOfCharge = {'label':'Vehicle.eManager.stateOfCharge', 'en': 'Charging state main battery', 'de': 'Ladezustand der Hauptbatterie'};
 const state_e_remainingChargingTimeTargetSOC = {'label':'Vehicle.eManager.remainingChargingTimeTargetSOC', 'en': 'Remaining charging time until SOC', 'de': 'Verbleibende Ladedauer untere Batterie-Ladegrenze'};
@@ -207,9 +232,11 @@ const state_e_maxChargeCurrent = {'label':'Vehicle.eManager.maxChargeCurrent', '
 const state_e_plugState = {'label':'Vehicle.eManager.plugState', 'en': 'Charging cable plugged', 'de': 'Status Ladestecker'};
 const state_e_lockState = {'label':'Vehicle.eManager.lockState', 'en': 'Charging cable locked', 'de': 'Verriegelung Ladestecker'};
 const state_e_extPowerSupplyState = {'label':'Vehicle.eManager.externalPowerSupplyState', 'en': 'External power supply state', 'de': 'Status externe Stromversorgung'};
+const state_e_chargerStart = {'label':'Vehicle.eManager.btn_chargerStart', 'en': 'start charging process', 'de': 'Ladevorgang starten'};
+const state_e_chargerStop = {'label':'Vehicle.eManager.btn_chargerStop', 'en': 'stop charging process', 'de': 'Ladevorgang stoppen'};
 
 //##############################################################################################################
-// declaring names for states for location data
+// declaring names of states for location data
 const channel_l = {'label':'Vehicle.location', 'en': 'Location', 'de': 'Ortungsdaten Fahrzeug'};
 const state_l_lat = {'label':'Vehicle.location.latitude', 'en': 'Latitude', 'de': 'Breitengrad'};
 const state_l_lng = {'label':'Vehicle.location.longitude', 'en': 'Longitude', 'de': 'Längengrad'};
@@ -253,6 +280,11 @@ function CreateStates_common(callback){
     adapter.setObject(state_v_VIN.label, {
         type: 'state',
         common: {name: state_v_VIN[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
+        native: {}
+    });
+    adapter.setObject(state_v_Update.label, {
+        type: 'state',
+        common: {name: state_v_Update[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
         native: {}
     });
     return callback(true);
@@ -480,6 +512,26 @@ function CreateStates_climater(callback){
         common: {name: state_c_remainingClimatisationTime[ioBroker_Language], type: "number", unit: "Min", read: true, write: false, role: 'value'},
         native: {}
     });
+    adapter.setObject(state_c_climaterStart.label, {
+        type: 'state',
+        common: {name: state_c_climaterStart[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        native: {}
+    });
+    adapter.setObject(state_c_climaterStop.label, {
+        type: 'state',
+        common: {name: state_c_climaterStop[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        native: {}
+    });
+    adapter.setObject(state_c_windowheatStart.label, {
+        type: 'state',
+        common: {name: state_c_windowheatStart[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        native: {}
+    });
+    adapter.setObject(state_c_windowheatStop.label, {
+        type: 'state',
+        common: {name: state_c_windowheatStop[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        native: {}
+    });
     return callback(true);
 }
 
@@ -543,6 +595,16 @@ function CreateStates_eManager(callback){
         common: {name: state_e_extPowerSupplyState[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
         native: {}
     });
+    adapter.setObject(state_e_chargerStart.label, {
+        type: 'state',
+        common: {name: state_e_chargerStart[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        native: {}
+    });
+    adapter.setObject(state_e_chargerStop.label, {
+        type: 'state',
+        common: {name: state_e_chargerStop[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        native: {}
+    });
     return callback(true);
 }
 
@@ -592,6 +654,7 @@ function readCarNetData() {
 // ############################################# start here! ###################################################
 
 function main() {
+    adapter.subscribeStates('*.btn_');
     CarNetLogon(function(myTmp){
         VWCarNet_CredentialsAreValid=myTmp;
         myCarNetDoors['FL']={'closed':false,'locked':true,'safe':false};
@@ -1080,17 +1143,23 @@ function RetrieveVehicleData_eManager(callback){
 
     			var chargerSettings = result.charger.settings;
     			if (chargerSettings !== '' ) {
-    				adapter.setState(state_e_maxChargeCurrent.label, {val: chargerSettings.maxChargeCurrent.content, ack: true});
+                    myCarNet_MaxChargeCurrent = chargerSettings.maxChargeCurrent.content
+                    adapter.setState(state_e_maxChargeCurrent.label, {val: myCarNet_MaxChargeCurrent, ack: true});
     			}
 
     			var chargingStatusData = result.charger.status.chargingStatusData;
     			if (chargingStatusData !== undefined) {
     				adapter.setState(state_e_chargingMode.label, {val: chargingStatusData.chargingMode.content.toUpperCase(), ack: true});
-    				//adapter.log.info('eManager/chargingStateErrorCode: ' + chargingStatusData.chargingStateErrorCode.content);
-    				adapter.setState(state_e_chargingReason.label, {val: chargingStatusData.chargingReason.content.toUpperCase(), ack: true});
-    				adapter.setState(state_e_extPowerSupplyState.label, {val: chargingStatusData.externalPowerSupplyState.content.toUpperCase(), ack: true});
-    				//adapter.log.info('eManager/energyFlow: ' + chargingStatusData.energyFlow.content);
-    				adapter.setState(state_e_chargingState.label, {val: chargingStatusData.chargingState.content.toUpperCase(), ack: true});
+                    //adapter.log.info('eManager/chargingStateErrorCode: ' + chargingStatusData.chargingStateErrorCode.content);
+                    
+                    adapter.setState(state_e_chargingReason.label, {val: chargingStatusData.chargingReason.content.toUpperCase(), ack: true});
+                    
+                    myCarNet_PowerSupplyState = chargingStatusData.externalPowerSupplyState.content.toUpperCase()
+    				adapter.setState(state_e_extPowerSupplyState.label, {val: myCarNet_PowerSupplyState, ack: true});
+                    //adapter.log.info('eManager/energyFlow: ' + chargingStatusData.energyFlow.content);
+                    
+                    myCarNet_myChargingState = chargingStatusData.chargingState.content.toUpperCase()
+    				adapter.setState(state_e_chargingState.label, {val: myCarNet_myChargingState, ack: true});
     			}
 
     			var cruisingRangeStatusData = result.charger.status.cruisingRangeStatusData;
@@ -1241,16 +1310,15 @@ function requestGeocoding(lat, lng) {
 }
 
 function requestCarSendData2CarNet(callback){
-    if (VWCarNet_Connected===false) { return callback(false); }
-
+    if (VWCarNet_Connected===false) { return callback(false); }; 
     //Requesting car to send it's data to the server
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/requests';
     try {
         request.post({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result) {
-            adapter.log.debug('Status-Code: ' + response.statusCode);
+            if (myLoggingEnabled){adapter.log.info(response.statusCode);}
 
             if (response.statusCode===202){
-                adapter.log.debug('RequestID: ' + result.CurrentVehicleDataResponse.requestId);
+                if (myLoggingEnabled){adapter.log.info('RequestID: ' + result.CurrentVehicleDataResponse.requestId);}
                 return callback(true);
             } else {
                 return callback(false);
@@ -1261,6 +1329,99 @@ function requestCarSendData2CarNet(callback){
         return callback(false);
     }
 }
+
+function requestCarSwitchCharger(myAction, callback){
+    //adapter.log.info(myCarNet_myChargingState)
+    //adapter.log.info(myCarNet_MaxChargeCurrent + ' Ampere')
+    //adapter.log.info('Electrical Power is ' + myCarNet_PowerSupplyState)
+    if(VWCarNet_Connected === false) { return callback(false); }; //quit if not connected
+    if(myCarNet_myChargingState === 'OFF' && myAction === 'stop') { return callback(false); }; //quit if command is 'stop' and charger is inactive
+    if(myCarNet_myChargingState === 'CHARGING' && myAction === 'start') { return callback(false); }; //quit if command is 'start' and charger is already active
+    if(isNaN(myCarNet_MaxChargeCurrent) && myAction === 'start') { return callback(false); }; //quit if maxCurrent is not a valid number
+    if(myCarNet_PowerSupplyState !== 'AVAILABLE' && myAction === 'start') { return callback(false); }; //quit if command is 'start' and no powersupply is connected
+
+    myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
+    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml;charset=utf-8'
+    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml, application/vnd.vwg.mbb.genericError_v1_0_2+xml'
+    //Requesting car start charge with it's max allowed current
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/charger/actions'
+    var myData
+    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>start</type> <settings> <maxChargeCurrent>' + myCarNet_MaxChargeCurrent + '</maxChargeCurrent> </settings> </action>'};
+    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stop</type> </action>'};
+    if (myData === ''){ return callback(false); };
+    //adapter.log.info(myData)
+    try {
+        request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
+            if (response.statusCode===202){
+                adapter.log.info('charger-command ' + myAction + ' successful')
+                return callback(false);
+            } else {
+                adapter.log.error('charger-command ' + myAction + ' failed')
+                return callback(false);
+            }
+        });
+    } catch (err){
+        return callback(false);
+    }
+}
+
+function requestCarSwitchClimater(myAction, callback){
+    if (VWCarNet_Connected===false) { return callback(false); };
+
+    myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
+    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml;charset=utf-8'
+    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml'
+    //Requesting car start climater/heating
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions'
+    var myData
+    if (myAction === 'set'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>setSettings</type> <settings> <targetTemperature>2950</targetTemperature> <climatisationWithoutHVpower>false</climatisationWithoutHVpower> <heaterSource>electric</heaterSource> </settings> </action>'};
+    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startClimatisation</type> </action>'};
+    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopClimatisation</type> </action>'};
+    if (myData === ''){ return callback (false); };
+    try {
+        request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
+            if (response.statusCode===202){
+                adapter.log.info('climater-command successful')
+                return callback(true);
+            } else {
+                adapter.log.info('climater-command failed')
+                console.log(result)
+                return callback(false);
+            }
+        });
+    } catch (err){
+        return callback(false);
+    }
+}
+
+function requestCarSwitchWindowHeater(myAction, callback){
+    if (VWCarNet_Connected===false) { return callback(false); };
+
+    myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
+    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml'
+    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml'
+    //Requesting car start window defrost
+    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions'
+    var myData
+    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startWindowHeating</type> </action>'};
+    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopWindowHeating</type> </action>'};
+    if (myData === ''){ return callback (false); };
+    try {
+        request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
+            if (response.statusCode===202){
+                adapter.log.info('windowheater-command successful')
+                return callback(true);
+            } else {
+                adapter.log.info('windowheater-command failed')
+                return callback(false);
+            }
+        });
+    } catch (err){
+        return callback(false);
+    }
+}
+
+
 
 // If started as allInOne/compact mode => return function to create instance 
 if (module && module.parent) { 
