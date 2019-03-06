@@ -43,15 +43,31 @@ function startAdapter(options) {
             var myTmp1
             var myCommand = id.split('.');
             myCommand = myCommand[myCommand.length -1];
-            adapter.log.info(myCommand);
+            //adapter.log.info(myCommand);
             if (myCommand === 'btn_update') {
                 VWCarNetReadData(); // command 'update' received
             }
             if (myCommand === 'btn_chargerStart') {
-                requestCarSwitchCharger('start', dummyFunc); //command stop charging received
+                requestCarSwitchCharger('start', dummyFunc); //command start charging received
             }
             if (myCommand === 'btn_chargerStop') {
                 requestCarSwitchCharger('stop', dummyFunc); //command stop charging received
+            }
+            if (myCommand === 'btn_climaterStart') {
+                adapter.log.info('start climater not yet implemented')
+                //requestCarSwitchClimater('start', dummyFunc); //command start climater received
+            }
+            if (myCommand === 'btn_climaterStop') {
+                adapter.log.info('stop climater not yet implemented')
+                //requestCarSwitchClimater('stop', dummyFunc); //command stop climater received
+            }
+            if (myCommand === 'btn_windowheatStart') {
+                adapter.log.info('start windowheat not yet implemented')
+                //requestCarSwitchWindowHeater('start', dummyFunc); //command start windowheat received
+            }
+            if (myCommand === 'btn_windowheatStop') {
+                adapter.log.info('stop windowheat not yet implemented')
+                //requestCarSwitchWindowHeater('stop', dummyFunc); //command stop windowheat received
             }
         },
         //bis hier neu V 0.3.x
