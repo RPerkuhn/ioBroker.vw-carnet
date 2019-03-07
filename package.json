@@ -1,6 +1,6 @@
 {
   "name": "iobroker.vw-carnet",
-  "version": "0.3.1",
+  "version": "0.3.1a",
   "description": "ioBroker Volkswagen Car-Net adapter",
   "author": {
     "name": "Ralf Perkuhn",
