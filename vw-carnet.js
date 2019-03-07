@@ -1080,7 +1080,7 @@ function RetrieveVehicleData_Climater(callback){
     var myTemperatureCelsius = 0;
     var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater';
     request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData){
-    	if (isRequestOk('getClimater', error, response, result)) {
+    	if (isRequestOk('getClimater', error, response, responseData)) {
 			adapter.log.debug('Retrieve climater: ' + JSON.stringify(responseData));
 
 			var climaterSettings = responseData.climater.settings;
@@ -1243,7 +1243,7 @@ function RetrieveVehicleData_Location(callback) {
 
     try {
         request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData) {
-        	if (isRequestOk('getClimater', error, response, result)) {
+        	if (isRequestOk('getClimater', error, response, responseData)) {
 
         		if (response.statusCode == 204) {
         			setCarIsMoving();
