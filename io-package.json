@@ -1,8 +1,12 @@
 {
     "common": {
         "name": "vw-carnet",
-        "version": "0.3.1",
+        "version": "0.3.1a",
         "news": {
+			"0.3.1a": {
+                "en": "optimized error handling on http request",
+                "de": "Optimierte Fehlerbehandlung bei HTTP-Request"
+			},
 			"0.3.1": {
                 "en": "Option to update via button in admin",
                 "de": "Option zum Update per Button aus Admin"

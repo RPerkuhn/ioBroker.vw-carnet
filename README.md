@@ -28,6 +28,8 @@ This might be changed in a future update but it is the current state.
 
 
 ## Changelog
+### 0.3.1a (2019-03-07)
+* (Sneak-L8) optimized error handling on http request
 ### 0.3.1 (2019-03-06)
 * (RPerkuhn) implemented option to update via button in admin
 ### 0.3.0 (2019-03-06)
