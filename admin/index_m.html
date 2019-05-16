@@ -12,30 +12,30 @@
 <script type="text/javascript" src="../../lib/js/materialize.js"></script>
 <script type="text/javascript" src="../../js/adapter-settings.js"></script>
 <script type="text/javascript" src="words.js"></script>
- <style>
-  .m .col .select-wrapper+label {
-   top: -26px;  
-  }
-     .m span{
-         font-size: 0.9em;
-     }
+<style>
+    .m .col .select-wrapper+label {
+        top: -26px;  
+    }
+    .m span{
+        font-size: 0.9em;
+    }
  </style>
 <!-- you have to define 2 functions in the global scope: -->
 <script type="text/javascript">
     // the function loadSettings has to exist ...
     function load(settings, onChange) {
         // example: select elements with id=key and class=value and insert value
-       if (!settings) return;
+        if (!settings) return;
         $('.value').each(function () {            
             var $key = $(this);
             var id = $key.attr('id');
             if ($key.attr('type') === 'checkbox') {
-		        // do not call onChange direct, because onChange could expect some arguments
+                // do not call onChange direct, because onChange could expect some arguments
                 $key.prop('checked', settings[id]).on('change', function() {
                     onChange();
                 });
             } else {
-		        // do not call onChange direct, because onChange could expect some arguments
+                // do not call onChange direct, because onChange could expect some arguments
                 $key.val(settings[id]).on('change', function() {
                     onChange();
                 }).on('keyup', function() {
@@ -46,7 +46,7 @@
         onChange(false);
         M.updateTextFields();  // function Materialize.updateTextFields(); to reinitialize all the Materialize labels on the page if you are dynamically adding inputs.
     }
-		
+        
     // ... and the function save has to exist.
     // you have to make sure the callback is called with the settings object as first param!
     function save(callback) {
@@ -62,9 +62,7 @@
         });
         callback(obj);
     }
-
-		
-	</script>
+    </script>
 </head>
 <body>
 <div id="adapter-container">
@@ -90,42 +88,44 @@
                 <span class="translate">enter your VW Car-Net username here</span>
             </div>
         </div>
-		<div class="row">
+        <div class="row">
             <div class="input-field col s12 m6">
                 <input class="value" id="password" type="password"/>
                 <label for="password" class="translate">Password</label>
                 <span class="translate">enter your VW Car-Net password here</span>
             </div>
         </div>
-		<div class="row">
+        <div class="row">
             <div class="input-field col s12 m6">
                 <input class="value" id="VIN" type="text"/>
                 <label for="VIN" class="translate">VIN</label>
                 <span class="translate">enter your VIN here (optional)</span>
             </div>
         </div>
-		<div class="row">
-			<div class="input-field col s12 m6">
-				<input id="adapterGetEManager" class="value" type="checkbox"/>
-				<span for="adapterGetEManager" class="translate">Retrieve eManager information</span>
-			</div>
-			<div class="input-field col s12 m6">
-				<input id="adapterGetClimater" class="value" type="checkbox"/>
-				<span for="adapterGetClimater" class="translate">Retrieve climater information</span>
-			</div>
-			<div class="input-field col s12 m6">
-				<input id="adapterGetLocation" class="value" type="checkbox"/>
-				<span for="adapterGetLocation" class="translate">Retrieve location information</span>
-			</div>
-		</div>
-		<div class="row">
+        <div class="row">
+            <div class="input-field col s12 m3">
+                <input id="adapterGetEManager" class="value" type="checkbox"/>
+                <span for="adapterGetEManager" class="translate">Retrieve eManager information</span>
+            </div>
+            <div class="input-field col s12 m3">
+                <input id="adapterGetClimater" class="value" type="checkbox"/>
+                <span for="adapterGetClimater" class="translate">Retrieve climater information</span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12 m3">
+                <input id="adapterGetLocation" class="value" type="checkbox"/>
+                <span for="adapterGetLocation" class="translate">Retrieve location information</span>
+            </div>
+        </div>
+        <div class="row">
             <div class="input-field col s12 m6">
                 <input class="value" id="autoUpdate" type="number"/>
                 <label for="autoUpdate" class="translate">Automatic Update</label>
                 <span class="translate">number of minutes after data is updated automatically (0 = no automatic update)</span>
             </div>
         </div>
-		<div class="row">
+        <div class="row">
             <div class="input-field col s12 m6">
                 <input class="value" id="GoogleAPIKey" type="text"/>
                 <label for="VIN" class="translate">Google API Key</label>
