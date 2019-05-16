@@ -18,12 +18,18 @@
     {
       "name": "Sneak-L8",
       "email": "git@sengler.de"
+    },
+    {
+      "name": "AlCalzone",
+      "email": "d.griesel@gmx.net"
     }
   ],
   "homepage": "https://github.com/RPerkuhn/ioBroker.vw-carnet",
   "license": "MIT",
   "keywords": [
     "ioBroker",
+    "VW",
+    "Audi",
     "car",
     "smarthome",
     "elektromobility"
@@ -37,13 +43,14 @@
     "@iobroker/adapter-core": "^1.0.2"
   },
   "devDependencies": {
-    "gulp": "^3.9.1",
-    "mocha": "^5.2.0",
-    "chai": "^4.1.2"
+    "@iobroker/testing": "^1.2.1",
+    "gulp": "^4.0.2"
   },
   "main": "vw-carnet.js",
   "scripts": {
-    "test": "node node_modules/mocha/bin/mocha --exit"
+    "test:unit": "mocha test/unit --exit",
+    "test:package": "mocha test/package --exit",
+    "test:integration": "mocha test/integration --exit"
   },
   "bugs": {
     "url": "https://github.com/RPerkuhn/ioBroker.vw-carnet/issues"
