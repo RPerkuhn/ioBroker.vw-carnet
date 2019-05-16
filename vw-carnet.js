@@ -6,19 +6,19 @@
 /*jshint sub:true*/
 
 // 'use strict';
-const utils = require('@iobroker/adapter-core'); 
+const utils = require('@iobroker/adapter-core');
 
-let adapter; 
+let adapter;
 
 //var ioBroker_Settings
-var ioBroker_Language = 'en';
+let ioBroker_Language = 'en';
 
 //DummyFunktion, die übergeben wird, wenn kein Callback benötigt wird
 function dummyFunc(myTmp) {}
 
 function startUpdateProcess(count) {
-	mySuccessfulUpdate = true;
-	myUpdateCount = count;
+    mySuccessfulUpdate = true;
+    myUpdateCount = count;
 }
 
 function updateSuccessfulFlag(myTmp) {
@@ -28,20 +28,20 @@ function updateSuccessfulFlag(myTmp) {
         myUpdateCount = 0;
         //adapter.log.info('VW Car-Net connected?: ' + VWCarNet_Connected);
         if (mySuccessfulUpdate){
-            var myDate = Date.now();
+            const myDate = Date.now();
             adapter.setState('lastUpdate', {val: myDate, ack: true});
         }
     }
 }
 
-function startAdapter(options) { 
-    options = options || {}; 
-    Object.assign(options,{ 
-        name:  "vw-carnet", 
+function startAdapter(options) {
+    options = options || {};
+    Object.assign(options,{
+        name:  'vw-carnet',
         //ab hier neu V 0.3.x
         stateChange: function (id, state) {
-            var myTmp1
-            var myCommand = id.split('.');
+            let myTmp1;
+            let myCommand = id.split('.');
             myCommand = myCommand[myCommand.length -1];
             //adapter.log.info(myCommand);
             if (myCommand === 'btn_update') {
@@ -54,26 +54,26 @@ function startAdapter(options) {
                 requestCarSwitchCharger('stop', dummyFunc); //command stop charging received
             }
             if (myCommand === 'btn_climaterStart') {
-                adapter.log.info('start climater not yet implemented')
+                adapter.log.info('start climater not yet implemented');
                 //requestCarSwitchClimater('start', dummyFunc); //command start climater received
             }
             if (myCommand === 'btn_climaterStop') {
-                adapter.log.info('stop climater not yet implemented')
+                adapter.log.info('stop climater not yet implemented');
                 //requestCarSwitchClimater('stop', dummyFunc); //command stop climater received
             }
             if (myCommand === 'btn_windowheatStart') {
-                adapter.log.info('start windowheat not yet implemented')
+                adapter.log.info('start windowheat not yet implemented');
                 //requestCarSwitchWindowHeater('start', dummyFunc); //command start windowheat received
             }
             if (myCommand === 'btn_windowheatStop') {
-                adapter.log.info('stop windowheat not yet implemented')
+                adapter.log.info('stop windowheat not yet implemented');
                 //requestCarSwitchWindowHeater('stop', dummyFunc); //command stop windowheat received
             }
         },
         //bis hier neu V 0.3.x
         message: function (obj) {
             if (typeof obj === 'object' && obj.message) {
-                var lCommand = obj.command.toLowerCase();
+                const lCommand = obj.command.toLowerCase();
                 adapter.log.info('Received message: ' + lCommand);
                 if (lCommand === 'update') {
                     VWCarNetReadData(); // sendto command 'update' received
@@ -83,7 +83,7 @@ function startAdapter(options) {
                 }
             }
         },
-        unload: function (callback) { 
+        unload: function (callback) {
             try {
                 stopUpdateTimer();
                 VWCarNet_Connected = false;
@@ -93,9 +93,9 @@ function startAdapter(options) {
             } catch (e) {
                 callback();
             }
-        }, 
-        ready: function () { 
-            var myTmp;
+        },
+        ready: function () {
+            let myTmp;
             //adapter.log.info(ioBroker_Language)
             CreateStates_common(dummyFunc);
             myGoogleMapsAPIKey = adapter.config.GoogleAPIKey;
@@ -110,10 +110,10 @@ function startAdapter(options) {
             CreateStates_location(dummyFunc);
             main();
             startUpdateTimer();
-        } 
-    }); 
- 
-    adapter = new utils.Adapter(options); 
+        }
+    });
+
+    adapter = new utils.Adapter(options);
 
     adapter.getForeignObject('system.config', function(err, ioBroker_Settings) {
         if (err) {
@@ -129,47 +129,47 @@ function startAdapter(options) {
                 ioBroker_Language = 'en';
         }
     });
-    
-    return adapter; 
-} 
 
-var VWCarNet_CredentialsAreValid = false;
-var VWCarNet_Country = 'DE';
-var VWCarNet_Brand = 'VW';
-var VWCarNet_VINIsValid = false;
+    return adapter;
+}
+
+let VWCarNet_CredentialsAreValid = false;
+let VWCarNet_Country = 'DE';
+let VWCarNet_Brand = 'VW';
+let VWCarNet_VINIsValid = false;
 var VWCarNet_Connected = false;
 var VWCarNet_GetStatus = false;
 var VWCarNet_GetClimater = false;
 var VWCarNet_GetEManager = false;
 var VWCarNet_GetLocation = false;
-var myCarNet_myChargingState;
-var myCarNet_MaxChargeCurrent;
-var myCarNet_PowerSupplyState;
-var myCarNet_vehicleStatus;
-var myCarNet_requestID;
-var myCarNetDoors={'doors':'dummy'};
-var myCarNetWindows={'windows':'dummy'};
+let myCarNet_myChargingState;
+let myCarNet_MaxChargeCurrent;
+let myCarNet_PowerSupplyState;
+let myCarNet_vehicleStatus;
+let myCarNet_requestID;
+const myCarNetDoors={'doors':'dummy'};
+const myCarNetWindows={'windows':'dummy'};
 var mySuccessfulUpdate = true;
 var myUpdateCount = 0;
-var myUpdateTimer = null;
+let myUpdateTimer = null;
 
-var myToken = '';
-var myVIN = '';
-var myTmp;
+let myToken = '';
+let myVIN = '';
+let myTmp;
 
-var request = require('request');
+const request = require('request');
 
 // Fake the VW CarNet mobile app headers
-var myHeaders = {'accept': 'application/json'};
-    myHeaders['x-app-name'] = 'eRemote';
-    myHeaders['clientid'] = 'CarNetApp';
-    myHeaders['x-app-version'] = '4.6.1';
-    myHeaders['user-agent'] = 'okhttp/3.7.0';
+const myHeaders = {'accept': 'application/json'};
+myHeaders['x-app-name'] = 'eRemote';
+myHeaders['clientid'] = 'CarNetApp';
+myHeaders['x-app-version'] = '4.6.1';
+myHeaders['user-agent'] = 'okhttp/3.7.0';
 
-var myAuthHeaders = JSON.parse(JSON.stringify(myHeaders));
+const myAuthHeaders = JSON.parse(JSON.stringify(myHeaders));
 
 var myGoogleMapsAPIKey = '';
-var myGoogleDefaulHeader = {
+const myGoogleDefaulHeader = {
     'Accept': 'application/json, ' + 'text/plain, */*',
     'Content-Type': 'application/json;charset=UTF-8',
     'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0.1; D5803 Build/23.5.A.1.291; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/63.0.3239.111 Mobile Safari/537.36'};
@@ -266,7 +266,7 @@ function stopUpdateTimer() {
 }
 function startUpdateTimer() {
     stopUpdateTimer();
-    var updateInterval = parseInt(adapter.config.autoUpdate);
+    const updateInterval = parseInt(adapter.config.autoUpdate);
     if (updateInterval > 0) {
         myUpdateTimer = setInterval(autoUpdate, 1000 * 60 * Math.max(updateInterval, 5));
     }
@@ -274,7 +274,7 @@ function startUpdateTimer() {
 
 function autoUpdate() {
     // Always try to update data. If not logged on, funxction will try to
-    // Otherwise: In case of a suspended VW server Connected will become false 
+    // Otherwise: In case of a suspended VW server Connected will become false
     // an there would be no further updates anymore.
     //if (VWCarNet_Connected) // If connected to VW car-net server
     VWCarNetReadData();
@@ -299,7 +299,7 @@ function CreateStates_common(callback){
     });
     adapter.setObject(state_v_Update.label, {
         type: 'state',
-        common: {name: state_v_Update[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        common: {name: state_v_Update[ioBroker_Language], type: 'boolean', read: false, write: true, role: 'button'},
         native: {}
     });
     return callback(true);
@@ -411,17 +411,17 @@ function CreateStates_Status(callback){
     });
     adapter.setObject(state_s_parkingLights.label, {
         type: 'state',
-        common: {name: state_s_parkingLights[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_s_parkingLights[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_parkingBrake.label, {
         type: 'state',
-        common: {name: state_s_parkingBrake[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_s_parkingBrake[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_carCentralLock.label, {
         type: 'state',
-        common: {name: state_s_carCentralLock[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_s_carCentralLock[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_fuelType.label, {
@@ -431,22 +431,22 @@ function CreateStates_Status(callback){
     });
     adapter.setObject(state_s_fuelLevel.label, {
         type: 'state',
-        common: {name: state_s_fuelLevel[ioBroker_Language], type: "number", unit: "%", read: true, write: false, def: 0, role: 'value'},
+        common: {name: state_s_fuelLevel[ioBroker_Language], type: 'number', unit: '%', read: true, write: false, def: 0, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_fuelRange.label, {
         type: 'state',
-        common: {name: state_s_fuelRange[ioBroker_Language], type: "number", unit: "km", read: true, write: false, def: 0, role: 'value'},
+        common: {name: state_s_fuelRange[ioBroker_Language], type: 'number', unit: 'km', read: true, write: false, def: 0, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_batteryLevel.label, {
         type: 'state',
-        common: {name: state_s_batteryLevel[ioBroker_Language], type: "number", unit: "%", read: true, write: false, def: 0, role: 'value'},
+        common: {name: state_s_batteryLevel[ioBroker_Language], type: 'number', unit: '%', read: true, write: false, def: 0, role: 'value'},
         native: {}
     });
     adapter.setObject(state_s_batteryRange.label, {
         type: 'state',
-        common: {name: state_s_batteryRange[ioBroker_Language], type: "number", unit: "km", read: true, write: false, def: 0, role: 'value'},
+        common: {name: state_s_batteryRange[ioBroker_Language], type: 'number', unit: 'km', read: true, write: false, def: 0, role: 'value'},
         native: {}
     });
     adapter.setObject(channel_dw_DoorsAndWindows.label, {
@@ -456,12 +456,12 @@ function CreateStates_Status(callback){
     });
     adapter.setObject(state_dw_Doors.label, {
         type: 'state',
-        common: {name: state_dw_Doors[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_dw_Doors[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_dw_Windows.label, {
         type: 'state',
-        common: {name: state_dw_Windows[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_dw_Windows[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     return callback(true);
@@ -479,37 +479,37 @@ function CreateStates_climater(callback){
     });
     adapter.setObject(state_c_climatisationWithoutHVPower.label, {
         type: 'state',
-        common: {name: state_c_climatisationWithoutHVPower[ioBroker_Language], type: "boolean", read: true, write: false, role: 'value'},
+        common: {name: state_c_climatisationWithoutHVPower[ioBroker_Language], type: 'boolean', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_c_targetTemperature.label, {
         type: 'state',
-        common: {name: state_c_targetTemperature[ioBroker_Language], type: "number", unit: "°C", read: true, write: false, role: 'value'},
+        common: {name: state_c_targetTemperature[ioBroker_Language], type: 'number', unit: '°C', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_c_heaterSource.label, {
         type: 'state',
-        common: {name: state_c_heaterSource[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_c_heaterSource[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_c_climatisationReason.label, {
         type: 'state',
-        common: {name: state_c_climatisationReason[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_c_climatisationReason[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_c_windowHeatingStateFront.label, {
         type: 'state',
-        common: {name: state_c_windowHeatingStateFront[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_c_windowHeatingStateFront[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_c_windowHeatingStateRear.label, {
         type: 'state',
-        common: {name: state_c_windowHeatingStateRear[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_c_windowHeatingStateRear[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_c_outdoorTemperature.label, {
         type: 'state',
-        common: {name: state_c_outdoorTemperature[ioBroker_Language], type: "number", unit: "°C", read: true, write: false, role: 'value'},
+        common: {name: state_c_outdoorTemperature[ioBroker_Language], type: 'number', unit: '°C', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_c_vehicleParkingClock.label, {
@@ -519,32 +519,32 @@ function CreateStates_climater(callback){
     });
     adapter.setObject(state_c_climatisationState.label, {
         type: 'state',
-        common: {name: state_c_climatisationState[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_c_climatisationState[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_c_remainingClimatisationTime.label, {
         type: 'state',
-        common: {name: state_c_remainingClimatisationTime[ioBroker_Language], type: "number", unit: "Min", read: true, write: false, role: 'value'},
+        common: {name: state_c_remainingClimatisationTime[ioBroker_Language], type: 'number', unit: 'Min', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_c_climaterStart.label, {
         type: 'state',
-        common: {name: state_c_climaterStart[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        common: {name: state_c_climaterStart[ioBroker_Language], type: 'boolean', read: false, write: true, role: 'button'},
         native: {}
     });
     adapter.setObject(state_c_climaterStop.label, {
         type: 'state',
-        common: {name: state_c_climaterStop[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        common: {name: state_c_climaterStop[ioBroker_Language], type: 'boolean', read: false, write: true, role: 'button'},
         native: {}
     });
     adapter.setObject(state_c_windowheatStart.label, {
         type: 'state',
-        common: {name: state_c_windowheatStart[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        common: {name: state_c_windowheatStart[ioBroker_Language], type: 'boolean', read: false, write: true, role: 'button'},
         native: {}
     });
     adapter.setObject(state_c_windowheatStop.label, {
         type: 'state',
-        common: {name: state_c_windowheatStop[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        common: {name: state_c_windowheatStop[ioBroker_Language], type: 'boolean', read: false, write: true, role: 'button'},
         native: {}
     });
     return callback(true);
@@ -562,62 +562,62 @@ function CreateStates_eManager(callback){
     });
     adapter.setObject(state_e_stateOfCharge.label, {
         type: 'state',
-        common: {name: state_e_stateOfCharge[ioBroker_Language], type: "number", unit: "%", read: true, write: false, role: 'value'},
+        common: {name: state_e_stateOfCharge[ioBroker_Language], type: 'number', unit: '%', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_e_remainingChargingTimeTargetSOC.label, {
         type: 'state',
-        common: {name: state_e_remainingChargingTimeTargetSOC[ioBroker_Language], type: "number", read: true, write: false, role: 'value'},
+        common: {name: state_e_remainingChargingTimeTargetSOC[ioBroker_Language], type: 'number', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_e_chargingMode.label, {
         type: 'state',
-        common: {name: state_e_chargingMode[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_chargingMode[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_e_chargingState.label, {
         type: 'state',
-        common: {name: state_e_chargingState[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_chargingState[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_e_chargingReason.label, {
         type: 'state',
-        common: {name: state_e_chargingReason[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_chargingReason[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_e_remainingChargingTime.label, {
         type: 'state',
-        common: {name: state_e_remainingChargingTime[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_remainingChargingTime[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_e_maxChargeCurrent.label, {
         type: 'state',
-        common: {name: state_e_maxChargeCurrent[ioBroker_Language], type: "number", unit: "A", read: true, write: false, role: 'value'},
+        common: {name: state_e_maxChargeCurrent[ioBroker_Language], type: 'number', unit: 'A', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_e_plugState.label, {
         type: 'state',
-        common: {name: state_e_plugState[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_plugState[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_e_lockState.label, {
         type: 'state',
-        common: {name: state_e_lockState[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_lockState[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_e_extPowerSupplyState.label, {
         type: 'state',
-        common: {name: state_e_extPowerSupplyState[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+        common: {name: state_e_extPowerSupplyState[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_e_chargerStart.label, {
         type: 'state',
-        common: {name: state_e_chargerStart[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        common: {name: state_e_chargerStart[ioBroker_Language], type: 'boolean', read: false, write: true, role: 'button'},
         native: {}
     });
     adapter.setObject(state_e_chargerStop.label, {
         type: 'state',
-        common: {name: state_e_chargerStop[ioBroker_Language], type: "boolean", read: false, write: true, role: 'button'},
+        common: {name: state_e_chargerStop[ioBroker_Language], type: 'boolean', read: false, write: true, role: 'button'},
         native: {}
     });
     return callback(true);
@@ -635,23 +635,23 @@ function CreateStates_location(callback){
     });
     adapter.setObject(state_l_lat.label, {
         type: 'state',
-        common: {name: state_l_lat[ioBroker_Language], type: "number", read: true, write: false, role: 'value'},
+        common: {name: state_l_lat[ioBroker_Language], type: 'number', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_l_lng.label, {
         type: 'state',
-        common: {name: state_l_lng[ioBroker_Language], type: "number", read: true, write: false, role: 'value'},
+        common: {name: state_l_lng[ioBroker_Language], type: 'number', read: true, write: false, role: 'value'},
         native: {}
     });
     adapter.setObject(state_l_parkingTime.label, {
         type: 'state',
-        common: {name: state_l_parkingTime[ioBroker_Language], type: "string", read: true, write: false, role: 'datetime'},
+        common: {name: state_l_parkingTime[ioBroker_Language], type: 'string', read: true, write: false, role: 'datetime'},
         native: {}
     });
     if (myGoogleMapsAPIKey !== '') {
         adapter.setObject(state_l_address.label, {
             type: 'state',
-            common: {name: state_l_address[ioBroker_Language], type: "string", read: true, write: false, role: 'value'},
+            common: {name: state_l_address[ioBroker_Language], type: 'string', read: true, write: false, role: 'value'},
             native: {}
         });
     }
@@ -667,35 +667,35 @@ function readCarNetData() {
 }
 
 function isRequestOk(name, error, response, result) {
-	if (error) {
-		adapter.log.error('error at ' + name + ': ' + error);
-		return false;
-	} 
-	var errorInfo = "";
-	
-	switch(response.statusCode){
-	case 200:
-	case 202:
-	case 204:
-		return true;
-	case 401:
-		errorInfo = "Username or PW are incorrect =>" + JSON.stringify(response);
-		break;
-	case 504:
-		if (result !== null && typeof result == 'object') {
-			if (result.hasOwnProperty('error')) {
-				errorInfo = result.error;
-				if (result.hasOwnProperty('error_description')) {
-					errorInfo += ' - ' + result.error_description;
-				}
-				break;
-			}
-		}
-	default:
-		errorInfo = "=> " + JSON.stringify(response);
-	}
-	adapter.log.error(name + ": " + response.statusCode + " " + errorInfo);
-	return false;
+    if (error) {
+        adapter.log.error('error at ' + name + ': ' + error);
+        return false;
+    }
+    let errorInfo = '';
+
+    switch(response.statusCode){
+        case 200:
+        case 202:
+        case 204:
+            return true;
+        case 401:
+            errorInfo = 'Username or PW are incorrect =>' + JSON.stringify(response);
+            break;
+        case 504:
+            if (result !== null && typeof result == 'object') {
+                if (result.hasOwnProperty('error')) {
+                    errorInfo = result.error;
+                    if (result.hasOwnProperty('error_description')) {
+                        errorInfo += ' - ' + result.error_description;
+                    }
+                    break;
+                }
+            }
+        default:
+            errorInfo = '=> ' + JSON.stringify(response);
+    }
+    adapter.log.error(name + ': ' + response.statusCode + ' ' + errorInfo);
+    return false;
 }
 
 // ############################################# start here! ###################################################
@@ -709,7 +709,7 @@ function main() {
         myCarNetDoors['FR']={'closed':false,'locked':true,'safe':false};
         myCarNetDoors['RR']={'closed':false,'locked':true,'safe':false};
         myCarNetDoors['hood']={'closed':false};
-        myCarNetDoors['rear']={'closed':false,'locked':false,};
+        myCarNetDoors['rear']={'closed':false,'locked':false};
         delete myCarNetDoors['doors']; //remove dummy entry
         myCarNetWindows['FL']={'closed':false, 'level':0};
         myCarNetWindows['RL']={'closed':false, 'level':0};
@@ -772,9 +772,9 @@ function VWCarNetForceCarToSendData(){
 }
 
 function CarNetLogon(callback) { //retrieve Token for the respective user
-    var responseData;
-    var myUrl = 'https://msg.volkswagen.de/fs-car/core/auth/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/token';
-    var myFormdata = {'grant_type': 'password',
+    let responseData;
+    const myUrl = 'https://msg.volkswagen.de/fs-car/core/auth/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/token';
+    const myFormdata = {'grant_type': 'password',
         'username': adapter.config.email,
         'password': adapter.config.password};
     request.post({url: myUrl, form: myFormdata, headers: myHeaders, json: true}, function(error, response, result){
@@ -783,14 +783,14 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
     		myToken = result.access_token;
     		return callback(true);
     	} else {
-			callback(false); //connection to VW Car-Net not established
+            callback(false); //connection to VW Car-Net not established
     	}
     });
 }
 
 function RetrieveVehicles(callback){ //retrieve VIN of the first vehicle (Fahrgestellnummer)
-    var myVehicleID = 0;
-    var myUrl = 'https://msg.volkswagen.de/fs-car/usermanagement/users/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles';
+    const myVehicleID = 0;
+    const myUrl = 'https://msg.volkswagen.de/fs-car/usermanagement/users/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles';
     if (VWCarNet_CredentialsAreValid===false){
         return callback('not authenticated');
     }
@@ -807,8 +807,8 @@ function RetrieveVehicles(callback){ //retrieve VIN of the first vehicle (Fahrge
 }
 
 function RetrieveVehicleData_VINValid(callback){
-    var myVINIsValid=false; 
-    var myUrl = 'https://msg.volkswagen.de/fs-car/vehicleMgmt/vehicledata/v2/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/'+ myVIN;
+    let myVINIsValid=false;
+    const myUrl = 'https://msg.volkswagen.de/fs-car/vehicleMgmt/vehicledata/v2/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/'+ myVIN;
     request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result){
         adapter.log.debug('Retrieve brand and country: ' + JSON.stringify(result));
         try {
@@ -821,20 +821,20 @@ function RetrieveVehicleData_VINValid(callback){
         catch (ex) {
             myVINIsValid=false;
         }
-        return callback(myVINIsValid); 
+        return callback(myVINIsValid);
     });
 }
 
 function RetrieveVehicleData_operationList(callback){
     if (VWCarNet_Connected===false) { return callback(false); }
-    var myUrl;
-    var myService = 0;
+    let myUrl;
+    let myService = 0;
     //######### Request Operations
     myUrl = 'https://msg.volkswagen.de/fs-car/rolesrights/operationlist/v2/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/operations'; //Möglichkeiten von Carnet für entsprechendes FZ abrufen
     request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result) {
     	if (isRequestOk('RequestOperations', error, response, result)) {
-			adapter.log.debug('Retrieve operations: ' + JSON.stringify(result));
-    		var myOperations = result.operationList.serviceInfo;
+            adapter.log.debug('Retrieve operations: ' + JSON.stringify(result));
+    		const myOperations = result.operationList.serviceInfo;
     		for (myService in myOperations){
     			switch(myOperations[myService].serviceId){
     			case 'statusreport_v1':
@@ -874,11 +874,11 @@ function RetrieveVehicleData_operationList(callback){
 function RetrieveVehicleData_Status(callback){
     if (VWCarNet_GetStatus === false) { return callback(true); }
     if (VWCarNet_Connected===false) { return callback(false); }
-    var myData = 0;
-    var myField = 0;
-    var myReceivedDataKey;
-    var myParkingLight;
-    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/status';
+    let myData = 0;
+    let myField = 0;
+    let myReceivedDataKey;
+    let myParkingLight;
+    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/status';
     try{
         request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result) {
         	if (isRequestOk('getStatus', error, response, result)) {
@@ -890,15 +890,15 @@ function RetrieveVehicleData_Status(callback){
     			result.StoredVehicleDataResponse.vin = 'ANONYMIZED_VIN_FOR_LOGGING';
     			adapter.log.debug('Retrieve status: ' + JSON.stringify(result));
 
-    			var vehicleData = result.StoredVehicleDataResponse.vehicleData;
+    			const vehicleData = result.StoredVehicleDataResponse.vehicleData;
 
     			adapter.setState(state_s_lastConnectionTimeStamp.label, {val: vehicleData.data[myData].field[myField].tsCarSentUtc, ack: true});
 
-    			var vdj = JSON.stringify(vehicleData.data);
+    			const vdj = JSON.stringify(vehicleData.data);
     			for (myData in vehicleData.data) {
     				for (myField in vehicleData.data[myData].field) {
     					myReceivedDataKey = vehicleData.data[myData].field[myField];
-    					switch(vehicleData.data[myData].id + "." + vehicleData.data[myData].field[myField].id){
+    					switch(vehicleData.data[myData].id + '.' + vehicleData.data[myData].field[myField].id){
     					case '0x0101010002.0x0101010002': //distanceCovered
     						adapter.setState(state_s_distanceCovered.label, {val: myReceivedDataKey.value, ack: true});
     						break;
@@ -1077,62 +1077,62 @@ function RetrieveVehicleData_Climater(callback){
     if (VWCarNet_GetClimater === false) { return callback(true); }
     if (VWCarNet_Connected===false) { return callback(false); }
 
-    var myTemperatureCelsius = 0;
-    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater';
+    let myTemperatureCelsius = 0;
+    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater';
     request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, responseData){
     	if (isRequestOk('getClimater', error, response, responseData)) {
-			adapter.log.debug('Retrieve climater: ' + JSON.stringify(responseData));
+            adapter.log.debug('Retrieve climater: ' + JSON.stringify(responseData));
 
-			var climaterSettings = responseData.climater.settings;
-			if (climaterSettings !== null) {
-				if (isNaN(climaterSettings.targetTemperature.content)) {
-					myTemperatureCelsius = 999;
-				} else {
-					myTemperatureCelsius = parseFloat((climaterSettings.targetTemperature.content)/10) - 273;
-				}
-				adapter.setState(state_c_targetTemperature.label, {val: myTemperatureCelsius.toFixed(1), ack: true});
-				myTemperatureCelsius = null;
-				adapter.setState(state_c_climatisationWithoutHVPower.label, {val: climaterSettings.climatisationWithoutHVpower.content, ack: true});
-				adapter.setState(state_c_heaterSource.label, {val: climaterSettings.heaterSource.content.toUpperCase(), ack: true});
-			}
+            const climaterSettings = responseData.climater.settings;
+            if (climaterSettings !== null) {
+                if (isNaN(climaterSettings.targetTemperature.content)) {
+                    myTemperatureCelsius = 999;
+                } else {
+                    myTemperatureCelsius = parseFloat((climaterSettings.targetTemperature.content)/10) - 273;
+                }
+                adapter.setState(state_c_targetTemperature.label, {val: myTemperatureCelsius.toFixed(1), ack: true});
+                myTemperatureCelsius = null;
+                adapter.setState(state_c_climatisationWithoutHVPower.label, {val: climaterSettings.climatisationWithoutHVpower.content, ack: true});
+                adapter.setState(state_c_heaterSource.label, {val: climaterSettings.heaterSource.content.toUpperCase(), ack: true});
+            }
 
-			var climatisationStatusData = responseData.climater.status.climatisationStatusData;
-			if (climatisationStatusData !== undefined) {
-				adapter.setState(state_c_climatisationState.label, {val: climatisationStatusData.climatisationState.content.toUpperCase(), ack: true});
-				//adapter.log.info(climatisationStatusData.climatisationStateErrorCode.content);
+            const climatisationStatusData = responseData.climater.status.climatisationStatusData;
+            if (climatisationStatusData !== undefined) {
+                adapter.setState(state_c_climatisationState.label, {val: climatisationStatusData.climatisationState.content.toUpperCase(), ack: true});
+                //adapter.log.info(climatisationStatusData.climatisationStateErrorCode.content);
 
-				var myRemainingTime = climatisationStatusData.remainingClimatisationTime.content;
-				//var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
-				var myRemainingTimeStr = myRemainingTime;
-				if (myRemainingTime <0 ){ myRemainingTimeStr = null; }
-				adapter.setState(state_c_remainingClimatisationTime.label, {val: myRemainingTimeStr, ack: true});
-				adapter.setState(state_c_climatisationReason.label, {val: climatisationStatusData.climatisationReason.content.toUpperCase(), ack: true});
-			}
-			var windowHeatingStatusData = responseData.climater.status.windowHeatingStatusData;
-			if (windowHeatingStatusData !== undefined) {
-				adapter.setState(state_c_windowHeatingStateFront.label, {val: windowHeatingStatusData.windowHeatingStateFront.content.toUpperCase(), ack: true});
-				adapter.setState(state_c_windowHeatingStateRear.label, {val: windowHeatingStatusData.windowHeatingStateRear.content.toUpperCase(), ack: true});
-				//adapter.log.info(windowHeatingStatusData.windowHeatingErrorCode.content);
-			}
-			var temperatureStatusData = responseData.climater.status.temperatureStatusData;
-			if (isNaN(temperatureStatusData.outdoorTemperature.content)){
-				myTemperatureCelsius = 999;
-			} else {
-				myTemperatureCelsius = parseFloat((temperatureStatusData.outdoorTemperature.content)/10) - 273;
-			}
-			adapter.setState(state_c_outdoorTemperature.label, {val: myTemperatureCelsius.toFixed(1), ack: true});
-			myTemperatureCelsius = null;
+                const myRemainingTime = climatisationStatusData.remainingClimatisationTime.content;
+                //var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
+                let myRemainingTimeStr = myRemainingTime;
+                if (myRemainingTime <0 ){ myRemainingTimeStr = null; }
+                adapter.setState(state_c_remainingClimatisationTime.label, {val: myRemainingTimeStr, ack: true});
+                adapter.setState(state_c_climatisationReason.label, {val: climatisationStatusData.climatisationReason.content.toUpperCase(), ack: true});
+            }
+            const windowHeatingStatusData = responseData.climater.status.windowHeatingStatusData;
+            if (windowHeatingStatusData !== undefined) {
+                adapter.setState(state_c_windowHeatingStateFront.label, {val: windowHeatingStatusData.windowHeatingStateFront.content.toUpperCase(), ack: true});
+                adapter.setState(state_c_windowHeatingStateRear.label, {val: windowHeatingStatusData.windowHeatingStateRear.content.toUpperCase(), ack: true});
+                //adapter.log.info(windowHeatingStatusData.windowHeatingErrorCode.content);
+            }
+            const temperatureStatusData = responseData.climater.status.temperatureStatusData;
+            if (isNaN(temperatureStatusData.outdoorTemperature.content)){
+                myTemperatureCelsius = 999;
+            } else {
+                myTemperatureCelsius = parseFloat((temperatureStatusData.outdoorTemperature.content)/10) - 273;
+            }
+            adapter.setState(state_c_outdoorTemperature.label, {val: myTemperatureCelsius.toFixed(1), ack: true});
+            myTemperatureCelsius = null;
 
-			var vehicleParkingClockStatusData = responseData.climater.status.vehicleParkingClockStatusData;
-			if (vehicleParkingClockStatusData !== undefined){
-				adapter.setState(state_c_vehicleParkingClock.label, {val: vehicleParkingClockStatusData.vehicleParkingClock.content, ack: true});
-			} else {
-				adapter.setState(state_c_vehicleParkingClock.label, {val: 'MOVING', ack: true});
-			}
-			return callback(true);
-		} else {
-			return callback(false);
-		}
+            const vehicleParkingClockStatusData = responseData.climater.status.vehicleParkingClockStatusData;
+            if (vehicleParkingClockStatusData !== undefined){
+                adapter.setState(state_c_vehicleParkingClock.label, {val: vehicleParkingClockStatusData.vehicleParkingClock.content, ack: true});
+            } else {
+                adapter.setState(state_c_vehicleParkingClock.label, {val: 'MOVING', ack: true});
+            }
+            return callback(true);
+        } else {
+            return callback(false);
+        }
     });
 }
 
@@ -1140,57 +1140,57 @@ function RetrieveVehicleData_eManager(callback){
     if (VWCarNet_GetEManager === false){ return callback(true); }
     if (VWCarNet_Connected===false) { return callback(false); }
 
-    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/charger';
+    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/charger';
     try {
         request.get({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result){
         	if (isRequestOk('geteManager', error, response, result)) {
     			adapter.log.debug('Retrieve charger: ' + JSON.stringify(result));
 
-    			var chargerSettings = result.charger.settings;
+    			const chargerSettings = result.charger.settings;
     			if (chargerSettings !== '' ) {
-                    myCarNet_MaxChargeCurrent = chargerSettings.maxChargeCurrent.content
+                    myCarNet_MaxChargeCurrent = chargerSettings.maxChargeCurrent.content;
                     adapter.setState(state_e_maxChargeCurrent.label, {val: myCarNet_MaxChargeCurrent, ack: true});
     			}
 
-    			var chargingStatusData = result.charger.status.chargingStatusData;
+    			const chargingStatusData = result.charger.status.chargingStatusData;
     			if (chargingStatusData !== undefined) {
     				adapter.setState(state_e_chargingMode.label, {val: chargingStatusData.chargingMode.content.toUpperCase(), ack: true});
                     //adapter.log.info('eManager/chargingStateErrorCode: ' + chargingStatusData.chargingStateErrorCode.content);
-                    
+
                     adapter.setState(state_e_chargingReason.label, {val: chargingStatusData.chargingReason.content.toUpperCase(), ack: true});
-                    
-                    myCarNet_PowerSupplyState = chargingStatusData.externalPowerSupplyState.content.toUpperCase()
+
+                    myCarNet_PowerSupplyState = chargingStatusData.externalPowerSupplyState.content.toUpperCase();
     				adapter.setState(state_e_extPowerSupplyState.label, {val: myCarNet_PowerSupplyState, ack: true});
                     //adapter.log.info('eManager/energyFlow: ' + chargingStatusData.energyFlow.content);
-                    
-                    myCarNet_myChargingState = chargingStatusData.chargingState.content.toUpperCase()
+
+                    myCarNet_myChargingState = chargingStatusData.chargingState.content.toUpperCase();
     				adapter.setState(state_e_chargingState.label, {val: myCarNet_myChargingState, ack: true});
     			}
 
-    			var cruisingRangeStatusData = result.charger.status.cruisingRangeStatusData;
+    			const cruisingRangeStatusData = result.charger.status.cruisingRangeStatusData;
     			// adapter.log.info(cruisingRangeStatusData.engineTypeFirstEngine.content);
     			// adapter.log.info(cruisingRangeStatusData.primaryEngineRange.content);
     			// adapter.log.info(cruisingRangeStatusData.hybridRange.content);
     			// adapter.log.info(cruisingRangeStatusData.engineTypeSecondEngine.content);
     			// adapter.log.info(cruisingRangeStatusData.secondaryEngineRange.content);
 
-    			var ledStatusData = result.charger.status.ledStatusData;
+    			const ledStatusData = result.charger.status.ledStatusData;
     			if (ledStatusData !== undefined) {
     				//adapter.log.info('eManager/ledColor: ' + ledStatusData.ledColor.content);
     				//adapter.log.info('eManager/ledState: ' + ledStatusData.ledState.content);
     			}
 
-    			var batteryStatusData = result.charger.status.batteryStatusData;
+    			const batteryStatusData = result.charger.status.batteryStatusData;
     			if (batteryStatusData !== undefined) {
     				adapter.setState(state_e_stateOfCharge.label, {val: batteryStatusData.stateOfCharge.content, ack: true});
-    				var myRemainingTime = batteryStatusData.remainingChargingTime.content;
-    				var myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
+    				const myRemainingTime = batteryStatusData.remainingChargingTime.content;
+    				let myRemainingTimeStr = Math.floor( myRemainingTime / 60 ) + ':' + ('00' + Math.floor( myRemainingTime%60 )).substr(-2);
     				if (myRemainingTime <0 ) { myRemainingTimeStr = null; }
     				adapter.setState(state_e_remainingChargingTime.label, {val: myRemainingTimeStr, ack: true});
     				adapter.setState(state_e_remainingChargingTimeTargetSOC.label, {val: batteryStatusData.remainingChargingTimeTargetSOC.content, ack: true});
     			}
 
-    			var plugStatusData = result.charger.status.plugStatusData;
+    			const plugStatusData = result.charger.status.plugStatusData;
     			if (plugStatusData !== undefined) {
     				adapter.setState(state_e_plugState.label, {val: plugStatusData.plugState.content.toUpperCase(), ack: true});
     				adapter.setState(state_e_lockState.label, {val: plugStatusData.lockState.content.toUpperCase(), ack: true});
@@ -1215,24 +1215,24 @@ function setCarIsMoving() {
             adapter.setState(state_l_lat.label, {val: null, ack: true});
             adapter.setState(state_l_lng.label, {val: null, ack: true});
             adapter.setState(state_l_parkingTime.label, {val: null, ack: true});
-            var newAddress = obj.val;
+            let newAddress = obj.val;
             if (newAddress.substr(0, 6) != 'MOVING') {
             	if (newAddress)
             		newAddress = 'MOVING from ' + newAddress;
             	else
             		newAddress = 'MOVING';
-            }   
+            }
             adapter.setState(state_l_address.label, {val: newAddress, ack: true});
         }
     });
-	
+
 }
 
 function RetrieveVehicleData_Location(callback) {
     if (VWCarNet_GetLocation === false) { return callback(true); }
     if (VWCarNet_Connected===false) { return callback(false); }
 
-    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/cf/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/position';
+    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/cf/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/position';
 
     if (VWCarNet_GetLocation === false) {
         adapter.setState(state_l_lat.label, {val: null, ack: true});
@@ -1253,7 +1253,7 @@ function RetrieveVehicleData_Location(callback) {
     			adapter.log.debug('Retrieve position: ' + JSON.stringify(responseData));
 
     			if ('findCarResponse' in responseData) {
-    				var findCarResponse = responseData.findCarResponse;
+    				const findCarResponse = responseData.findCarResponse;
     				if (findCarResponse !== undefined && findCarResponse !== null) {
     					adapter.setState(state_l_lat.label, {
     						val: findCarResponse.Position.carCoordinate.latitude/1000000,
@@ -1283,9 +1283,9 @@ function RetrieveVehicleData_Location(callback) {
 }
 
 function requestGeocoding(lat, lng) {
-    var myUrl = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat/1000000 + ',' + lng/1000000;
-    var myAddress = '<UNKNOWN>';
-    if (myGoogleMapsAPIKey !== "") {
+    let myUrl = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat/1000000 + ',' + lng/1000000;
+    let myAddress = '<UNKNOWN>';
+    if (myGoogleMapsAPIKey !== '') {
         myUrl = myUrl + '&key=' + myGoogleMapsAPIKey;
         //adapter.log.info(myUrl);
         try{
@@ -1293,7 +1293,7 @@ function requestGeocoding(lat, lng) {
                 //adapter.log.info(response.statusCode);
                 //adapter.log.info(JSON.stringify(result));
 
-                if ((result.results.length > 0) & result.results[0].formatted_address !== "") {
+                if ((result.results.length > 0) & result.results[0].formatted_address !== '') {
                     myAddress = result.results[0].formatted_address;
                 }
                 adapter.setState(state_l_address.label, {val: myAddress, ack: true});
@@ -1309,9 +1309,9 @@ function requestGeocoding(lat, lng) {
 }
 
 function requestCarSendData2CarNet(callback){
-    if (VWCarNet_Connected===false) { return callback(false); }; 
+    if (VWCarNet_Connected===false) { return callback(false); }
     //Requesting car to send it's data to the server
-    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/requests';
+    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/requests';
     try {
         request.post({url: myUrl, headers: myAuthHeaders, json: true}, function (error, response, result) {
             adapter.log.debug(response.statusCode);
@@ -1333,29 +1333,29 @@ function requestCarSwitchCharger(myAction, callback){
     //adapter.log.info(myCarNet_myChargingState)
     //adapter.log.info(myCarNet_MaxChargeCurrent + ' Ampere')
     //adapter.log.info('Electrical Power is ' + myCarNet_PowerSupplyState)
-    if(VWCarNet_Connected === false) { return callback(false); }; //quit if not connected
-    if(myCarNet_myChargingState === 'OFF' && myAction === 'stop') { return callback(false); }; //quit if command is 'stop' and charger is inactive
-    if(myCarNet_myChargingState === 'CHARGING' && myAction === 'start') { return callback(false); }; //quit if command is 'start' and charger is already active
-    if(isNaN(myCarNet_MaxChargeCurrent) && myAction === 'start') { return callback(false); }; //quit if maxCurrent is not a valid number
-    if(myCarNet_PowerSupplyState !== 'AVAILABLE' && myAction === 'start') { return callback(false); }; //quit if command is 'start' and no powersupply is connected
+    if(VWCarNet_Connected === false) { return callback(false); } //quit if not connected
+    if(myCarNet_myChargingState === 'OFF' && myAction === 'stop') { return callback(false); } //quit if command is 'stop' and charger is inactive
+    if(myCarNet_myChargingState === 'CHARGING' && myAction === 'start') { return callback(false); } //quit if command is 'start' and charger is already active
+    if(isNaN(myCarNet_MaxChargeCurrent) && myAction === 'start') { return callback(false); } //quit if maxCurrent is not a valid number
+    if(myCarNet_PowerSupplyState !== 'AVAILABLE' && myAction === 'start') { return callback(false); } //quit if command is 'start' and no powersupply is connected
 
     myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
-    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml;charset=utf-8'
-    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml, application/vnd.vwg.mbb.genericError_v1_0_2+xml'
+    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml;charset=utf-8';
+    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml, application/vnd.vwg.mbb.genericError_v1_0_2+xml';
     //Requesting car start charge with it's max allowed current
-    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/charger/actions'
-    var myData
-    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>start</type> <settings> <maxChargeCurrent>' + myCarNet_MaxChargeCurrent + '</maxChargeCurrent> </settings> </action>'};
-    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stop</type> </action>'};
-    if (myData === ''){ return callback(false); };
+    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/charger/actions';
+    let myData;
+    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>start</type> <settings> <maxChargeCurrent>' + myCarNet_MaxChargeCurrent + '</maxChargeCurrent> </settings> </action>';}
+    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stop</type> </action>';}
+    if (myData === ''){ return callback(false); }
     //adapter.log.info(myData)
     try {
         request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
             if (response.statusCode===202){
-                adapter.log.info('charger-command ' + myAction + ' successful')
+                adapter.log.info('charger-command ' + myAction + ' successful');
                 return callback(false);
             } else {
-                adapter.log.error('charger-command ' + myAction + ' failed')
+                adapter.log.error('charger-command ' + myAction + ' failed');
                 return callback(false);
             }
         });
@@ -1365,26 +1365,26 @@ function requestCarSwitchCharger(myAction, callback){
 }
 
 function requestCarSwitchClimater(myAction, callback){
-    if (VWCarNet_Connected===false) { return callback(false); };
+    if (VWCarNet_Connected===false) { return callback(false); }
 
     myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
-    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml;charset=utf-8'
-    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml'
+    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml;charset=utf-8';
+    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml';
     //Requesting car start climater/heating
-    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions'
-    var myData
-    if (myAction === 'set'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>setSettings</type> <settings> <targetTemperature>2950</targetTemperature> <climatisationWithoutHVpower>false</climatisationWithoutHVpower> <heaterSource>electric</heaterSource> </settings> </action>'};
-    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startClimatisation</type> </action>'};
-    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopClimatisation</type> </action>'};
-    if (myData === ''){ return callback (false); };
+    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions';
+    let myData;
+    if (myAction === 'set'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>setSettings</type> <settings> <targetTemperature>2950</targetTemperature> <climatisationWithoutHVpower>false</climatisationWithoutHVpower> <heaterSource>electric</heaterSource> </settings> </action>';}
+    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startClimatisation</type> </action>';}
+    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopClimatisation</type> </action>';}
+    if (myData === ''){ return callback (false); }
     try {
         request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
             if (response.statusCode===202){
-                adapter.log.info('climater-command successful')
+                adapter.log.info('climater-command successful');
                 return callback(true);
             } else {
-                adapter.log.info('climater-command failed')
-                console.log(result)
+                adapter.log.info('climater-command failed');
+                console.log(result);
                 return callback(false);
             }
         });
@@ -1394,24 +1394,24 @@ function requestCarSwitchClimater(myAction, callback){
 }
 
 function requestCarSwitchWindowHeater(myAction, callback){
-    if (VWCarNet_Connected===false) { return callback(false); };
+    if (VWCarNet_Connected===false) { return callback(false); }
 
     myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
-    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml'
-    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml'
+    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml';
+    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml';
     //Requesting car start window defrost
-    var myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions'
-    var myData
-    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startWindowHeating</type> </action>'};
-    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopWindowHeating</type> </action>'};
-    if (myData === ''){ return callback (false); };
+    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/'+ VWCarNet_Brand + '/'+ VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions';
+    let myData;
+    if (myAction === 'start'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startWindowHeating</type> </action>';}
+    if (myAction === 'stop'){myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopWindowHeating</type> </action>';}
+    if (myData === ''){ return callback (false); }
     try {
         request.post({url: myUrl, body: myData, headers: myPushHeaders}, function (error, response, result) {
             if (response.statusCode===202){
-                adapter.log.info('windowheater-command successful')
+                adapter.log.info('windowheater-command successful');
                 return callback(true);
             } else {
-                adapter.log.info('windowheater-command failed')
+                adapter.log.info('windowheater-command failed');
                 return callback(false);
             }
         });
@@ -1420,12 +1420,10 @@ function requestCarSwitchWindowHeater(myAction, callback){
     }
 }
 
-
-
-// If started as allInOne/compact mode => return function to create instance 
-if (module && module.parent) { 
-    module.exports = startAdapter; 
-} else { 
-    // or start the instance directly 
-    startAdapter(); 
+// If started as allInOne/compact mode => return function to create instance
+if (module && module.parent) {
+    module.exports = startAdapter;
+} else {
+    // or start the instance directly
+    startAdapter();
 }
