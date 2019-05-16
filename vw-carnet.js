@@ -135,18 +135,18 @@ let VWCarNet_CredentialsAreValid = false;
 let VWCarNet_Country = 'DE';
 let VWCarNet_Brand = 'VW';
 let VWCarNet_VINIsValid = false;
-var VWCarNet_Connected = false;
-var VWCarNet_GetStatus = false;
-var VWCarNet_GetClimater = false;
-var VWCarNet_GetEManager = false;
-var VWCarNet_GetLocation = false;
+let VWCarNet_Connected = false;
+let VWCarNet_GetStatus = false;
+let VWCarNet_GetClimater = false;
+let VWCarNet_GetEManager = false;
+let VWCarNet_GetLocation = false;
 let myCarNet_myChargingState;
 let myCarNet_MaxChargeCurrent;
 let myCarNet_PowerSupplyState;
 const myCarNetDoors = { 'doors': 'dummy' };
 const myCarNetWindows = { 'windows': 'dummy' };
-var mySuccessfulUpdate = true;
-var myUpdateCount = 0;
+let mySuccessfulUpdate = true;
+let myUpdateCount = 0;
 let myUpdateTimer = null;
 
 let myVIN = '';
@@ -162,7 +162,7 @@ myHeaders['user-agent'] = 'okhttp/3.7.0';
 
 const myAuthHeaders = JSON.parse(JSON.stringify(myHeaders));
 
-var myGoogleMapsAPIKey = '';
+let myGoogleMapsAPIKey = '';
 const myGoogleDefaulHeader = {
     'Accept': 'application/json, ' + 'text/plain, */*',
     'Content-Type': 'application/json;charset=UTF-8',
@@ -822,10 +822,9 @@ function RetrieveVehicleData_VINValid(callback) {
 
 function RetrieveVehicleData_operationList(callback) {
     if (VWCarNet_Connected === false) { return callback(false); }
-    let myUrl;
     let myService = 0;
     //######### Request Operations
-    myUrl = 'https://msg.volkswagen.de/fs-car/rolesrights/operationlist/v2/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN + '/operations'; //Möglichkeiten von Carnet für entsprechendes FZ abrufen
+    const myUrl = 'https://msg.volkswagen.de/fs-car/rolesrights/operationlist/v2/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN + '/operations'; //Möglichkeiten von Carnet für entsprechendes FZ abrufen
     request.get({ url: myUrl, headers: myAuthHeaders, json: true }, function (error, response, result) {
         if (isRequestOk('RequestOperations', error, response, result)) {
             adapter.log.debug('Retrieve operations: ' + JSON.stringify(result));
@@ -1081,7 +1080,7 @@ function RetrieveVehicleData_Climater(callback) {
                 if (isNaN(climaterSettings.targetTemperature.content)) {
                     myTemperatureCelsius = 999;
                 } else {
-                    myTemperatureCelsius = parseFloat((climaterSettings.targetTemperature.content) / 10) - 273;
+                    myTemperatureCelsius = (parseFloat(climaterSettings.targetTemperature.content) / 10) - 273;
                 }
                 adapter.setState(state_c_targetTemperature.label, { val: myTemperatureCelsius.toFixed(1), ack: true });
                 myTemperatureCelsius = null;
@@ -1111,7 +1110,7 @@ function RetrieveVehicleData_Climater(callback) {
             if (isNaN(temperatureStatusData.outdoorTemperature.content)) {
                 myTemperatureCelsius = 999;
             } else {
-                myTemperatureCelsius = parseFloat((temperatureStatusData.outdoorTemperature.content) / 10) - 273;
+                myTemperatureCelsius = (parseFloat(temperatureStatusData.outdoorTemperature.content) / 10) - 273;
             }
             adapter.setState(state_c_outdoorTemperature.label, { val: myTemperatureCelsius.toFixed(1), ack: true });
             myTemperatureCelsius = null;
@@ -1285,7 +1284,7 @@ function requestGeocoding(lat, lng) {
                 //adapter.log.info(response.statusCode);
                 //adapter.log.info(JSON.stringify(result));
 
-                if ((result.results.length > 0) & result.results[0].formatted_address !== '') {
+                if ((result.results.length > 0) && result.results[0].formatted_address !== '') {
                     myAddress = result.results[0].formatted_address;
                 }
                 adapter.setState(state_l_address.label, { val: myAddress, ack: true });
@@ -1293,7 +1292,7 @@ function requestGeocoding(lat, lng) {
             });
         } catch (err) {
             adapter.setState(state_l_address.label, { val: null, ack: true });
-            adapter.log.error(response.statusCode);
+            if (err.response) adapter.log.error(err.response.statusCode);
         }
     } else {
         adapter.setState(state_l_address.label, { val: null, ack: true });
@@ -1331,7 +1330,7 @@ function requestCarSwitchCharger(myAction, callback) {
     if (isNaN(myCarNet_MaxChargeCurrent) && myAction === 'start') { return callback(false); } //quit if maxCurrent is not a valid number
     if (myCarNet_PowerSupplyState !== 'AVAILABLE' && myAction === 'start') { return callback(false); } //quit if command is 'start' and no powersupply is connected
 
-    myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
+    const myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
     myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml;charset=utf-8';
     myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml, application/vnd.vwg.mbb.genericError_v1_0_2+xml';
     //Requesting car start charge with it's max allowed current
@@ -1355,8 +1354,6 @@ function requestCarSwitchCharger(myAction, callback) {
         return callback(false);
     }
 }
-
-
 
 // If started as allInOne/compact mode => return function to create instance
 if (module && module.parent) {
