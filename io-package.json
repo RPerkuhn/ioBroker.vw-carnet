@@ -3,19 +3,19 @@
         "name": "vw-carnet",
         "version": "0.3.1a",
         "news": {
-			"0.3.1a": {
+            "0.3.1a": {
                 "en": "optimized error handling on http request",
                 "de": "Optimierte Fehlerbehandlung bei HTTP-Request"
-			},
-			"0.3.1": {
+            },
+            "0.3.1": {
                 "en": "Option to update via button in admin",
                 "de": "Option zum Update per Button aus Admin"
-			},
-			"0.3.0": {
+            },
+            "0.3.0": {
                 "en": "Enhanced function start and stop charge via button in admin",
                 "de": "Erweiterte Funktionen für start und stop Batterie laden"
-			},
-			"0.2.3a": {
+            },
+            "0.2.3a": {
                 "en": "improved stability, catch empty responses",
                 "de": "verbesserte Stabilität, leere Rückmeldungen abfangen"
             },
@@ -76,18 +76,16 @@
                 "de": "Initiale Version"
             }
         },
-		"title": "Volkswagen Car-Net",
+        "title": "Volkswagen Car-Net",
         "titleLang": {
             "en": "Volkswagen Car-Net",
             "de": "Volkswagen Car-Net"
         },
         "desc": {
-            "en": "Adapter for connection to VW Car-Net",
-            "de": "Adapter zur Verbindung mit VW Car-Net"
+            "en": "Adapter for connection to VW Car-Net and Audi Connect",
+            "de": "Adapter zur Verbindung mit VW Car-Net und Audi Connect"
         },
-        "authors": [
-            "RPerkuhn <ralf.perkuhn@online.de>"
-        ],
+        "authors": ["RPerkuhn <ralf.perkuhn@online.de>"],
         "docs": {
             "en": "docs/en/admin.md",
             "de": "docs/de/admin.md"
@@ -99,47 +97,53 @@
         "compact": true,
         "enabled": false,
         "extIcon": "https://raw.githubusercontent.com/RPerkuhn/ioBroker.vw-carnet/master/admin/vw-logo.png",
-        "keywords": ["Volkswagen Car-Net"],
+        "keywords": ["Volkswagen Car-Net", "Audi Connect"],
         "readme": "https://github.com/RPerkuhn/ioBroker.vw-carnet/blob/master/README.md",
         "loglevel": "info",
         "type": "hardware",
-		"blockly": false,
+        "blockly": false,
         "license": "MIT",
         "messagebox": true
     },
     "native": {
+        "service": "VW Car-Net",
         "email": "",
         "password": "",
-        "GoogleAPIKey": ""
+        "VIN": "",
+        "GoogleAPIKey": "",
+        "adapterGetEManager": false,
+        "adapterGetClimater": false,
+        "adapterGetLocation": false,
+        "autoUpdate": 0
     },
+    "protectedNative": ["email", "password", "VIN", "GoogleAPIKey"],
     "objects": [],
     "instanceObjects": [
-
-	{
-		"_id": "connection",
-		"type": "state",
-		"common": {
-			"role": "indicator.connected",
-			"name": "If connected to VW car-net server",
-			"type": "boolean",
-			"read": true,
-			"write": false,
-			"def": false
-		},
-		"native": {}
-	},
-	{
-		"_id": "lastUpdate",
-		"type": "state",
-		"common": {
-			"role": "datetime",
-			"name": "last data-update from VW car-net",
-			"type": "string",
-			"read": true,
-			"write": false,
-			"def": false
-		},
-		"native": {}
-	}
-]
+        {
+            "_id": "connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "If connected to VW car-net server",
+                "type": "boolean",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        },
+        {
+            "_id": "lastUpdate",
+            "type": "state",
+            "common": {
+                "role": "datetime",
+                "name": "last data-update from VW car-net",
+                "type": "string",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        }
+    ]
 }

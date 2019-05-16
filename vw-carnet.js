@@ -8,6 +8,7 @@
 // 'use strict';
 const utils = require('@iobroker/adapter-core');
 
+/** @type {ioBroker.Adapter} */
 let adapter;
 
 //var ioBroker_Settings
@@ -101,6 +102,33 @@ function startAdapter(options) {
             VWCarNet_GetClimater = adapter.config.adapterGetClimater;
             VWCarNet_GetEManager = adapter.config.adapterGetEManager;
             VWCarNet_GetLocation = adapter.config.adapterGetLocation;
+
+            // Change our HTTP endpoints depending on the service we use
+            switch (adapter.config.service) {
+                case 'Audi':
+                    VWCarNet_Brand = 'Audi';
+                    requestHost = 'msg.audi.de';
+                    requestHeaders = {
+                        'accept': 'application/json',
+                        'X-App-ID': 'de.audi.mmiapp',
+                        'X-App-Name': 'MMIconnect',
+                        'X-App-Version': '2.8.3',
+                        'X-Brand': 'audi',
+                        'user-agent': 'okhttp/3.7.0'
+                    };
+                    break;
+                default: // includes "VW":
+                    VWCarNet_Brand = 'VW';
+                    requestHost = 'msg.volkswagen.de';
+                    requestHeaders = {
+                        'accept': 'application/json',
+                        'x-app-name': 'eRemote',
+                        'clientid': 'CarNetApp',
+                        'x-app-version': '4.6.1',
+                        'user-agent': 'okhttp/3.7.0'
+                    };
+            }
+
             CreateStates_Services(dummyFunc);
             CreateStates_Status(dummyFunc);
             CreateStates_climater(dummyFunc);
@@ -133,7 +161,7 @@ function startAdapter(options) {
 
 let VWCarNet_CredentialsAreValid = false;
 let VWCarNet_Country = 'DE';
-let VWCarNet_Brand = 'VW';
+let VWCarNet_Brand;
 let VWCarNet_VINIsValid = false;
 let VWCarNet_Connected = false;
 let VWCarNet_GetStatus = false;
@@ -154,13 +182,9 @@ let myVIN = '';
 const request = require('request');
 
 // Fake the VW CarNet mobile app headers
-const myHeaders = { 'accept': 'application/json' };
-myHeaders['x-app-name'] = 'eRemote';
-myHeaders['clientid'] = 'CarNetApp';
-myHeaders['x-app-version'] = '4.6.1';
-myHeaders['user-agent'] = 'okhttp/3.7.0';
-
-const myAuthHeaders = JSON.parse(JSON.stringify(myHeaders));
+let requestHost;
+let requestHeaders;
+const myAuthHeaders = JSON.parse(JSON.stringify(requestHeaders));
 
 let myGoogleMapsAPIKey = '';
 const myGoogleDefaulHeader = {
@@ -278,7 +302,7 @@ function autoUpdate() {
 function CreateStates_common(callback) {
     // creating channel/states for Vehicle Data
     adapter.setObject(channel_v.label, {
-        type: 'object',
+        type: 'channel',
         common: { name: channel_v[ioBroker_Language] },
         native: {}
     });
@@ -303,7 +327,7 @@ function CreateStates_common(callback) {
 function CreateStates_Services(callback) {
     // creating channel/states for available CarNet services
     adapter.setObject(channel_sv.label, {
-        type: 'object',
+        type: 'channel',
         common: { name: channel_sv[ioBroker_Language] },
         native: {}
     });
@@ -767,13 +791,13 @@ function VWCarNetForceCarToSendData() {
 }
 
 function CarNetLogon(callback) { //retrieve Token for the respective user
-    const myUrl = 'https://msg.volkswagen.de/fs-car/core/auth/v1/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/token';
+    const myUrl = `https://${requestHost}/fs-car/core/auth/v1/${VWCarNet_Brand}/${VWCarNet_Country}/token`;
     const myFormdata = {
         'grant_type': 'password',
         'username': adapter.config.email,
         'password': adapter.config.password
     };
-    request.post({ url: myUrl, form: myFormdata, headers: myHeaders, json: true }, function (error, response, result) {
+    request.post({ url: myUrl, form: myFormdata, headers: requestHeaders, json: true }, function (error, response, result) {
         if (isRequestOk('CarNetLogin', error, response, result)) {
             myAuthHeaders.Authorization = 'AudiAuth 1 ' + result.access_token;
             return callback(true);
@@ -785,7 +809,7 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
 
 function RetrieveVehicles(callback) { //retrieve VIN of the first vehicle (Fahrgestellnummer)
     const myVehicleID = 0;
-    const myUrl = 'https://msg.volkswagen.de/fs-car/usermanagement/users/v1/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles';
+    const myUrl = `https://${requestHost}/fs-car/usermanagement/users/v1/${VWCarNet_Brand}/${VWCarNet_Country}/vehicles`;
     if (VWCarNet_CredentialsAreValid === false) {
         return callback('not authenticated');
     }
@@ -803,7 +827,7 @@ function RetrieveVehicles(callback) { //retrieve VIN of the first vehicle (Fahrg
 
 function RetrieveVehicleData_VINValid(callback) {
     let myVINIsValid = false;
-    const myUrl = 'https://msg.volkswagen.de/fs-car/vehicleMgmt/vehicledata/v2/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN;
+    const myUrl = `https://${requestHost}/fs-car/vehicleMgmt/vehicledata/v2/${VWCarNet_Brand}/${VWCarNet_Country}/vehicles/${myVIN}`;
     request.get({ url: myUrl, headers: myAuthHeaders, json: true }, function (error, response, result) {
         adapter.log.debug('Retrieve brand and country: ' + JSON.stringify(result));
         try {
@@ -824,7 +848,8 @@ function RetrieveVehicleData_operationList(callback) {
     if (VWCarNet_Connected === false) { return callback(false); }
     let myService = 0;
     //######### Request Operations
-    const myUrl = 'https://msg.volkswagen.de/fs-car/rolesrights/operationlist/v2/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN + '/operations'; //Möglichkeiten von Carnet für entsprechendes FZ abrufen
+    //Möglichkeiten von Carnet für entsprechendes FZ abrufen
+    const myUrl = `https://${requestHost}/fs-car/rolesrights/operationlist/v2/${VWCarNet_Brand}/${VWCarNet_Country}/vehicles/${myVIN}/operations`;
     request.get({ url: myUrl, headers: myAuthHeaders, json: true }, function (error, response, result) {
         if (isRequestOk('RequestOperations', error, response, result)) {
             adapter.log.debug('Retrieve operations: ' + JSON.stringify(result));
@@ -872,7 +897,7 @@ function RetrieveVehicleData_Status(callback) {
     let myField = 0;
     let myReceivedDataKey;
     let myParkingLight;
-    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN + '/status';
+    const myUrl = `https://${requestHost}/fs-car/bs/vsr/v1/${VWCarNet_Brand}/${VWCarNet_Country}/vehicles/${myVIN}/status`;
     try {
         request.get({ url: myUrl, headers: myAuthHeaders, json: true }, function (error, response, result) {
             if (isRequestOk('getStatus', error, response, result)) {
@@ -1070,7 +1095,7 @@ function RetrieveVehicleData_Climater(callback) {
     if (VWCarNet_Connected === false) { return callback(false); }
 
     let myTemperatureCelsius = 0;
-    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN + '/climater';
+    const myUrl = `https://${requestHost}/fs-car/bs/climatisation/v1/${VWCarNet_Brand}/${VWCarNet_Country}/vehicles/${myVIN}/climater`;
     request.get({ url: myUrl, headers: myAuthHeaders, json: true }, function (error, response, responseData) {
         if (isRequestOk('getClimater', error, response, responseData)) {
             adapter.log.debug('Retrieve climater: ' + JSON.stringify(responseData));
@@ -1132,7 +1157,7 @@ function RetrieveVehicleData_eManager(callback) {
     if (VWCarNet_GetEManager === false) { return callback(true); }
     if (VWCarNet_Connected === false) { return callback(false); }
 
-    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN + '/charger';
+    const myUrl = `https://${requestHost}/fs-car/bs/batterycharge/v1/${VWCarNet_Brand}/${VWCarNet_Country}/vehicles/${myVIN}/charger`;
     try {
         request.get({ url: myUrl, headers: myAuthHeaders, json: true }, function (error, response, result) {
             if (isRequestOk('geteManager', error, response, result)) {
@@ -1202,7 +1227,7 @@ function setCarIsMoving() {
     adapter.getState(state_l_address.label, function (err, obj) {
         if (err) {
             adapter.log.error(err);
-        } else {
+        } else if (obj) {
             adapter.setState(state_l_lat.label, { val: null, ack: true });
             adapter.setState(state_l_lng.label, { val: null, ack: true });
             adapter.setState(state_l_parkingTime.label, { val: null, ack: true });
@@ -1223,7 +1248,7 @@ function RetrieveVehicleData_Location(callback) {
     if (VWCarNet_GetLocation === false) { return callback(true); }
     if (VWCarNet_Connected === false) { return callback(false); }
 
-    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/cf/v1/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN + '/position';
+    const myUrl = `https://${requestHost}/fs-car/bs/cf/v1/${VWCarNet_Brand}/${VWCarNet_Country}/vehicles/${myVIN}/position`;
 
     if (VWCarNet_GetLocation === false) {
         adapter.setState(state_l_lat.label, { val: null, ack: true });
@@ -1302,7 +1327,7 @@ function requestGeocoding(lat, lng) {
 function requestCarSendData2CarNet(callback) {
     if (VWCarNet_Connected === false) { return callback(false); }
     //Requesting car to send it's data to the server
-    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/vsr/v1/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN + '/requests';
+    const myUrl = `https://${requestHost}/fs-car/bs/vsr/v1/${VWCarNet_Brand}/${VWCarNet_Country}/vehicles/${myVIN}/requests`;
     try {
         request.post({ url: myUrl, headers: myAuthHeaders, json: true }, function (error, response, result) {
             adapter.log.debug(response.statusCode);
@@ -1334,7 +1359,7 @@ function requestCarSwitchCharger(myAction, callback) {
     myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml;charset=utf-8';
     myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ChargerAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml, application/vnd.vwg.mbb.genericError_v1_0_2+xml';
     //Requesting car start charge with it's max allowed current
-    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/batterycharge/v1/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN + '/charger/actions';
+    const myUrl = `https://${requestHost}/fs-car/bs/batterycharge/v1/${VWCarNet_Brand}/${VWCarNet_Country}/vehicles/${myVIN}/charger/actions`;
     let myData;
     if (myAction === 'start') { myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>start</type> <settings> <maxChargeCurrent>' + myCarNet_MaxChargeCurrent + '</maxChargeCurrent> </settings> </action>'; }
     if (myAction === 'stop') { myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stop</type> </action>'; }
