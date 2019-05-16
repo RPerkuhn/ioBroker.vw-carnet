@@ -128,6 +128,7 @@ function startAdapter(options) {
                         'user-agent': 'okhttp/3.7.0'
                     };
             }
+            myAuthHeaders = JSON.parse(JSON.stringify(requestHeaders));
 
             CreateStates_Services(dummyFunc);
             CreateStates_Status(dummyFunc);
@@ -184,7 +185,7 @@ const request = require('request');
 // Fake the VW CarNet mobile app headers
 let requestHost;
 let requestHeaders;
-const myAuthHeaders = JSON.parse(JSON.stringify(requestHeaders));
+let myAuthHeaders;
 
 let myGoogleMapsAPIKey = '';
 const myGoogleDefaulHeader = {
