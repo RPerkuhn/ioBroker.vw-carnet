@@ -14,7 +14,7 @@ let adapter;
 let ioBroker_Language = 'en';
 
 //DummyFunktion, die übergeben wird, wenn kein Callback benötigt wird
-function dummyFunc(myTmp) { }
+function dummyFunc() { }
 
 function startUpdateProcess(count) {
     mySuccessfulUpdate = true;
@@ -39,8 +39,7 @@ function startAdapter(options) {
     Object.assign(options, {
         name: 'vw-carnet',
         //ab hier neu V 0.3.x
-        stateChange: function (id, state) {
-            let myTmp1;
+        stateChange: function (id) {
             let myCommand = id.split('.');
             myCommand = myCommand[myCommand.length - 1];
             //adapter.log.info(myCommand);
@@ -95,7 +94,6 @@ function startAdapter(options) {
             }
         },
         ready: function () {
-            let myTmp;
             //adapter.log.info(ioBroker_Language)
             CreateStates_common(dummyFunc);
             myGoogleMapsAPIKey = adapter.config.GoogleAPIKey;
@@ -145,17 +143,13 @@ var VWCarNet_GetLocation = false;
 let myCarNet_myChargingState;
 let myCarNet_MaxChargeCurrent;
 let myCarNet_PowerSupplyState;
-let myCarNet_vehicleStatus;
-let myCarNet_requestID;
 const myCarNetDoors = { 'doors': 'dummy' };
 const myCarNetWindows = { 'windows': 'dummy' };
 var mySuccessfulUpdate = true;
 var myUpdateCount = 0;
 let myUpdateTimer = null;
 
-let myToken = '';
 let myVIN = '';
-let myTmp;
 
 const request = require('request');
 
@@ -721,7 +715,7 @@ function main() {
         //adapter.log.info('Credentials valid?: ' +  VWCarNet_CredentialsAreValid);
         if (VWCarNet_CredentialsAreValid) {
             //adapter.log.info('Credentials valid - starting adapter')
-            RetrieveVehicles(function (myTmp) {
+            RetrieveVehicles(function () {
                 RetrieveVehicleData_VINValid(function (myTmp) {
                     VWCarNet_VINIsValid = myTmp;
                     adapter.log.debug('VIN valid: ' + VWCarNet_VINIsValid);
@@ -732,7 +726,7 @@ function main() {
                     } else {
                         adapter.setState(state_v_VIN.label, { val: '', ack: true });
                     }
-                    RetrieveVehicleData_operationList(function (myTmp) {
+                    RetrieveVehicleData_operationList(function () {
                         if (VWCarNet_Connected) {
                             readCarNetData();
                         }
@@ -773,7 +767,6 @@ function VWCarNetForceCarToSendData() {
 }
 
 function CarNetLogon(callback) { //retrieve Token for the respective user
-    let responseData;
     const myUrl = 'https://msg.volkswagen.de/fs-car/core/auth/v1/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/token';
     const myFormdata = {
         'grant_type': 'password',
@@ -783,7 +776,6 @@ function CarNetLogon(callback) { //retrieve Token for the respective user
     request.post({ url: myUrl, form: myFormdata, headers: myHeaders, json: true }, function (error, response, result) {
         if (isRequestOk('CarNetLogin', error, response, result)) {
             myAuthHeaders.Authorization = 'AudiAuth 1 ' + result.access_token;
-            myToken = result.access_token;
             return callback(true);
         } else {
             callback(false); //connection to VW Car-Net not established
@@ -897,7 +889,6 @@ function RetrieveVehicleData_Status(callback) {
 
                 adapter.setState(state_s_lastConnectionTimeStamp.label, { val: vehicleData.data[myData].field[myField].tsCarSentUtc, ack: true });
 
-                const vdj = JSON.stringify(vehicleData.data);
                 for (myData in vehicleData.data) {
                     for (myField in vehicleData.data[myData].field) {
                         myReceivedDataKey = vehicleData.data[myData].field[myField];
@@ -936,7 +927,6 @@ function RetrieveVehicleData_Status(callback) {
                                 adapter.setState(state_s_fuelRange.label, { val: 'value' in myReceivedDataKey ? myReceivedDataKey.value * 1 : 0, ack: true });
                                 break;
                             case '0x030103FFFF.0x0301030009': //secondary_typ - erst ab Modelljahr 2018
-                                var secondaryType = 'textId' in myReceivedDataKey ? myReceivedDataKey.textId.replace('engine_type_', '').replace('unsupported', '-').Capitalize() : myReceivedDataKey.value;
                                 break;
                             case '0x030103FFFF.0x0301030002': //soc_ok
                                 adapter.setState(state_s_batteryLevel.label, { val: myReceivedDataKey.value, ack: true });
@@ -1170,7 +1160,6 @@ function RetrieveVehicleData_eManager(callback) {
                     adapter.setState(state_e_chargingState.label, { val: myCarNet_myChargingState, ack: true });
                 }
 
-                const cruisingRangeStatusData = result.charger.status.cruisingRangeStatusData;
                 // adapter.log.info(cruisingRangeStatusData.engineTypeFirstEngine.content);
                 // adapter.log.info(cruisingRangeStatusData.primaryEngineRange.content);
                 // adapter.log.info(cruisingRangeStatusData.hybridRange.content);
@@ -1353,7 +1342,7 @@ function requestCarSwitchCharger(myAction, callback) {
     if (myData === '') { return callback(false); }
     //adapter.log.info(myData)
     try {
-        request.post({ url: myUrl, body: myData, headers: myPushHeaders }, function (error, response, result) {
+        request.post({ url: myUrl, body: myData, headers: myPushHeaders }, function (error, response) {
             if (response.statusCode === 202) {
                 adapter.log.info('charger-command ' + myAction + ' successful');
                 return callback(false);
@@ -1367,61 +1356,7 @@ function requestCarSwitchCharger(myAction, callback) {
     }
 }
 
-function requestCarSwitchClimater(myAction, callback) {
-    if (VWCarNet_Connected === false) { return callback(false); }
 
-    myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
-    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml;charset=utf-8';
-    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml';
-    //Requesting car start climater/heating
-    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions';
-    let myData;
-    if (myAction === 'set') { myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>setSettings</type> <settings> <targetTemperature>2950</targetTemperature> <climatisationWithoutHVpower>false</climatisationWithoutHVpower> <heaterSource>electric</heaterSource> </settings> </action>'; }
-    if (myAction === 'start') { myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startClimatisation</type> </action>'; }
-    if (myAction === 'stop') { myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopClimatisation</type> </action>'; }
-    if (myData === '') { return callback(false); }
-    try {
-        request.post({ url: myUrl, body: myData, headers: myPushHeaders }, function (error, response, result) {
-            if (response.statusCode === 202) {
-                adapter.log.info('climater-command successful');
-                return callback(true);
-            } else {
-                adapter.log.info('climater-command failed');
-                console.log(result);
-                return callback(false);
-            }
-        });
-    } catch (err) {
-        return callback(false);
-    }
-}
-
-function requestCarSwitchWindowHeater(myAction, callback) {
-    if (VWCarNet_Connected === false) { return callback(false); }
-
-    myPushHeaders = JSON.parse(JSON.stringify(myAuthHeaders));
-    myPushHeaders['Content-Type'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml';
-    myPushHeaders['Accept'] = 'application/vnd.vwg.mbb.ClimaterAction_v1_0_0+xml, application/vnd.volkswagenag.com-error-v1+xml,application/vnd.vwg.mbb.genericError_v1_0_2+xml';
-    //Requesting car start window defrost
-    const myUrl = 'https://msg.volkswagen.de/fs-car/bs/climatisation/v1/' + VWCarNet_Brand + '/' + VWCarNet_Country + '/vehicles/' + myVIN + '/climater/actions';
-    let myData;
-    if (myAction === 'start') { myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>startWindowHeating</type> </action>'; }
-    if (myAction === 'stop') { myData = '<?xml version="1.0" encoding= "UTF-8" ?> <action> <type>stopWindowHeating</type> </action>'; }
-    if (myData === '') { return callback(false); }
-    try {
-        request.post({ url: myUrl, body: myData, headers: myPushHeaders }, function (error, response, result) {
-            if (response.statusCode === 202) {
-                adapter.log.info('windowheater-command successful');
-                return callback(true);
-            } else {
-                adapter.log.info('windowheater-command failed');
-                return callback(false);
-            }
-        });
-    } catch (err) {
-        return callback(false);
-    }
-}
 
 // If started as allInOne/compact mode => return function to create instance
 if (module && module.parent) {
