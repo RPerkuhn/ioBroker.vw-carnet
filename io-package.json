@@ -102,7 +102,7 @@
         "keywords": ["Volkswagen Car-Net"],
         "readme": "https://github.com/RPerkuhn/ioBroker.vw-carnet/blob/master/README.md",
         "loglevel": "info",
-        "type": "hardware",
+        "type": "vehicle",
 		"blockly": false,
         "license": "MIT",
         "messagebox": true
